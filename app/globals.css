@@ -2,25 +2,69 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #222422ff;
+  --Green-1: #386641ff;
+  --Green-2: #6a994eff;
+  --Green-3: #a7c957ff;
+  --Green-4: #d3e3a4ff;
+  --Dark-Red: #2c040eff;
+  --Red: #bc4749ff;
+  --Beige: #f2e8cfff;
+  --Off-White: #fffcf2ff;
+  --Dark-Green-1: #222422ff;
+  --Dark-Green-2: #435447ff;
+  --Pink: #f2cfd3ff;
+  --Blue: #cfe0f2ff;
+  --Cream: #ffdcb6ff;
+  --Sky-Blue: #76a5eaff;
+  --Lilac: #e4ccfdff;
+  --Orange: #ffa500ff;
+
+  --task-status-to-do-button: #dbeafeff;
+  --task-status-to-do-stroke: #bfd7feff;
+  --task-status-to-do-text: #1e40afff;
+  --task-status-in-prog-button: #fef9c3ff;
+  --task-status-in-prog-stroke: #ffe7a3ff;
+  --task-status-in-prog-text: #854d0eff;
+  --task-status-done-button: #dcfce7ff;
+  --task-status-done-stroke: #b8ebcaff;
+  --task-status-done-text: #166534ff;
+  --task-due-button: #ffedd5ff;
+  --task-due-stroke: #fed7aaff;
+  --task-due-text: #9a3412ff;
+  --task-priority-button: #fee2e2ff;
+  --task-priority-stroke: #fecacaff;
+  --task-priority-text: #dc2626ff;
+  --task-inactive-button: #cacdc2ff;
+  --task-inactive-stroke: #ecebe1ff;
+  --task-tag-purple-text: #6b21a8ff;
+  --task-tag-purple-stroke: #e9d5ffff;
+  --task-tag-purple-button: #f3e8ffff;
+  --task-tag-blue-text: #20a6bbff;
+  --task-tag-blue-stroke: #9bf2ffff;
+  --task-tag-blue-button: #d7f8fdff;
+  --task-tag-lilac-text: #95589dff;
+  --task-tag-lilac-button: #efe6f1ff;
+  --task-tag-lilac-stroke: #dfcae1ff;
+  --Icon-Filled: Filled;
+  --Icon-Outlined: Outlined;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* --background: #0a0a0a;
+    --foreground: #ededed; */
+
+    /* TODO: add this logic when we implement dark mode */
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
