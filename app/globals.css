@@ -46,6 +46,48 @@
   --task-tag-lilac-text: #95589dff;
   --task-tag-lilac-button: #efe6f1ff;
   --task-tag-lilac-stroke: #dfcae1ff;
+
+  /* Text styles: Notes */
+  --note-body-font-size: 16px;
+  --note-body-font-weight: 400;
+  --note-body-letter-spacing: -0.5px;
+
+  --note-date-font-size: 16px;
+  --note-date-font-weight: 700;
+  --note-date-letter-spacing: 0.5px;
+
+  --note-link-font-size: 16px;
+  --note-link-font-weight: 300;
+  --note-link-letter-spacing: 0.5px;
+
+  --note-title-font-size: 36px;
+  --note-title-font-weight: 700;
+  --note-title-letter-spacing: -0.75px;
+
+  /* Text styles: Page Text */
+  --text-body-font-size: 16px;
+  --text-body-font-weight: 500;
+
+  --text-button-font-size: 16px;
+  --text-button-font-weight: 600;
+
+  --text-chip-info-font-size: 12px;
+  --text-chip-info-font-weight: 400;
+
+  --text-page-title-font-size: 46px;
+  --text-page-title-font-weight: 700;
+
+  --text-section-header-font-size: 30px;
+  --text-section-header-font-weight: 600;
+  --text-section-header-letter-spacing: -0.6px;
+
+  --text-section-sub-header-font-size: 20px;
+  --text-section-sub-header-font-weight: 600;
+  --text-section-sub-header-letter-spacing: -0.4px;
+
+  --text-small-header-font-size: 14px;
+  --text-small-header-font-weight: 600;
+
   --Icon-Filled: Filled;
   --Icon-Outlined: Outlined;
 }
@@ -53,6 +95,168 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Palette Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-green-1: var(--Green-1);
+  --color-green-2: var(--Green-2);
+  --color-green-3: var(--Green-3);
+  --color-green-4: var(--Green-4);
+
+  --color-dark-red: var(--Dark-Red);
+  --color-red: var(--Red);
+
+  --color-beige: var(--Beige);
+  --color-off-white: var(--Off-White);
+
+  --color-dark-green-1: var(--Dark-Green-1);
+  --color-dark-green-2: var(--Dark-Green-2);
+
+  --color-pink: var(--Pink);
+  --color-blue: var(--Blue);
+  --color-cream: var(--Cream);
+  --color-sky-blue: var(--Sky-Blue);
+  --color-lilac: var(--Lilac);
+  --color-orange: var(--Orange);
+
+  /* Task-Status Colors */
+  --color-task-status-to-do-button: var(--task-status-to-do-button);
+  --color-task-status-to-do-stroke: var(--task-status-to-do-stroke);
+  --color-task-status-to-do-text: var(--task-status-to-do-text);
+
+  --color-task-status-in-prog-button: var(--task-status-in-prog-button);
+  --color-task-status-in-prog-stroke: var(--task-status-in-prog-stroke);
+  --color-task-status-in-prog-text: var(--task-status-in-prog-text);
+
+  --color-task-status-done-button: var(--task-status-done-button);
+  --color-task-status-done-stroke: var(--task-status-done-stroke);
+  --color-task-status-done-text: var(--task-status-done-text);
+
+  --color-task-due-button: var(--task-due-button);
+  --color-task-due-stroke: var(--task-due-stroke);
+  --color-task-due-text: var(--task-due-text);
+
+  --color-task-priority-button: var(--task-priority-button);
+  --color-task-priority-stroke: var(--task-priority-stroke);
+  --color-task-priority-text: var(--task-priority-text);
+
+  --color-task-inactive-button: var(--task-inactive-button);
+  --color-task-inactive-stroke: var(--task-inactive-stroke);
+
+  /* Task-Tag Colors */
+  --color-task-tag-purple-text: var(--task-tag-purple-text);
+  --color-task-tag-purple-stroke: var(--task-tag-purple-stroke);
+  --color-task-tag-purple-button: var(--task-tag-purple-button);
+
+  --color-task-tag-blue-text: var(--task-tag-blue-text);
+  --color-task-tag-blue-stroke: var(--task-tag-blue-stroke);
+  --color-task-tag-blue-button: var(--task-tag-blue-button);
+
+  --color-task-tag-lilac-text: var(--task-tag-lilac-text);
+  --color-task-tag-lilac-button: var(--task-tag-lilac-button);
+  --color-task-tag-lilac-stroke: var(--task-tag-lilac-stroke);
+
+  /* Font sizes */
+  --text-note-body: var(--note-body-font-size);
+  --text-note-date: var(--note-date-font-size);
+  --text-note-link: var(--note-link-font-size);
+  --text-note-title: var(--note-title-font-size);
+
+  --text-body: var(--text-body-font-size);
+  --text-button: var(--text-button-font-size);
+  --text-chip-info: var(--text-chip-info-font-size);
+  --text-page-title: var(--text-page-title-font-size);
+  --text-section-header: var(--text-section-header-font-size);
+  --text-section-sub-header: var(--text-section-sub-header-font-size);
+  --text-small-header: var(--text-small-header-font-size);
+
+  /* Font weights */
+  --font-weight-note-body: var(--note-body-font-weight);
+  --font-weight-note-date: var(--note-date-font-weight);
+  --font-weight-note-link: var(--note-link-font-weight);
+  --font-weight-note-title: var(--note-title-font-weight);
+
+  --font-weight-text-body: var(--text-body-font-weight);
+  --font-weight-text-button: var(--text-button-font-weight);
+  --font-weight-text-chip-info: var(--text-chip-info-font-weight);
+  --font-weight-text-page-title: var(--text-page-title-font-weight);
+  --font-weight-text-section-header: var(--text-section-header-font-weight);
+  --font-weight-text-section-sub-header: var(
+    --text-section-sub-header-font-weight
+  );
+  --font-weight-text-small-header: var(--text-small-header-font-weight);
+
+  /* Letter spacing */
+  --tracking-note-body: var(--note-body-letter-spacing);
+  --tracking-note-date: var(--note-date-letter-spacing);
+  --tracking-note-link: var(--note-link-letter-spacing);
+  --tracking-note-title: var(--note-title-letter-spacing);
+  --tracking-text-section-header: var(--text-section-header-letter-spacing);
+  --tracking-text-section-sub-header: var(
+    --text-section-sub-header-letter-spacing
+  );
+}
+
+@layer utilities {
+  /* Notes */
+  .note-body {
+    font-family: var(--font-geist-mono);
+    font-size: var(--note-body-font-size);
+    font-weight: var(--note-body-font-weight);
+    letter-spacing: var(--note-body-letter-spacing);
+  }
+  .note-date {
+    font-family: var(--font-geist-mono);
+    font-size: var(--note-date-font-size);
+    font-weight: var(--note-date-font-weight);
+    letter-spacing: var(--note-date-letter-spacing);
+  }
+  .note-link {
+    font-family: var(--font-geist-mono);
+    font-size: var(--note-link-font-size);
+    font-weight: var(--note-link-font-weight);
+    letter-spacing: var(--note-link-letter-spacing);
+  }
+  .note-title {
+    font-family: var(--font-geist-mono);
+    font-size: var(--note-title-font-size);
+    font-weight: var(--note-title-font-weight);
+    letter-spacing: var(--note-title-letter-spacing);
+  }
+
+  /* Page Texts */
+  .text-body {
+    font-size: var(--text-body-font-size);
+    font-weight: var(--text-body-font-weight);
+  }
+  .text-button {
+    font-size: var(--text-button-font-size);
+    font-weight: var(--text-button-font-weight);
+  }
+  .text-chip-info {
+    font-size: var(--text-chip-info-font-size);
+    font-weight: var(--text-chip-info-font-weight);
+  }
+  .text-page-title {
+    font-size: var(--text-page-title-font-size);
+    font-weight: var(--text-page-title-font-weight);
+  }
+  .text-section-header {
+    font-size: var(--text-section-header-font-size);
+    font-weight: var(--text-section-header-font-weight);
+    letter-spacing: var(--text-section-header-letter-spacing);
+  }
+  .text-section-sub-header {
+    font-size: var(--text-section-sub-header-font-size);
+    font-weight: var(--text-section-sub-header-font-weight);
+    letter-spacing: var(--text-section-sub-header-letter-spacing);
+  }
+  .text-small-header {
+    font-size: var(--text-small-header-font-size);
+    font-weight: var(--text-small-header-font-weight);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
