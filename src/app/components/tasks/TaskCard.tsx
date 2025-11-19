@@ -1,5 +1,5 @@
 import React from 'react'
-import { Task } from '@/app/types'
+import { Task } from '@/src/app/types'
 
 export default function TaskCard() {
     const dummyTask: Task= {
