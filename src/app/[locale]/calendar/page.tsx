@@ -1,3 +1,5 @@
+import TaskCard from "../../components/tasks/TaskCard";
+
 export default function CalendarPage() {
-  return <h1>Calendar</h1>;
+  return <><TaskCard></TaskCard></>
 }
