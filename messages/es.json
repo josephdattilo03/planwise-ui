@@ -1,0 +1,12 @@
+{
+  "HomePage": {
+    "title": "Hola, Mundo!"
+  },
+  "Navbar": {
+    "home": "Inicio",
+    "calendar": "Calendario",
+    "folders": "Carpetas y Tableros",
+    "tasks": "Tareas",
+    "notes": "Notas"
+  }
+}

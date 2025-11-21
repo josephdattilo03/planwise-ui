@@ -57,3 +57,55 @@
 > Use the typography classes for consistency, use the colour utilities for theme colours, and mix in Tailwind spacing/layout utilities as you design the component.
 >
 > If you’re unsure which text-class or colour-class to use → check the Figma spec and ask.
+
+> **5. Internationalization (i18n) – Adding Text to the Codebase**
+>
+> We use Next.js internationalization with JSON message files. All user-facing text should be externalized for translation support.
+>
+> **Step-by-step procedure:**
+>
+> **a) Add your text key to the messages file**
+> - Navigate to `messages/en.json`
+> - Add a new key-value pair with a descriptive key:
+>
+> ```json
+> {
+>   "homePage": {
+>     "title": "Welcome to PlanWise",
+>     "subtitle": "Organize your academic life"
+>   },
+>   "buttons": {
+>     "save": "Save",
+>     "cancel": "Cancel"
+>   }
+> }
+> ```
+>
+> **b) Use the translation in your component**
+> - Import the translation hook (exact import depends on your i18n setup):
+>
+> ```tsx
+> import { useTranslations } from 'next-intl';
+>
+> export default function HomePage() {
+>   const t = useTranslations('homePage');
+>   
+>   return (
+>     <div>
+>       <h1 className="text-page-title">{t('title')}</h1>
+>       <p className="text-body">{t('subtitle')}</p>
+>     </div>
+>   );
+> }
+> ```
+>
+> **c) Naming conventions**
+> - Use camelCase for keys
+> - Group related strings under namespaces (e.g., `homePage`, `buttons`, `errors`)
+> - Be descriptive: prefer `taskList.emptyState` over `text1`
+>
+> **d) For new locales**
+> - Create a new file in `messages/` (e.g., `es.json` for Spanish)
+> - Copy the structure from `en.json` and translate values
+>
+> **Never hardcode user-facing strings directly in components.** Always use the i18n system, even if you're only supporting English initially – it makes future translations much easier.

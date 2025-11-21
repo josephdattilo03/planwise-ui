@@ -1,5 +1,12 @@
 {
   "HomePage": {
-    "title": "Hello world!"
+    "title": "Hello World!"
+  },
+  "Navbar": {
+    "home": "Home",
+    "calendar": "Calendar",
+    "folders": "Folders & Boards",
+    "tasks": "Tasks",
+    "notes": "Notes"
   }
 }
