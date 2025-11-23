@@ -7,7 +7,7 @@ type BoardChipProps = {
 
 export default function BoardChip({ board }: BoardChipProps) {
     return (
-        <div className="flex gap-2 items-center justify-center">
+        <div className="flex gap-2 items-center justify-center text-label">
             <div className="w-3 h-3 rounded-full"
             style={{backgroundColor: board.color}}
             ></div>
