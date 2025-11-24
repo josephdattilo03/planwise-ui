@@ -13,6 +13,7 @@ import {
   Box,
 } from "@mui/material";
 import type { Tag } from "../../types";
+import FormButton from "@/src/common/button/FormButton";
 
 type Props = {
   open: boolean;
@@ -77,21 +78,9 @@ export default function TagEditDialog({ open, tag, onClose, onSave }: Props) {
         </Box>
       </DialogContent>
 
-      <DialogActions>
-        <Button
-          onClick={onClose}
-          variant="text"
-          className="font-sans rounded-full text-green-1"
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSave}
-          color="success"
-          className="font-sans rounded-full bg-green-1 text-white"
-        >
-          Save
-        </Button>
+      <DialogActions className="px-6 pb-4">
+        <FormButton onClick={onClose} text="Clear" variant="clear" />
+        <FormButton onClick={handleSave} text="Save" variant="confirm" />
       </DialogActions>
     </Dialog>
   );

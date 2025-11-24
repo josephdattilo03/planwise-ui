@@ -3,6 +3,7 @@
 import React from "react";
 import { Button, Switch } from "@mui/material";
 import TipsAndUpdatesRoundedIcon from "@mui/icons-material/TipsAndUpdatesRounded";
+import FormButton from "@/src/common/button/FormButton";
 
 type Props = {
   /** children sections (Boards, Tags, Calendar, anything) */
@@ -59,12 +60,11 @@ export default function FilterSidebar({
       <div className="w-full flex flex-col gap-4 px-4">
         {/* Clear All / optional */}
         {showClearAll && (
-          <Button
+          <FormButton
             onClick={onClearAll}
-            className="w-full py-2 rounded-full border border-green-3 text-dark-green-1 text-small-header bg-off-white hover:bg-beige transition"
-          >
-            Clear All Filters
-          </Button>
+            text="Clear All Filters"
+            variant="clear"
+          />
         )}
 
         {/* Smart Recommendations / optional */}

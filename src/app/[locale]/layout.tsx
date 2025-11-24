@@ -10,8 +10,8 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/src/i18n";
 
-import NavBarComponent from "@/src/components/NavBar/NavBarComponent";
-import ThemeRegistry from "@/src/components/ThemeRegistry";
+import NavBarComponent from "@/src/common/NavBar/NavBarComponent";
+import ThemeRegistry from "@/src/common/ThemeRegistry";
 
 type Props = {
   children: React.ReactNode;
