@@ -1,6 +1,7 @@
 export interface Tag {
-    name: string;
-    backgroundColor: string;
-    borderColor: string;
-    textColor: string;
+  id: number;
+  name: string;
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
 }
