@@ -1,9 +1,11 @@
-import NewTaskComponent from '@/src/components/NewTask/NewTaskComponent';
+import NewTaskComponent from "@/src/app/components/tasks/NewTaskComponent";
 
 export default function NewTaskPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-off-white">
-      <NewTaskComponent />
+    <main className="overflow-hidden flex bg-white">
+      <div className="flex-1">
+        <NewTaskComponent />
+      </div>
     </main>
   );
 }

@@ -3,6 +3,8 @@
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { theme } from "@/theme";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { LocalizationProvider } from "@mui/x-date-pickers";
 
 export default function ThemeRegistry({
   children,
@@ -13,7 +15,9 @@ export default function ThemeRegistry({
     <AppRouterCacheProvider options={{ enableCssLayer: true }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        {children}
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          {children}
+        </LocalizationProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

@@ -1,3 +1,11 @@
+import CalendarFilterComponent from "../../components/calendar/CalendarFilterComponent";
+import { FiltersProvider } from "../../providers/filters/FiltersContext";
 export default function CalendarPage() {
-  return <h1>Calendar</h1>;
+  return (
+    <div className="h-full">
+      <FiltersProvider>
+        <CalendarFilterComponent />
+      </FiltersProvider>
+    </div>
+  );
 }
