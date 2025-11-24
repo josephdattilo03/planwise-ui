@@ -1,6 +1,19 @@
 "use client";
 
 import React, { useState, FormEvent } from "react";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  Box,
+  Paper,
+  Typography,
+  Alert,
+  SelectChangeEvent,
+} from "@mui/material";
 
 // Types
 interface TaskFormData {
@@ -101,146 +114,233 @@ export default function NewTaskComponent() {
   };
 
   return (
-    <aside className="bg-beige border border-green-3 rounded-2xl shadow-sm px-6 py-6 flex flex-col gap-4 w-full max-w-md">
-      <h2 className="text-section-sub-header text-dark-green-1 mb-2">
+    <aside
+      className="bg-off-white ml-auto border-l-2 border-green-4 w-96 h-screen flex flex-col"
+    >
+      {/* Header */}
+      <Typography
+        variant="h6"
+        className="text-section-sub-header px-6 pt-6 pb-3 bg-off-white"
+        sx={{
+          color: "var(--Dark-Green-1)",
+          textTransform: "uppercase",
+        }}
+      >
         + Create New Task
-      </h2>
+      </Typography>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-body text-dark-green-1">
-        {error && (
-          <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            {error}
-          </p>
-        )}
+      {/* Form fills the rest of the column */}
+      <div className="flex-1 bg-off-white">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-off-white flex flex-col justify-start gap-6 px-6 py-6 text-body text-dark-green-1"
+        >
+          <div className="flex flex-col gap-6">
+            {error && <Alert severity="error">{error}</Alert>}
 
-        <Field label="TASK TITLE *">
-          <input
-            type="text"
-            className="w-full rounded-lg border border-green-4 bg-off-white px-3 py-2 outline-none focus:ring-2 focus:ring-green-2"
-            placeholder="Enter task title..."
-            value={formData.title}
-            onChange={(e) => handleInputChange("title", e.target.value)}
-            disabled={isSubmitting}
-            required
-          />
-        </Field>
+            <TextField
+              label="TASK TITLE"
+              placeholder="Enter task title..."
+              value={formData.title}
+              onChange={(e) => handleInputChange("title", e.target.value)}
+              disabled={isSubmitting}
+              required
+              fullWidth
+              sx={{
+                "& .MuiFormLabel-root": {
+                  textTransform: "uppercase",
+                  fontSize: "14px",
+                  color: "var(--Dark-Green-1)",
+                },
+                "& .MuiInputBase-input": {
+                  color: "var(--Dark-Green-1)",
+                },
+              }}
+            />
 
-        <Field label="STATUS">
-          <select
-            className="w-full rounded-lg border border-green-4 bg-off-white px-3 py-2 outline-none focus:ring-2 focus:ring-green-2"
-            value={formData.status}
-            onChange={(e) => handleInputChange("status", e.target.value)}
-            disabled={isSubmitting}
-          >
-            {STATUS_OPTIONS.map((_option) => (
-              <option key={_option} value={_option}>
-                {_option}
-              </option>
-            ))}
-          </select>
-        </Field>
+            {/* STATUS */}
+            <FormControl
+              fullWidth
+              sx={{
+                "& .MuiFormLabel-root": {
+                  textTransform: "uppercase",
+                  fontSize: "14px",
+                  color: "var(--Dark-Green-1)",
+                },
+                "& .MuiInputBase-input": {
+                  color: "var(--Dark-Green-1)",
+                },
+              }}
+            >
+              <InputLabel>STATUS</InputLabel>
+              <Select
+                value={formData.status}
+                label="STATUS"
+                onChange={(e) =>
+                  handleInputChange("status", e.target.value as string)
+                }
+                disabled={isSubmitting}
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        <Field label="PRIORITY">
-          <select
-            className="w-full rounded-lg border border-green-4 bg-off-white px-3 py-2 outline-none focus:ring-2 focus:ring-green-2"
-            value={formData.priority}
-            onChange={(e) => handleInputChange("priority", e.target.value)}
-            disabled={isSubmitting}
-          >
-            {PRIORITY_OPTIONS.map((_option) => (
-              <option key={_option} value={_option}>
-                {_option}
-              </option>
-            ))}
-          </select>
-        </Field>
+            {/* PRIORITY */}
+            <FormControl
+              fullWidth
+              sx={{
+                "& .MuiFormLabel-root": {
+                  textTransform: "uppercase",
+                  fontSize: "14px",
+                  color: "var(--Dark-Green-1)",
+                },
+                "& .MuiInputBase-input": {
+                  color: "var(--Dark-Green-1)",
+                },
+              }}
+            >
+              <InputLabel>PRIORITY</InputLabel>
+              <Select
+                value={formData.priority}
+                label="PRIORITY"
+                onChange={(e) =>
+                  handleInputChange("priority", e.target.value as string)
+                }
+                disabled={isSubmitting}
+              >
+                {PRIORITY_OPTIONS.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        <Field label="DUE DATE">
-          <input
-            type="date"
-            className="w-full rounded-lg border border-green-4 bg-off-white px-3 py-2 text-body text-dark-green-1 outline-none focus:ring-2 focus:ring-green-2"
-            value={formData.dueDate}
-            onChange={(e) => handleInputChange("dueDate", e.target.value)}
-            disabled={isSubmitting}
-          />
-        </Field>
+            {/* DUE DATE */}
+            <TextField
+              type="date"
+              label="DUE DATE"
+              value={formData.dueDate}
+              onChange={(e) => handleInputChange("dueDate", e.target.value)}
+              disabled={isSubmitting}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              sx={{
+                "& .MuiFormLabel-root": {
+                  textTransform: "uppercase",
+                  fontSize: "14px",
+                  color: "var(--Dark-Green-1)",
+                },
+                "& .MuiInputBase-input": {
+                  color: "var(--Dark-Green-1)",
+                },
+              }}
+            />
 
-        <Field label="BOARD">
-          <select
-            className="w-full rounded-lg border border-green-4 bg-off-white px-3 py-2 outline-none focus:ring-2 focus:ring-green-2"
-            value={formData.board}
-            onChange={(e) => handleInputChange("board", e.target.value)}
-            disabled={isSubmitting}
-          >
-            {BOARD_OPTIONS.map((_option) => (
-              <option key={_option} value={_option}>
-                {_option}
-              </option>
-            ))}
-          </select>
-        </Field>
+            {/* BOARD */}
+            <FormControl
+              fullWidth
+              sx={{
+                "& .MuiFormLabel-root": {
+                  textTransform: "uppercase",
+                  fontSize: "14px",
+                  color: "var(--Dark-Green-1)",
+                },
+                "& .MuiInputBase-input": {
+                  color: "var(--Dark-Green-1)",
+                },
+              }}
+            >
+              <InputLabel>BOARD</InputLabel>
+              <Select
+                value={formData.board}
+                label="BOARD"
+                onChange={(e) =>
+                  handleInputChange("board", e.target.value as string)
+                }
+                disabled={isSubmitting}
+              >
+                {BOARD_OPTIONS.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        <Field label="TAGS (COMMA SEPARATED)">
-          <input
-            type="text"
-            className="w-full rounded-lg border border-green-4 bg-off-white px-3 py-2 outline-none focus:ring-2 focus:ring-green-2"
-            placeholder="e.g. design, bug, urgent"
-            value={formData.tagsInput}
-            onChange={(e) => handleInputChange("tagsInput", e.target.value)}
-            disabled={isSubmitting}
-          />
-        </Field>
+            {/* TAGS */}
+            <TextField
+              label="TAGS (COMMA SEPARATED)"
+              placeholder="e.g. design, bug, urgent"
+              value={formData.tagsInput}
+              onChange={(e) => handleInputChange("tagsInput", e.target.value)}
+              disabled={isSubmitting}
+              fullWidth
+              sx={{
+                "& .MuiFormLabel-root": {
+                  textTransform: "uppercase",
+                  fontSize: "14px",
+                  color: "var(--Dark-Green-1)",
+                },
+                "& .MuiInputBase-input": {
+                  color: "var(--Dark-Green-1)",
+                },
+              }}
+            />
 
-        <Field label="DESCRIPTION">
-          <textarea
-            rows={3}
-            className="w-full rounded-lg border border-green-4 bg-off-white px-3 py-2 outline-none resize-none focus:ring-2 focus:ring-green-2"
-            placeholder="Add task description..."
-            value={formData.description}
-            onChange={(e) => handleInputChange("description", e.target.value)}
-            disabled={isSubmitting}
-          />
-        </Field>
+            {/* DESCRIPTION */}
+            <TextField
+              multiline
+              rows={3}
+              label="DESCRIPTION"
+              placeholder="Add task description..."
+              value={formData.description}
+              onChange={(e) =>
+                handleInputChange("description", e.target.value)
+              }
+              disabled={isSubmitting}
+              fullWidth
+              sx={{
+                "& .MuiFormLabel-root": {
+                  textTransform: "uppercase",
+                  fontSize: "14px",
+                  color: "var(--Dark-Green-1)",
+                },
+                "& .MuiInputBase-input": {
+                  color: "var(--Dark-Green-1)",
+                },
+              }}
+            />
+          </div>
 
-        <div className="mt-4 flex gap-3">
-          <button
-            type="submit"
-            className={`flex-1 rounded-full px-4 py-2 text-button transition ${
-              isSubmitting
-                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                : "bg-green-2 text-off-white hover:bg-green-1"
-            }`}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating..." : "Create Task"}
-          </button>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="flex-1 rounded-full border border-green-3 bg-off-white text-button text-dark-green-1 py-2 hover:bg-beige transition"
-            disabled={isSubmitting}
-          >
-            Clear
-          </button>
-        </div>
-      </form>
+          {/* Buttons pinned to bottom */}
+          <div className="mt-0 flex gap-5">
+            <Button
+              type="submit"
+              className={`flex-1 rounded-full px-4 py-2 text-button transition ${
+                isSubmitting
+                  ? "bg-gray-400 text-gray-200"
+                  : "bg-green-2 text-off-white hover:bg-green-1"
+              }`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating..." : "Create Task"}
+            </Button>
+            <Button
+              type="button"
+              className="flex-1 rounded-full border border-green-3 bg-off-white text-button text-dark-green-1 py-2 hover:bg-beige transition"
+              onClick={handleClear}
+              disabled={isSubmitting}
+            >
+              Clear
+            </Button>
+          </div>
+        </form>
+      </div>
     </aside>
-  );
-}
-
-// Helper Component
-type FieldProps = {
-  label: string;
-  children: React.ReactNode;
-};
-
-function Field({ label, children }: FieldProps) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-small-header text-dark-green-2 tracking-[0.08em] uppercase text-xs">
-        {label}
-      </span>
-      {children}
-    </label>
   );
 }
