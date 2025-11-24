@@ -25,7 +25,15 @@
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
     "@mui/material-nextjs": "^7.3.5",
+<<<<<<< HEAD
     "date-fns": "^4.1.0",
+=======
+    "@mui/x-date-pickers": "^8.19.0",
+    "chroma.ts": "^1.0.10",
+    "colorjs.io": "^0.5.2",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.19",
+>>>>>>> 4794e79bd4c8b733fe4e716a2c7c101dea15ed2d
     "next": "^16.0.3",
     "next-intl": "^4.5.3",
     "react": "19.2.0",

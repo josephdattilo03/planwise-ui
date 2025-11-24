@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  IBM_Plex_Mono,
+  IBM_Plex_Sans,
+} from "next/font/google";
 import "../globals.css";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/src/i18n";
 
-import Navbar from "@/src/components/NavBar/NavBar";
+import NavBarComponent from "@/src/components/NavBar/NavBarComponent";
 import ThemeRegistry from "@/src/components/ThemeRegistry";
 
 type Props = {
@@ -13,14 +18,15 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700"],
 });
 
 // export const metadata: Metadata = {
@@ -40,12 +46,12 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${plexSans.variable} ${plexMono.variable} antialiased h-screen flex flex-col`}
       >
         <ThemeRegistry>
           <NextIntlClientProvider locale={locale} messages={messages}>
-            <Navbar />
-            {children}
+            <NavBarComponent />
+            <main className="flex-1 overflow-auto font-sans">{children}</main>
           </NextIntlClientProvider>
         </ThemeRegistry>
       </body>

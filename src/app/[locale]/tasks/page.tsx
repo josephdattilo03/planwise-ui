@@ -1,4 +1,4 @@
-import NewTaskComponent from '@/src/components/NewTask/NewTaskComponent';
+import NewTaskComponent from "@/src/app/components/tasks/NewTaskComponent";
 
 export default function NewTaskPage() {
   return (

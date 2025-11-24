@@ -62,13 +62,13 @@ const navItems: NavItem[] = [
   },
 ];
 
-export default function Navbar() {
+export default function NavBarComponent() {
   const pathname = usePathname();
   const locale = pathname.split("/")[1];
   const t = useTranslations("Navbar");
 
   return (
-    <Box className="flex flex-row justify-between font-sans text-[16px] w-full bg-off-white py-3 px-8 border-b-2 border-green-2">
+    <Box className="flex flex-row justify-between font-sans text-[16px] w-full h-fit bg-off-white py-3 px-8 border-b-2 border-green-2">
       <Image
         src="/logo.svg"
         alt="Planwise logo"
@@ -117,7 +117,7 @@ export default function Navbar() {
           );
         })}
       </Tabs>
-      <div className="flex-shrink-0 flex items-center gap-4">
+      <div className="shrink-0 flex items-center gap-4">
         <IconButton>
           <SearchIcon sx={{ color: "#43544780" }} />
         </IconButton>

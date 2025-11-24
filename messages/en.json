@@ -8,5 +8,10 @@
     "folders": "Folders & Boards",
     "tasks": "Tasks",
     "notes": "Notes"
+  },
+  "TaskCard": {
+    "task-to-do": "To-Do",
+    "task-in-progress": "In Progress",
+    "task-done": "Done"
   }
 }
