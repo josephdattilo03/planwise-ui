@@ -1,6 +1,9 @@
-import EditableNote from "@/src/components/NoteComponent/NoteComponent";
+import NoteBoard from "../../components/note/NoteBoard";
+
 export default function NotesPage() {
-  return  <main className="min-h-screen flex items-center justify-center bg-off-white">
-        <EditableNote />
-      </main>
+  return (
+    <main className="min-h-screen bg-off-white">
+      <NoteBoard />
+    </main>
+  );
 }
