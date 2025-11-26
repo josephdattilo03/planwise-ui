@@ -1,137 +1,112 @@
 "use client"
-import { useState } from "react";
-import { FolderNode, BoardNode, WorkspaceNode} from "../../types/workspace";
+import { useState, useEffect } from "react";
+import { FolderNode, BoardNode, WorkspaceNode } from "../../types/workspace";
 import TreeItem from "./TreeItem";
+import { fetchRootFolder, fetchChildrenByParentId } from "../../services/folders/folderService";
 
 export default function FolderTreeDisplay() {
-  // Sample workspace data
-  const [workspace] = useState<FolderNode>({
-    id: 'root',
-    name: 'My Workspace',
-    parentId: null,
-    type: 'folder',
-    children: [
-      {
-        id: 'folder-1',
-        name: 'Projects',
-        parentId: 'root',
-        type: 'folder',
-        children: [
-          {
-            parentId: 'folder-1',
-            type: 'board',
-            board: {
-            id: 'board-1',
-            name: 'Website Redesign',
-            color: '#3b82f6',
-
-            }
-          },
-          {
-            parentId: 'folder-1',
-            type: 'board',
-            board: {
-            color: '#10b981',
-            id: 'board-2',
-            name: 'Mobile App',
-            }
-          }
-        ]
-      },
-      {
-        id: 'folder-2',
-        name: 'Archive',
-        parentId: 'root',
-        type: 'folder',
-        children: [
-          {
-            id: 'folder-3',
-            name: '2024',
-            parentId: 'folder-2',
-            type: 'folder',
-            children: [
-              {
-                parentId: 'folder-3',
-                type: 'board',
-                board: {
-                color: '#f59e0b',
-                id: 'board-3',
-                name: 'Q1 Planning',
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        parentId: 'root',
-        type: 'board',
-        board: {
-        color: '#8b5cf6',
-        id: 'board-4',
-        name: 'Quick Notes',
-
-        }
-      }
-    ]
-  });
-
-  // Track expanded folders in state
+  const [workspace, setWorkspace] = useState<FolderNode | null>(null);
+  const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
-    // Initialize from memory
     return new Set(['root']);
   });
-
   const [selectedNode, setSelectedNode] = useState<WorkspaceNode | null>(null);
 
-  // Toggle folder expansion
-  const toggleFolder = (folderId: string) => {
+  // Load root folder on mount
+  useEffect(() => {
+    const loadRoot = async () => {
+      const root = await fetchRootFolder();
+      if (root) {
+        setWorkspace(root);
+        // Load children for root since it's expanded by default
+        await loadChildren(root.id);
+      }
+    };
+    loadRoot();
+  }, []);
+
+  // Load children for a specific folder
+  const loadChildren = async (folderId: string) => {
+    // Don't load if already loading
+    if (loadingFolders.has(folderId)) return;
+    
+    setLoadingFolders(prev => new Set(prev).add(folderId));
+    
+    try {
+      const children = await fetchChildrenByParentId(folderId);
+      
+      // Update the workspace tree with the loaded children
+      setWorkspace(prevWorkspace => {
+        if (!prevWorkspace) return null;
+        return updateFolderChildren(prevWorkspace, folderId, children);
+      });
+    } finally {
+      setLoadingFolders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(folderId);
+        return newSet;
+      });
+    }
+  };
+
+  // Recursively update a folder's children in the tree
+  const updateFolderChildren = (
+    node: FolderNode,
+    targetId: string,
+    children: WorkspaceNode[]
+  ): FolderNode => {
+    if (node.id === targetId) {
+      return { ...node, children };
+    }
+
+    return {
+      ...node,
+      children: node.children.map(child => {
+        if (child.type === 'folder') {
+          return updateFolderChildren(child as FolderNode, targetId, children);
+        }
+        return child;
+      })
+    };
+  };
+
+  // Toggle folder expansion and load children if needed
+  const toggleFolder = async (folderId: string) => {
+    const wasExpanded = expandedFolders.has(folderId);
+    
     setExpandedFolders(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(folderId)) {
+      if (wasExpanded) {
         newSet.delete(folderId);
       } else {
         newSet.add(folderId);
       }
       return newSet;
     });
+
+    // Load children when expanding (if not already loaded)
+    if (!wasExpanded) {
+      await loadChildren(folderId);
+    }
   };
 
+  if (!workspace) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-gray-500">Loading workspace...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-screen">
+    <div className="h-screen">
       {/* Left sidebar with tree */}
-      <div className="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">Workspace</h2>
-        <TreeItem 
+        <TreeItem
           node={workspace}
           expandedFolders={expandedFolders}
           toggleFolder={toggleFolder}
           onSelectNode={setSelectedNode}
         />
-      </div>
-
-      {/* Main content area */}
-      <div className="flex-1 p-8 bg-gray-50">
-        {selectedNode ? (
-          <div>
-            <h1 className="text-2xl font-bold mb-2">{selectedNode.type == 'folder' ? (selectedNode as FolderNode).name : (selectedNode as BoardNode).board.name}</h1>
-            <p className="text-gray-600">
-              Type: {selectedNode.type === 'folder' ? 'Folder' : 'Board'}
-            </p>
-            {selectedNode.type === 'board' && (
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-gray-600">Color:</span>
-                <div 
-                  className="w-6 h-6 rounded border border-gray-300"
-                  style={{ backgroundColor: (selectedNode as BoardNode).board.color }}
-                />
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-gray-500">Select a folder or board to view details</div>
-        )}
-      </div>
     </div>
   );
 }

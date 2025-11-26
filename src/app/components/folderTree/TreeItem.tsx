@@ -1,5 +1,6 @@
 import { WorkspaceNode } from "../../types/workspace";
 import { FolderNode, BoardNode } from "../../types/workspace";
+import BoardChip from "../boards/BoardChip";
 
 type TreeItemProps = {
     node: WorkspaceNode;
@@ -47,15 +48,7 @@ export default function TreeItem({
                         <span className="text-sm">{node.name}</span>
                     </>
                 ) : (
-                    <>
-                        <div className="w-5" />
-                        <div
-                            className="w-4 h-4 rounded"
-                            style={{ backgroundColor: (node as BoardNode).board.color }}
-                        />
-                        <span className="text-gray-500">📄</span>
-                        <span className="text-sm">{node.board.name}</span>
-                    </>
+                    <BoardChip board={(node as BoardNode).board}></BoardChip>
                 )}
             </div>
 
