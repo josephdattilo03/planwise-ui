@@ -1,3 +1,9 @@
+import FolderTreeDisplay from "../../components/folderTree/FolderTreeDisplay";
+
 export default function FoldersPage() {
-  return <h1>Folders & Boards</h1>;
+  return <div>
+    <FolderTreeDisplay></FolderTreeDisplay>
+
+
+  </div>
 }

@@ -1,5 +1,5 @@
 import {useTranslations} from "next-intl"
-import FolderSidebar from "../components/folders/FolderSidebar";
+import FolderSidebar from "../components/folderTree/FolderTreeDisplay";
 
 export default function Home() {
   const t = useTranslations('HomePage');
