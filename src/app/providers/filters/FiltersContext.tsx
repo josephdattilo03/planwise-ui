@@ -2,7 +2,12 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import type { Board, Tag } from "../../types";
-import { fetchBoards, fetchTags } from "../../services/dataService";
+import { fetchBoards } from "../../services/boards/boardService";
+import {
+  fetchTags,
+  createTag as createTagService,
+  updateTag as updateTagService,
+} from "../../services/tags/tagService";
 
 type FiltersContextType = {
   loading: boolean;
@@ -21,8 +26,8 @@ type FiltersContextType = {
   setSelectedDate: (date: Date | null) => void;
   setSmartRecs: (v: boolean) => void;
 
-  createTag: (data: Partial<Tag>) => Tag;
-  editTag: (tag: Tag) => void;
+  createTag: (data: Partial<Tag>) => Promise<Tag>;
+  editTag: (tag: Tag) => Promise<void>;
 
   clearAll: () => void;
 };
@@ -84,24 +89,16 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Create tag
-  const createTag = (data: Partial<Tag>): Tag => {
-    const newTag: Tag = {
-      id: tags.length + 1,
-      name: data.name ?? "New Tag",
-      backgroundColor: "#E0E0E0",
-      textColor: "#333",
-      borderColor: "#999",
-    };
-
+  const createTag = (data: Partial<Tag>) => {
+    const newTag = createTagService(data);
     setTags((prev) => [...prev, newTag]);
     return newTag;
   };
 
   // Edit tag
   const editTag = (tag: Tag) => {
-    setTags((prev) =>
-      prev.map((t) => (t.id === tag.id ? { ...t, ...tag } : t))
-    );
+    updateTagService(tag);
+    setTags((prev) => prev.map((t) => (t.id === tag.id ? tag : t)));
   };
 
   // Clear all filters

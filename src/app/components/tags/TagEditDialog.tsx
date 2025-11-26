@@ -79,7 +79,7 @@ export default function TagEditDialog({ open, tag, onClose, onSave }: Props) {
       </DialogContent>
 
       <DialogActions className="px-6 pb-4">
-        <FormButton onClick={onClose} text="Clear" variant="clear" />
+        <FormButton onClick={onClose} text="Cancel" variant="clear" />
         <FormButton onClick={handleSave} text="Save" variant="confirm" />
       </DialogActions>
     </Dialog>

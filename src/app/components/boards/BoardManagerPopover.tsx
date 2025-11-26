@@ -61,11 +61,14 @@ export default function BoardManagerPopover({
           size="small"
           getOptionLabel={(option) => option.name}
           isOptionEqualToValue={(opt, val) => opt.id === val.id}
-          renderOption={(props, option, { selected }) => (
-            <li {...props}>
-              <BoardChip board={option} />
-            </li>
-          )}
+          renderOption={(props, option) => {
+            const { key, ...optionProps } = props;
+            return (
+              <li key={key} {...optionProps}>
+                <BoardChip board={option} />
+              </li>
+            );
+          }}
           onChange={(event, newValue) => {
             const newSet = new Set(newValue.map((b) => b.id));
             boards.forEach((b) => {
@@ -84,10 +87,10 @@ export default function BoardManagerPopover({
               className="font-sans"
             />
           )}
+          renderValue={(value, getItemProps) => (
+            <span className="pl-1 italic">{`${value.length} ${value.length > 1 ? "tags" : "tag"} selected`}</span>
+          )}
           sx={{
-            "& .MuiChip-label": {
-              fontSize: "12px",
-            },
             "& .MuiFormLabel-root": {
               fontSize: "14px",
             },
