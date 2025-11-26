@@ -208,25 +208,25 @@
 @layer utilities {
   /* Notes */
   .note-body {
-    font-family: var(--font-geist-mono);
+    font-family: var(--font-plex-mono);
     font-size: var(--note-body-font-size);
     font-weight: var(--note-body-font-weight);
     letter-spacing: var(--note-body-letter-spacing);
   }
   .note-date {
-    font-family: var(--font-geist-mono);
+    font-family: var(--font-plex-mono);
     font-size: var(--note-date-font-size);
     font-weight: var(--note-date-font-weight);
     letter-spacing: var(--note-date-letter-spacing);
   }
   .note-link {
-    font-family: var(--font-geist-mono);
+    font-family: var(--font-plex-mono);
     font-size: var(--note-link-font-size);
     font-weight: var(--note-link-font-weight);
     letter-spacing: var(--note-link-letter-spacing);
   }
   .note-title {
-    font-family: var(--font-geist-mono);
+    font-family: var(--font-plex-mono);
     font-size: var(--note-title-font-size);
     font-weight: var(--note-title-font-weight);
     letter-spacing: var(--note-title-letter-spacing);
@@ -269,12 +269,8 @@
   }
 }
 
-.scroll-shadows {
+.scroll-shadows-intense {
   z-index: 999;
-  /* max-height: 200px;
-  overflow: auto; */
-  /* -webkit-overflow-scrolling: touch;
-  overflow-scrolling: touch; */
 
   background:
     /* Shadow Cover TOP */
@@ -299,6 +295,40 @@
     100% 40px,
     100% 40px,
     100% 30px,
+    100% 14px;
+  background-attachment: local, local, scroll, scroll;
+}
+
+.scroll-shadows {
+  z-index: 999;
+
+  background:
+    /* Shadow Cover TOP */
+    linear-gradient(var(--color-off-white) 30%, rgba(255, 255, 255, 0)) center
+      top,
+    /* Shadow Cover BOTTOM */
+      linear-gradient(rgba(255, 255, 255, 0), var(--color-off-white) 70%) center
+      bottom,
+    /* Shadow TOP */
+      radial-gradient(
+        farthest-side at 50% 0,
+        rgb(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0)
+      )
+      center top,
+    /* Shadow BOTTOM */
+      radial-gradient(
+        farthest-side at 50% 100%,
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0)
+      )
+      center bottom;
+
+  background-repeat: no-repeat;
+  background-size:
+    100% 40px,
+    100% 40px,
+    100% 14px,
     100% 14px;
   background-attachment: local, local, scroll, scroll;
 }

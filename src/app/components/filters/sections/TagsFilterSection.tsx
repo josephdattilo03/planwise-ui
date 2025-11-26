@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import FilterSection from "../FilterSection";
 import TagChip from "../../tags/TagChip";
 import TagManagerPopover from "../../tags/TagManagerPopover";
-import type { Tag } from "../../../types";
 
 import { useFilters } from "../../../providers/filters/useFilters";
 

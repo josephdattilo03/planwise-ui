@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
+import React, { useState, FormEvent, useRef } from "react";
 import {
   TextField,
   Select,
@@ -13,113 +13,150 @@ import {
   Typography,
   Alert,
   SelectChangeEvent,
+  Autocomplete,
+  createFilterOptions,
+  IconButton,
 } from "@mui/material";
+
+import { useTask } from "../../providers/tasks/useTask";
+import TagManagerPopover from "../tags/TagManagerPopover";
+import BoardManagerPopover from "../boards/BoardManagerPopover";
 import FormButton from "@/src/common/button/FormButton";
+import BoardChip from "../boards/BoardChip";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import { Tag, TagOption } from "../../types";
+import TagChip from "../tags/TagChip";
 
-// Types
-interface TaskFormData {
-  title: string;
-  status: string;
-  priority: string;
-  dueDate: string;
-  board: string;
-  tagsInput: string;
-  description: string;
-}
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import TagEditDialog from "../tags/TagEditDialog";
 
-interface TaskPayload {
-  user_id: string;
-  title: string;
-  status: string;
-  priority: string;
-  due_date?: string;
-  board: string;
-  tags: string[];
-  description?: string;
-}
+const filter = createFilterOptions<TagOption>();
 
-// Constants
-const STATUS_OPTIONS = ["To-Do", "In Progress", "Done", "Pending"];
-const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Now"];
-const BOARD_OPTIONS = [
-  "Design Projects",
-  "Senior Design",
-  "PennOS",
-  "House",
-  "Personal",
-];
-
-// Component
 export default function NewTaskComponent() {
-  const initialFormData: TaskFormData = {
-    title: "",
-    status: "To-Do",
-    priority: "Low",
-    dueDate: "",
-    board: "Design Projects",
-    tagsInput: "",
-    description: "",
-  };
+  const {
+    isEditMode,
 
-  const [formData, setFormData] = useState<TaskFormData>(initialFormData);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    /** form fields from TaskContext */
+    id,
+    title,
+    description,
+    dueDate,
+    priorityLevel,
+    status,
+
+    setTitle,
+    setDescription,
+    setDueDate,
+    setPriorityLevel,
+    setStatus,
+
+    /** board + tag selections */
+    boards,
+    tags,
+    progressOptions,
+    priorityOptions,
+    newBoardId,
+    newTagIds,
+
+    changeBoard,
+    toggleTag,
+    createTag,
+    editTag,
+
+    resetTaskState,
+  } = useTask();
+
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleInputChange = (field: keyof TaskFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (error) setError(null); // Clear error on change
-  };
+  const [isEditTag, setIsEditTag] = useState<Tag | null>(null);
 
-  const validateForm = (): string | null => {
-    if (!formData.title.trim()) return "Task title is required";
+  const selectedBoard = boards.find((b) => b.id === newBoardId) || null;
+
+  const selectedTagOptions = tags.filter((t) => newTagIds.has(t.id));
+  const selectedTags = tags.filter((t) => newTagIds.has(t.id));
+
+  /** Validate */
+  const validate = () => {
+    if (!title.trim()) return "Task title is required";
+    if (newBoardId === -1) return "Please choose a board";
     return null;
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  /** Submit handler */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+    const v = validate();
+    if (v) {
+      setError(v);
       return;
     }
 
-    setIsSubmitting(true);
     setError(null);
-
-    const payload: TaskPayload = {
-      user_id: "test_user",
-      title: formData.title.trim(),
-      status: formData.status,
-      priority: formData.priority,
-      board: formData.board,
-      tags: formData.tagsInput
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      ...(formData.dueDate && { due_date: formData.dueDate }),
-      ...(formData.description.trim() && {
-        description: formData.description.trim(),
-      }),
-    };
+    setSubmitting(true);
 
     try {
-      // Save to localStorage for demo
-      const existingTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-      existingTasks.push(payload);
-      localStorage.setItem("tasks", JSON.stringify(existingTasks));
+      if (!isEditMode) {
+        // BUILD PAYLOAD FOR CREATE
+        const payload = {
+          id: id,
+          name: title.trim(),
+          description: description.trim(),
+          dueDate: dueDate,
+          priorityLevel: priorityLevel,
+          progress: status,
+          boardId: newBoardId,
+          tagIds: Array.from(newTagIds),
+        };
 
-      alert("Task created successfully!");
-      setFormData(initialFormData); // Reset form
+        console.log("✔ CREATE TASK PAYLOAD:", payload);
+
+        // TODO: call your create task service
+        // Save to localStorage for demo
+        const existingTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+        existingTasks.push(payload);
+        localStorage.setItem("tasks", JSON.stringify(existingTasks));
+
+        alert("Task created successfully!");
+      } else {
+        // EDIT MODE
+        const payload = {
+          id: id,
+          name: title.trim(),
+          description: description.trim(),
+          dueDate: dueDate,
+          priorityLevel: priorityLevel,
+          progress: status,
+          boardId: newBoardId,
+          tagIds: Array.from(newTagIds),
+        };
+
+        console.log("✔ EDIT TASK PAYLOAD:", payload);
+
+        // TODO: call your update task service
+        // Save to localStorage for demo
+        const existingTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+
+        // find the index
+        const index = existingTasks.findIndex((t: any) => t.id === id);
+
+        if (index !== -1) {
+          existingTasks[index] = payload; // overwrite
+        } else {
+          console.warn("⚠ Task not found, adding instead");
+          existingTasks.push(payload);
+        }
+
+        localStorage.setItem("tasks", JSON.stringify(existingTasks));
+
+        alert("Task edited successfully!");
+      }
     } catch (err) {
-      setError("Failed to save task. Please try again.");
+      console.error(err);
+      setError("Failed to save task. Try again.");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
-  };
-
-  const handleClear = () => {
-    setFormData(initialFormData);
-    setError(null);
   };
 
   return (
@@ -127,37 +164,36 @@ export default function NewTaskComponent() {
       {/* Header */}
       <Typography
         variant="h6"
-        className="text-section-sub-header px-4 bg-off-white"
+        className="text-section-sub-header px-4 bg-off-white pb-2"
         sx={{
           color: "var(--Dark-Green-1)",
           textTransform: "uppercase",
         }}
       >
-        + Create New Task
+        + {isEditMode ? "Edit Task" : "Create New Task"}
       </Typography>
 
       {/* Form fills the rest of the column */}
       <form
         onSubmit={handleSubmit}
-        className="w-full h-full flex flex-col justify-between gap-4 p-4 text-body text-dark-green-1"
+        className="scroll-shadows w-full h-full overflow-y-scroll flex flex-col justify-between gap-4 px-4 pb-4 pt-2 text-body text-dark-green-1"
       >
-        <div className="flex flex-col gap-4  overflow-y-scroll">
+        <div className="flex flex-col gap-4">
           {error && <Alert severity="error">{error}</Alert>}
 
           <TextField
             label="TASK TITLE"
             placeholder="Enter task title..."
-            value={formData.title}
-            onChange={(e) => handleInputChange("title", e.target.value)}
-            disabled={isSubmitting}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             required
             fullWidth
-            color="success"
             variant="filled"
+            color="success"
             sx={{
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
-                fontSize: "12px",
+                fontSize: "14px",
                 color: "var(--Dark-Green-1)",
               },
               "& .MuiInputBase-input": {
@@ -175,7 +211,7 @@ export default function NewTaskComponent() {
             sx={{
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
-                fontSize: "12px",
+                fontSize: "14px",
                 color: "var(--Dark-Green-1)",
               },
               "& .MuiInputBase-input": {
@@ -186,16 +222,13 @@ export default function NewTaskComponent() {
           >
             <InputLabel>STATUS</InputLabel>
             <Select
-              value={formData.status}
-              label="STATUS"
-              onChange={(e) =>
-                handleInputChange("status", e.target.value as string)
-              }
-              disabled={isSubmitting}
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              disabled={submitting}
             >
-              {STATUS_OPTIONS.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
+              {Object.entries(progressOptions).map(([value, label]) => (
+                <MenuItem key={value} value={value}>
+                  {label}
                 </MenuItem>
               ))}
             </Select>
@@ -209,7 +242,7 @@ export default function NewTaskComponent() {
             sx={{
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
-                fontSize: "12px",
+                fontSize: "14px",
                 color: "var(--Dark-Green-1)",
               },
               "& .MuiInputBase-input": {
@@ -220,16 +253,12 @@ export default function NewTaskComponent() {
           >
             <InputLabel>PRIORITY</InputLabel>
             <Select
-              value={formData.priority}
-              label="PRIORITY"
-              onChange={(e) =>
-                handleInputChange("priority", e.target.value as string)
-              }
-              disabled={isSubmitting}
+              value={priorityLevel}
+              onChange={(e) => setPriorityLevel(Number(e.target.value))}
             >
-              {PRIORITY_OPTIONS.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
+              {Object.entries(priorityOptions).map(([value, label]) => (
+                <MenuItem key={value} value={Number(value)}>
+                  {label}
                 </MenuItem>
               ))}
             </Select>
@@ -239,19 +268,18 @@ export default function NewTaskComponent() {
           <TextField
             type="date"
             label="DUE DATE"
-            value={formData.dueDate}
-            onChange={(e) => handleInputChange("dueDate", e.target.value)}
-            disabled={isSubmitting}
+            value={
+              dueDate ? new Date(dueDate).toISOString().substring(0, 10) : ""
+            }
+            onChange={(e) => setDueDate(new Date(e.target.value))}
             fullWidth
-            color="success"
             variant="filled"
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
+            color="success"
+            slotProps={{ inputLabel: { shrink: true } }}
             sx={{
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
-                fontSize: "12px",
+                fontSize: "14px",
                 color: "var(--Dark-Green-1)",
               },
               "& .MuiInputBase-input": {
@@ -278,30 +306,47 @@ export default function NewTaskComponent() {
               },
             }}
           >
-            <InputLabel>BOARD</InputLabel>
-            <Select
-              value={formData.board}
-              label="BOARD"
-              onChange={(e) =>
-                handleInputChange("board", e.target.value as string)
-              }
-              disabled={isSubmitting}
-            >
-              {BOARD_OPTIONS.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </Select>
+            <Autocomplete
+              options={boards}
+              value={selectedBoard}
+              onChange={(e, value) => changeBoard(value?.id ?? -1)}
+              size="small"
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(opt, val) => opt.id === val.id}
+              renderOption={(props, option) => {
+                const { key, ...optionProps } = props;
+                return (
+                  <li key={key} {...optionProps}>
+                    <BoardChip board={option} />
+                  </li>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="BOARD"
+                  variant="filled"
+                  color="success"
+                  className="font-sans"
+                />
+              )}
+              renderValue={(selected) => {
+                return (
+                  <div className="pl-1">
+                    <BoardChip board={selected} fullWidth={false} />
+                  </div>
+                );
+              }}
+              sx={{
+                "& .MuiFormLabel-root": {
+                  fontSize: "14px",
+                },
+              }}
+            />
           </FormControl>
 
           {/* TAGS */}
-          <TextField
-            label="TAGS (COMMA SEPARATED)"
-            placeholder="e.g. design, bug, urgent"
-            value={formData.tagsInput}
-            onChange={(e) => handleInputChange("tagsInput", e.target.value)}
-            disabled={isSubmitting}
+          <FormControl
             fullWidth
             color="success"
             variant="filled"
@@ -316,7 +361,160 @@ export default function NewTaskComponent() {
                 color: "var(--Dark-Green-1)",
               },
             }}
+          >
+            <Autocomplete
+              multiple
+              freeSolo
+              selectOnFocus
+              clearOnBlur
+              handleHomeEndKeys
+              forcePopupIcon
+              value={selectedTagOptions}
+              options={tags as TagOption[]}
+              size="small"
+              filterOptions={(options, params) => {
+                const filtered = filter(options, params);
+
+                if (params.inputValue !== "") {
+                  filtered.push({
+                    // synthetic option for “Add "<input>”
+                    id: -1,
+                    name: params.inputValue,
+                    backgroundColor: "#E0E0E0",
+                    textColor: "#333333",
+                    borderColor: "#999999",
+                    inputValue: params.inputValue,
+                  });
+                }
+
+                return filtered;
+              }}
+              getOptionLabel={(option) => {
+                // typed in directly as string
+                if (typeof option === "string") {
+                  return option;
+                }
+                // “Add …” synthetic option
+                if (option.inputValue) {
+                  return option.inputValue;
+                }
+                // regular Tag
+                return option.name;
+              }}
+              renderOption={(props, option) => {
+                const { key, ...optionProps } = props;
+
+                return (
+                  <li key={key} {...optionProps}>
+                    <div className="group flex w-full items-center justify-between gap-2 font-sans">
+                      <TagChip tag={option} />
+                      <IconButton
+                        size="small"
+                        sx={{ "& .MuiSvgIcon-root": { fontSize: 16 } }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditTag(option); // open edit dialog
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <MoreHorizRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </div>
+                  </li>
+                );
+              }}
+              onChange={(event, newValue) => {
+                // Handle “create new tag” first
+                let createdTag: Tag | null = null;
+
+                newValue.forEach((option) => {
+                  if (typeof option === "string") {
+                    const name = option.trim();
+                    if (!name) return;
+                    createdTag = createTag({ name });
+                  } else if (option.inputValue) {
+                    const name = option.inputValue.trim();
+                    if (!name) return;
+                    createdTag = createTag({ name });
+                  }
+                });
+
+                if (createdTag) {
+                  // ensure newly created tag is selected
+                  toggleTag(createdTag.id);
+                  return;
+                }
+
+                // For existing tags, compute new selection set
+                const newIdSet = new Set(
+                  newValue
+                    .filter(
+                      (opt): opt is Tag =>
+                        typeof opt !== "string" && !opt.inputValue
+                    )
+                    .map((t) => t.id)
+                );
+
+                // Diff vs previous selection and call onToggleTag as needed
+                tags.forEach((tag) => {
+                  const wasSelected = newTagIds.has(tag.id);
+                  const isSelectedNow = newIdSet.has(tag.id);
+                  if (wasSelected !== isSelectedNow) {
+                    toggleTag(tag.id);
+                  }
+                });
+              }}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              disableCloseOnSelect
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="TAGS"
+                  variant="filled"
+                  size="small"
+                  color="success"
+                  className="font-sans"
+                />
+              )}
+              renderValue={(value, getItemProps) => (
+                <span className="pl-1 italic">{`${value.length} ${value.length > 1 ? "tags" : "tag"} selected`}</span>
+              )}
+              sx={{
+                "& .MuiChip-label": {
+                  fontSize: "12px",
+                },
+                "& .MuiFormLabel-root": {
+                  fontSize: "14px",
+                },
+              }}
+            />
+          </FormControl>
+          <TagEditDialog
+            open={!!isEditTag}
+            tag={isEditTag}
+            onClose={() => setIsEditTag(null)}
+            onSave={(updated) => {
+              editTag(updated);
+              setIsEditTag(null);
+            }}
           />
+
+          <div className="flex flex-wrap gap-2">
+            {selectedTags.length > 0 &&
+              selectedTags.map((tag) => (
+                <div
+                  key={tag.id}
+                  className="transition rounded-full"
+                  onClick={() => toggleTag(tag.id)}
+                >
+                  <TagChip
+                    tag={tag}
+                    showRemoveButton={newTagIds.has(tag.id)}
+                    onRemoveClick={() => toggleTag(tag.id)}
+                  />
+                </div>
+              ))}
+          </div>
 
           {/* DESCRIPTION */}
           <TextField
@@ -324,16 +522,16 @@ export default function NewTaskComponent() {
             rows={3}
             label="DESCRIPTION"
             placeholder="Add task description..."
-            value={formData.description}
-            onChange={(e) => handleInputChange("description", e.target.value)}
-            disabled={isSubmitting}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={submitting}
             fullWidth
             color="success"
             variant="filled"
             sx={{
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
-                fontSize: "12px",
+                fontSize: "14px",
                 color: "var(--Dark-Green-1)",
               },
               "& .MuiInputBase-input": {
@@ -349,28 +547,26 @@ export default function NewTaskComponent() {
           <Button
             type="submit"
             className={`w-full rounded-full py-2 text-small-header transition ${
-              isSubmitting
+              submitting
                 ? "bg-gray-400 text-gray-200"
                 : "bg-green-1 text-white hover:bg-green-2"
             }`}
-            disabled={isSubmitting}
+            disabled={submitting}
           >
-            {isSubmitting ? "Creating..." : "Create Task"}
+            {submitting
+              ? isEditMode
+                ? "Saving..."
+                : "Creating..."
+              : isEditMode
+                ? "Save Changes"
+                : "Create Task"}
           </Button>
           <FormButton
-            onClick={handleClear}
-            text="Clear"
+            onClick={resetTaskState}
+            text={isEditMode ? "Reset" : "Clear"}
             variant="clear"
-            disabled={isSubmitting}
+            disabled={submitting}
           />
-          {/* <Button
-            type="button"
-            className="w-full py-2 rounded-full border border-beige text-dark-green-1 text-small-header bg-off-white hover:bg-beige transition"
-            onClick={handleClear}
-            disabled={isSubmitting}
-          >
-            Clear
-          </Button> */}
         </div>
       </form>
     </aside>

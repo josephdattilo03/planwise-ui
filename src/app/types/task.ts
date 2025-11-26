@@ -4,7 +4,8 @@ import { Tag } from "./tag";
 export interface Task {
   id: number;
   name: string;
-  progress: "to-do" | "in-progress" | "done";
+  description: string;
+  progress: "to-do" | "in-progress" | "done" | "pending";
   priorityLevel: number;
   dueDate: Date;
   board: Board;

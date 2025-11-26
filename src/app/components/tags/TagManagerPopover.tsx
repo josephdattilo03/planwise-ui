@@ -13,7 +13,7 @@ import TagEditDialog from "./TagEditDialog";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 
 import TagChip from "./TagChip";
-import type { Tag } from "../../types";
+import type { Tag, TagOption } from "../../types";
 
 type Props = {
   anchorEl: HTMLElement | null;
@@ -33,10 +33,6 @@ type Props = {
   /** Edit existing tag (you can wire this to a dialog in parent) */
   onEditTag: (tag: Tag) => void;
 };
-
-interface TagOption extends Tag {
-  inputValue?: string; // used for creatable “Add "<name>"” option
-}
 
 const filter = createFilterOptions<TagOption>();
 
@@ -197,10 +193,10 @@ export default function TagManagerPopover({
               className="font-sans"
             />
           )}
+          renderValue={(value, getItemProps) => (
+            <span className="pl-1 italic">{`${value.length} ${value.length > 1 ? "tags" : "tag"} selected`}</span>
+          )}
           sx={{
-            "& .MuiChip-label": {
-              fontSize: "12px",
-            },
             "& .MuiFormLabel-root": {
               fontSize: "14px",
             },

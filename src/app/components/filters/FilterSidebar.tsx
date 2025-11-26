@@ -57,7 +57,7 @@ export default function FilterSidebar({
   return (
     <aside className="w-full h-full max-w-2xs border border-green-4 bg-off-white flex flex-col pt-4">
       {/* ───── Top STATIC section ───── */}
-      <div className="w-full flex flex-col gap-4 px-4">
+      <div className="w-full flex flex-col gap-4 px-4 pb-2">
         {/* Clear All / optional */}
         {showClearAll && (
           <FormButton
@@ -85,7 +85,7 @@ export default function FilterSidebar({
       </div>
 
       {/* ───── BOTTOM SCROLL SECTION FOR FILTERS ───── */}
-      <div className="scroll-shadows w-full overflow-y-auto flex flex-col gap-4 p-4">
+      <div className="scroll-shadows-intense w-full overflow-y-auto flex flex-col gap-4 px-4 pb-4 pt-2">
         {children}
       </div>
     </aside>

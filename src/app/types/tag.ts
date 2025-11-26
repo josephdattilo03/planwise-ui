@@ -5,3 +5,7 @@ export interface Tag {
   borderColor: string;
   textColor: string;
 }
+
+export interface TagOption extends Tag {
+  inputValue?: string; // used for creatable “Add "<name>"” option
+}

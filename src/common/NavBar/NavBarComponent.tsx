@@ -68,7 +68,7 @@ export default function NavBarComponent() {
   const t = useTranslations("Navbar");
 
   return (
-    <Box className="flex flex-row justify-between font-sans text-[16px] w-full h-fit bg-off-white py-3 px-8 border-b-2 border-green-2">
+    <Box className="flex flex-row justify-between font-sans text-4 w-full h-fit bg-off-white py-3 px-8 border-b-2 border-green-2">
       <Image
         src="/logo.svg"
         alt="Planwise logo"
@@ -100,6 +100,7 @@ export default function NavBarComponent() {
               iconPosition="start"
               className="transition delay-50 duration-200 ease-in-out"
               sx={{
+                fontSize: "16px",
                 minHeight: 0,
                 py: "4px",
                 px: "10px",
