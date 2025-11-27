@@ -1,6 +1,7 @@
 import { WorkspaceNode } from "../../types/workspace";
 import { FolderNode, BoardNode } from "../../types/workspace";
 import BoardChip from "../boards/BoardChip";
+import FolderChip from "./FolderChip";
 
 type TreeItemProps = {
     node: WorkspaceNode;
@@ -30,23 +31,7 @@ export default function TreeItem({
                 }}
             >
                 {isFolder ? (
-                    <>
-                        <button
-                            className="p-0.5 hover:bg-gray-200 rounded"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                toggleFolder(node.id);
-                            }}
-                        >
-                            {isExpanded ? (
-                                <span className="text-gray-600">▼</span>
-                            ) : (
-                                <span className="text-gray-600">▶</span>
-                            )}
-                        </button>
-                        <span className="text-blue-500">📁</span>
-                        <span className="text-sm">{node.name}</span>
-                    </>
+                    <FolderChip node={node} toggleFolder={toggleFolder} isExpanded={isExpanded}></FolderChip>
                 ) : (
                     <BoardChip board={(node as BoardNode).board}></BoardChip>
                 )}

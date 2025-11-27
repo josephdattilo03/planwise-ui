@@ -12,18 +12,6 @@ export default function FolderTreeDisplay() {
   });
   const [selectedNode, setSelectedNode] = useState<WorkspaceNode | null>(null);
 
-  // Load root folder on mount
-  useEffect(() => {
-    const loadRoot = async () => {
-      const root = await fetchRootFolder();
-      if (root) {
-        setWorkspace(root);
-        // Load children for root since it's expanded by default
-        await loadChildren(root.id);
-      }
-    };
-    loadRoot();
-  }, []);
 
   // Load children for a specific folder
   const loadChildren = async (folderId: string) => {
@@ -48,6 +36,17 @@ export default function FolderTreeDisplay() {
       });
     }
   };
+
+  useEffect(() => {
+    const loadRoot = async () => {
+      const root = await fetchRootFolder();
+      if (root) {
+        setWorkspace(root);
+        await loadChildren(root.id);
+      }
+    };
+    loadRoot();
+  }, []);
 
   // Recursively update a folder's children in the tree
   const updateFolderChildren = (
@@ -100,7 +99,6 @@ export default function FolderTreeDisplay() {
 
   return (
     <div className="h-screen">
-      {/* Left sidebar with tree */}
         <TreeItem
           node={workspace}
           expandedFolders={expandedFolders}
