@@ -1,16 +1,18 @@
 import { Board } from "./board";
 
-export type Node = FolderNode | Board;
+export type WorkspaceNode = FolderNode | BoardNode 
 
 export interface FolderNode {
-  id: number;
-  type: "folder";
+  id: string;
+  parentId: string | null;
   name: string;
-  children: Node[];
+  children: WorkspaceNode[];
+  type: 'folder'
 }
 
 export interface BoardNode {
-  id: number;
-  type: "board";
+  parentId: string;
   board: Board;
+  type: 'board';
 }
+
