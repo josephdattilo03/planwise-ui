@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button, Box, Typography } from "@mui/material";
+import { Button} from "@mui/material";
 import EditableNote from "./EditableNote";
+import ArchiveSidebar from "./ArchiveSidebar";
 
 type NoteType = {
   id: string;
@@ -18,6 +19,7 @@ type NoteType = {
 export default function NoteBoard() {
   const [notes, setNotes] = useState<NoteType[]>([]);
   const [archivedNotes, setArchivedNotes] = useState<NoteType[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     const savedNotes = localStorage.getItem("notes");
@@ -35,16 +37,23 @@ export default function NoteBoard() {
     localStorage.setItem("archived_notes", JSON.stringify(archivedNotes));
   }, [archivedNotes]);
 
+  const NOTE_COLORS = [
+    "bg-pink",
+    "bg-blue",
+    "bg-cream",
+    "bg-lilac",
+    ];
+
   const addNote = () => {
     setNotes([
       ...notes,
       {
         id: crypto.randomUUID(),
-        x: 100,
+        x: 300,
         y: 100,
         title: "New Note",
         body: "",
-        color: "#fce4ec",
+        color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
         timestamp: new Date().toLocaleString(),
         links: [],
       },
@@ -72,10 +81,10 @@ export default function NoteBoard() {
   };
 
   const restoreNote = (id: string) => {
-    const noteToRestore = archivedNotes.find((n) => n.id === id);
-    if (!noteToRestore) return;
+    const note = archivedNotes.find((n) => n.id === id);
+    if (!note) return;
 
-    setNotes((prev) => [...prev, noteToRestore]);
+    setNotes((prev) => [...prev, note]);
     setArchivedNotes((prev) => prev.filter((n) => n.id !== id));
   };
 
@@ -90,68 +99,55 @@ export default function NoteBoard() {
   };
 
   return (
-    <Box sx={{ position: "relative", height: "calc(100vh - 60px)", width: "100%", marginTop: "60px", overflow: "hidden" }}>
-      <Button variant="contained" sx={{ position: "fixed", top: 90, left: 16, zIndex: 1000 }} onClick={addNote}>
-        + Add Note
-      </Button>
+    <div className="h-screen w-screen relative bg-white">
+        <ArchiveSidebar
+            archivedNotes={archivedNotes}
+            restoreNote={restoreNote}
+            isOpen={sidebarOpen}
+            toggleSidebar={() => setSidebarOpen((s) => !s)}
+        />
 
-      <Box
-        sx={{
-          position: "fixed",
-          right: 0,
-          top: 60,
-          width: 240,
-          height: "calc(100vh - 60px)",
-          bgcolor: "#f5f5f5",
-          borderLeft: "1px solid #ddd",
-          p: 2,
-          overflowY: "auto",
-        }}
-      >
-        <Typography variant="h6" mb={1}>Archived Notes</Typography>
-        {archivedNotes.length === 0 && (
-          <Typography variant="body2" color="text.secondary">No archived notes</Typography>
-        )}
-
-        {archivedNotes.map((note) => (
-          <Box key={note.id} sx={{ p: 1, border: "1px solid #ccc", borderRadius: 2, mb: 1 }}>
-            <Typography variant="subtitle2">{note.title}</Typography>
-            <Button size="small" variant="outlined" onClick={() => restoreNote(note.id)}>
-              Restore
-            </Button>
-          </Box>
-        ))}
-      </Box>
-
-      {notes.map((note) => (
-        <Box
-          key={note.id}
-          sx={{
-            position: "absolute",
-            left: note.x,
-            top: note.y,
-            cursor: "grab",
-          }}
-          onMouseDown={(e) => {
-            const moveHandler = (ev: MouseEvent) => handleDrag(ev, note.id);
-            document.addEventListener("mousemove", moveHandler);
-            document.addEventListener("mouseup", () => {
-              document.removeEventListener("mousemove", moveHandler);
-            }, { once: true });
+        <div
+            className={`transition-all duration-300 ${
+            sidebarOpen ? "ml-64" : "ml-12"
+            }`}
+        >
+        <button
+          onClick={addNote}
+          className="fixed top-24 left-20 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300"
+          style={{
+            left: sidebarOpen ? "280px" : "60px",
           }}
         >
-          <EditableNote
-            initialTitle={note.title}
-            initialBody={note.body}
-            initialColor={note.color}
-            initialLinks={note.links}
-            lastEdited={note.timestamp}
-            onDelete={() => deleteNote(note.id)}
-            onArchive={() => archiveNote(note.id)}
-            onUpdate={(updatedData) => updateNote(note.id, updatedData)} 
-          />
-        </Box>
-      ))}
-    </Box>
+          + Add Note
+        </button>
+
+        {notes.map((note) => (
+            <div
+                key={note.id}
+                className="absolute cursor-grab"
+                style={{ left: note.x, top: note.y }}
+                onMouseDown={(e) => {
+                    const moveHandler = (ev: MouseEvent) => handleDrag(ev, note.id);
+                    document.addEventListener("mousemove", moveHandler);
+                    document.addEventListener("mouseup", () => {
+                    document.removeEventListener("mousemove", moveHandler);
+                    }, { once: true });
+                }}
+            >
+            <EditableNote
+              initialTitle={note.title}
+              initialBody={note.body}
+              initialColor={note.color}
+              initialLinks={note.links}
+              lastEdited={note.timestamp}
+              onArchive={() => archiveNote(note.id)}
+              onDelete={() => deleteNote(note.id)}
+              onUpdate={(data) => updateNote(note.id, data)}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
