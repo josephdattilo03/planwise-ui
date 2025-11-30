@@ -44,6 +44,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     new Set()
   );
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
+  const [selectedPriorities, setSelectedPriorities] = useState<Set<number>>(new Set())
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [smartRecs, setSmartRecs] = useState(true);
 
@@ -78,6 +79,15 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   };
+
+  // Toggle priority
+  const togglePriority = (priority: number) => {
+    setSelectedPriorities((prev) => {
+      const next = new Set(prev)
+      next.has(priority) ? next.delete(priority) : next.add(priority);
+      return next
+    })
+  }
 
   // Toggle tag
   const toggleTag = (id: number) => {
@@ -119,11 +129,14 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
         selectedBoardIds,
         selectedTagIds,
         selectedDate,
+        selectedPriorities,
         smartRecs,
         toggleBoard,
         toggleTag,
+        togglePriority,
         setSelectedDate,
         setSmartRecs,
+        setSelectedPriorities,
         createTag,
         editTag,
         clearAll,

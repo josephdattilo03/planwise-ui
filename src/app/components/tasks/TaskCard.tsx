@@ -30,8 +30,8 @@ export default function TaskCard({task}: TaskCardProps) {
                 <h1 className="text-body">{task.name}</h1>
             </div>
             <div>
-                <div className='flex flex-row gap-3 items-center'>
-                    <span className={"inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring " + getProgressClass(task.progress)}>{t(`task-${task.progress}`)}</span>
+                <div className='flex flex-row gap-3 items-center text-nowrap'>
+                    <span className={"inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring" + getProgressClass(task.progress)}>{t(`task-${task.progress}`)}</span>
                     <p>
                         {Array.from({ length: task.priorityLevel + 1 }).map((_, i) => (
                             <span className='text-red' key={i}>!</span>
