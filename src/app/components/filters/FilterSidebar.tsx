@@ -85,7 +85,7 @@ export default function FilterSidebar({
       </div>
 
       {/* ───── BOTTOM SCROLL SECTION FOR FILTERS ───── */}
-      <div className="scroll-shadows-intense w-full overflow-y-auto flex flex-col gap-4 px-4 pb-4 pt-2">
+      <div className="scroll-shadows w-full overflow-y-auto flex flex-col gap-4 px-4 pb-4 pt-2">
         {children}
       </div>
     </aside>

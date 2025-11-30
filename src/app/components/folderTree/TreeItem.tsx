@@ -4,52 +4,60 @@ import BoardChip from "../boards/BoardChip";
 import FolderChip from "./FolderChip";
 
 type TreeItemProps = {
-    node: WorkspaceNode;
-    expandedFolders: Set<string>;
-    toggleFolder: (id: string) => void;
-    onSelectNode: (node: WorkspaceNode) => void;
-}
+  node: WorkspaceNode;
+  expandedFolders: Set<string>;
+  toggleFolder: (id: string) => void;
+  onSelectNode: (node: WorkspaceNode) => void;
+};
 
 export default function TreeItem({
-    node,
-    expandedFolders,
-    toggleFolder,
-    onSelectNode
+  node,
+  expandedFolders,
+  toggleFolder,
+  onSelectNode,
 }: TreeItemProps) {
-    const isFolder = node.type === 'folder';
-    const isExpanded = isFolder && expandedFolders.has(node.id);
+  const isFolder = node.type === "folder";
+  const isExpanded = isFolder && expandedFolders.has(node.id);
 
-    return (
-        <div className="select-none">
-            <div
-                className="flex items-center gap-1 py-1 px-2 hover:bg-gray-100 rounded cursor-pointer"
-                onClick={() => {
-                    if (isFolder) {
-                        toggleFolder(node.id);
-                    }
-                    onSelectNode(node);
-                }}
-            >
-                {isFolder ? (
-                    <FolderChip node={node} toggleFolder={toggleFolder} isExpanded={isExpanded}></FolderChip>
-                ) : (
-                    <BoardChip board={(node as BoardNode).board}></BoardChip>
-                )}
-            </div>
+  return (
+    <div className="select-none h-full">
+      <div
+        className="flex items-center gap-1 py-1 px-2 hover:bg-gray-100 rounded cursor-pointer"
+        onClick={() => {
+          if (isFolder) {
+            toggleFolder(node.id);
+          }
+          onSelectNode(node);
+        }}
+      >
+        {isFolder ? (
+          <FolderChip
+            node={node}
+            toggleFolder={toggleFolder}
+            isExpanded={isExpanded}
+          ></FolderChip>
+        ) : (
+          <BoardChip board={(node as BoardNode).board}></BoardChip>
+        )}
+      </div>
 
-            {isFolder && isExpanded && (node as FolderNode).children.length > 0 && (
-                <div className="ml-4 border-l border-gray-200">
-                    {(node as FolderNode).children.map(child => (
-                        <TreeItem
-                            key={child.type == "folder" ? (child as FolderNode).id : (child as BoardNode).board.id}
-                            node={child}
-                            expandedFolders={expandedFolders}
-                            toggleFolder={toggleFolder}
-                            onSelectNode={onSelectNode}
-                        />
-                    ))}
-                </div>
-            )}
+      {isFolder && isExpanded && (node as FolderNode).children.length > 0 && (
+        <div className="ml-4 border-l border-gray-200">
+          {(node as FolderNode).children.map((child) => (
+            <TreeItem
+              key={
+                child.type == "folder"
+                  ? (child as FolderNode).id
+                  : (child as BoardNode).board.id
+              }
+              node={child}
+              expandedFolders={expandedFolders}
+              toggleFolder={toggleFolder}
+              onSelectNode={onSelectNode}
+            />
+          ))}
         </div>
-    );
-};
+      )}
+    </div>
+  );
+}
