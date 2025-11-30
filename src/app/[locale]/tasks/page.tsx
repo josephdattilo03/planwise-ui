@@ -6,21 +6,13 @@ import NewTaskComponent from "../../components/tasks/NewTaskComponent";
 import { Board, Tag, Task } from "../../types";
 import { fetchBoards } from "../../services/boards/boardService";
 import { fetchTags } from "../../services/tags/tagService";
-
-type StoredTask = {
-  id: number;
-  name: string;
-  description: string;
-  dueDate: string | null;
-  priorityLevel: number;
-  progress: "to-do" | "in-progress" | "done" | "pending";
-  boardId: number;
-  tagIds: number[];
-};
+import TaskList from "../../components/tasks/TaskList";
+import TaskFilterComponent from "../../components/tasks/TaskFilterComponent";
+import { FiltersProvider } from "../../providers/filters/FiltersContext";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<StoredTask[]>([]);
-  const [editingTask, setEditingTask] = useState<StoredTask | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [mode, setMode] = useState<"list" | "create" | "edit">("list");
   const [boards, setBoards] = useState<Board[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -36,18 +28,29 @@ export default function TasksPage() {
 
         setBoards(boardData);
         setTags(tagData);
+
+        // Load and hydrate tasks after boards and tags are loaded
+        const stored = JSON.parse(localStorage.getItem("tasks") || "[]");
+        const hydratedTasks = stored.map((t: any) => ({
+          ...t,
+          dueDate: new Date(t.dueDate),
+          board: boardData.find((b) => b.id === t.boardId) || {
+            id: t.boardId,
+            name: "Unknown Board",
+            color: "#ccc",
+          },
+          tags: tagData.filter((tag) => t.tagIds?.includes(tag.id)) || [],
+        }));
+        setTasks(hydratedTasks);
       } catch (err) {
         console.error(err);
       }
     }
 
-    const stored = JSON.parse(localStorage.getItem("tasks") || "[]");
-    setTasks(stored);
-
     load();
   }, []);
 
-  const handleSelectTask = (task: StoredTask) => {
+  const handleSelectTask = (task: Task) => {
     setEditingTask(task);
     setMode("edit");
   };
@@ -60,7 +63,17 @@ export default function TasksPage() {
   /** Return to list and reload tasks */
   const returnToList = () => {
     const stored = JSON.parse(localStorage.getItem("tasks") || "[]");
-    setTasks(stored);
+    const hydratedTasks = stored.map((t: any) => ({
+      ...t,
+      dueDate: new Date(t.dueDate),
+      board: boards.find((b) => b.id === t.boardId) || {
+        id: t.boardId,
+        name: "Unknown Board",
+        color: "#ccc",
+      },
+      tags: tags.filter((tag) => t.tagIds?.includes(tag.id)) || [],
+    }));
+    setTasks(hydratedTasks);
     setMode("list");
   };
 
@@ -68,6 +81,10 @@ export default function TasksPage() {
   if (mode === "list") {
     return (
       <div className="p-6 space-y-4">
+        {/* Task Filters */}
+        <FiltersProvider>
+        <TaskFilterComponent></TaskFilterComponent>
+        </FiltersProvider>
         <h1 className="text-2xl font-semibold text-dark-green-1">
           Task Testing UI
         </h1>
@@ -86,28 +103,7 @@ export default function TasksPage() {
             <p className="text-gray-500">No tasks found in localStorage.</p>
           )}
 
-          {tasks.map((t, index) => (
-            <div
-              key={index}
-              onClick={() => handleSelectTask(t)}
-              className="cursor-pointer border border-green-4 p-3 rounded-md hover:bg-beige transition"
-            >
-              <p className="font-medium">{t.name}</p>
-              <p className="text-sm text-gray-500">
-                Board ID: {t.boardId} – Priority: {t.priorityLevel} - Status:{" "}
-                {t.progress}
-                <br></br>
-                {t.description}
-                <br></br>
-                {t.dueDate}
-              </p>
-              <div>
-                {t.tagIds.map((id) => (
-                  <div>{id}</div>
-                ))}
-              </div>
-            </div>
-          ))}
+          {<TaskList taskList={tasks}></TaskList>}
         </div>
       </div>
     );
@@ -134,25 +130,9 @@ export default function TasksPage() {
 
   /** EDIT MODE */
   if (mode === "edit" && editingTask) {
-    // Convert stored task shape into the shape TaskProvider expects
-    const convertedTask: Task = {
-      id: editingTask.id,
-      name: editingTask.name,
-      description: editingTask.description,
-      dueDate: editingTask.dueDate ? new Date(editingTask.dueDate) : new Date(),
-      priorityLevel: editingTask.priorityLevel,
-      progress: editingTask.progress,
-      board: boards.find((b) => b.id == editingTask.id) || {
-        id: editingTask.boardId,
-        name: "Loaded Board",
-        color: "#ccc",
-      },
-      tags: tags.filter((t) => editingTask.tagIds.includes(t.id)),
-    };
-
     return (
       <div className="h-full">
-        <TaskProvider task={convertedTask}>
+        <TaskProvider task={editingTask}>
           <div className="flex">
             <button
               onClick={returnToList}
