@@ -4,10 +4,8 @@ import { useState, useRef, useEffect} from "react";
 import {
   Card,
   CardContent,
-  TextField,
   IconButton,
   Button,
-  Box,
   Typography,
 } from "@mui/material";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
@@ -20,7 +18,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 export default function EditableNote({
   initialTitle = "",
   initialBody = "",
-  initialColor = "#fce4ec",
+  initialColor = "bg-pink",
   initialLinks = [],
   lastEdited = new Date().toLocaleDateString(),
   onDelete,
@@ -42,170 +40,170 @@ export default function EditableNote({
   const [editing, setEditing] = useState(false);
   const [links, setLinks] = useState(initialLinks);
   const [timestamp, setTimestamp] = useState(lastEdited);
+  const [noteWidth, setNoteWidth] = useState(380);
+const [noteHeight, setNoteHeight] = useState(300); 
 
-  const editorRef = useRef<HTMLDivElement | null>(null);
+const bodyRef = useRef<HTMLDivElement | null>(null);
+const titleRef = useRef<HTMLDivElement | null>(null);
 
-useEffect(() => {
-  if (!editorRef.current) return;
+  useEffect(() => {
+    if (!editing && bodyRef.current) bodyRef.current.innerHTML = body;
+    if (!editing && titleRef.current) titleRef.current.innerHTML = title;
+    if (editing && titleRef.current) titleRef.current.innerHTML = title;
+  }, [editing]);
 
-  if (editing && editorRef.current.innerHTML === "") {
-    editorRef.current.innerHTML = body;
-  }
+const applyStyle = (style: "bold" | "italic" | "underline") => {
+  document.execCommand(style);
+  updateBody();
+};
 
-  if (!editing) {
-    editorRef.current.innerHTML = body;
-  }
-}, [editing]);
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-    onUpdate?.({ title: e.target.value }); 
-  };
-
-  const handleBodyChange = () => {
-    const html = editorRef.current?.innerHTML ?? "";
+  const updateBody = () => {
+    const html = bodyRef.current?.innerHTML || "";
     setBody(html);
-    onUpdate?.({ body: html });
-    setTimestamp(new Date().toLocaleString());
-    onUpdate?.({ timestamp: new Date().toLocaleString() });
+    onUpdate?.({ body: html, timestamp: new Date().toLocaleString() });
   };
 
-  const handleColorChange = (c: string) => {
-    setColor(c);
-    onUpdate?.({ color: c });  
+const updateTitle = () => {
+  const html = titleRef.current?.innerHTML || "";
+  setTitle(html); 
+  onUpdate?.({ title: html });
+};
+
+const onResizeStart = (e: React.MouseEvent<HTMLDivElement>) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startWidth = noteWidth;
+  const startHeight = noteHeight;
+
+  const handleMouseMove = (ev: MouseEvent) => {
+    const deltaX = ev.clientX - startX;
+    const deltaY = ev.clientY - startY;
+
+    const newWidth = Math.max(240, startWidth + deltaX);
+    const newHeight = Math.max(180, startHeight + deltaY);
+
+    setNoteWidth(newWidth);
+    setNoteHeight(newHeight);
   };
 
-  const addLink = () => {
-    const url = prompt("Enter link:");
-    if (!url) return;
-    const newLinks = [...links, url];
-    setLinks(newLinks);
-    onUpdate?.({ links: newLinks });   
+  const handleMouseUp = () => {
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
   };
 
-  const applyStyle = (style: "bold" | "italic" | "underline") => {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-
-    const range = selection.getRangeAt(0);
-    const selectedText = range.extractContents();
-    const span = document.createElement("span");
-
-    if (style === "bold") span.style.fontWeight = "bold";
-    if (style === "italic") span.style.fontStyle = "italic";
-    if (style === "underline") span.style.textDecoration = "underline";
-
-    span.appendChild(selectedText);
-    range.insertNode(span);
-
-    setTimestamp(new Date().toLocaleString());
-    onUpdate?.({ timestamp: new Date().toLocaleString() });
-
-    const html = editorRef.current?.innerHTML ?? "";
-    setBody(html);
-    onUpdate?.({ body: html }); 
-  };
+  document.addEventListener("mousemove", handleMouseMove);
+  document.addEventListener("mouseup", handleMouseUp, { once: true });
+};
 
 
-  const muiColors = [
-    "#fce4ec", 
-    "#e3f2fd", 
-    "#e8f5e9", 
-    "#fff9c4", 
-    "#f3e5f5"];
 
+const addLink = () => {
+  const url = prompt("Enter link:");
+  if (!url) return;
+  const newLinks = [...links, url];
+  setLinks(newLinks);
+  onUpdate?.({ links: newLinks });
+};
 
-    return (
+  const NOTE_COLORS = ["bg-pink", "bg-blue", "bg-cream", "bg-lilac"];
+
+  return (
     <Card
-      sx={{
-        padding: 2,
-        borderRadius: 3,
-        boxShadow: 3,
-        width: 380,
-        backgroundColor: color,
-      }}
+      className={`${color} shadow-lg rounded-2xl p-4 relative${
+        editing ? "bg-opacity-80 ring-3 ring-gray-300" : ""
+      }`}
+      style={{ width: `${noteWidth}px`, height: `${noteHeight}px` }}
+      onDoubleClick={() => setEditing(true)} 
     >
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+      <div className="flex justify-between items-center mb-1">
         {editing ? (
-          <TextField
-            variant="standard"
-            value={title}
-            onChange={handleTitleChange}
-            fullWidth
-            sx={{ fontSize: "1.2rem", fontWeight: 600 }}
+          <div
+            ref={titleRef}
+            contentEditable
+            suppressContentEditableWarning
+            className="text-sm font-medium outline-none bg-transparent w-full"
+            onInput={updateTitle}
           />
         ) : (
-          <Typography variant="h6">{title}</Typography>
+          <Typography
+            className="text-sm font-medium"
+            dangerouslySetInnerHTML={{ __html: title }}
+          />
         )}
 
-        <Box>
-          <IconButton onClick={() => setEditing(!editing)}>
+        <div className="flex gap-1 ml-2">
+          <IconButton onClick={() => setEditing((s) => !s)}>
             <EditIcon />
           </IconButton>
           <IconButton onClick={onArchive}>
             <ArchiveIcon />
           </IconButton>
-          <IconButton color="error" onClick={onDelete}>
+          <IconButton className="text-red-500 hover:text-red-700" onClick={onDelete}>
             <DeleteIcon />
           </IconButton>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Typography variant="caption" color="gray" mb={2} display="block">
-        LAST EDITED {timestamp}
-      </Typography>
+      <p className="text-xs text-gray-600 mb-2">LAST EDITED {timestamp}</p>
 
       {editing && (
-        <Box display="flex" gap={1} mb={2}>
+        <div className="flex gap-2 mb-2">
           <IconButton onClick={() => applyStyle("bold")}><FormatBoldIcon /></IconButton>
           <IconButton onClick={() => applyStyle("italic")}><FormatItalicIcon /></IconButton>
           <IconButton onClick={() => applyStyle("underline")}><FormatUnderlinedIcon /></IconButton>
-          <Button variant="outlined" size="small" onClick={addLink}>+ Link</Button>
-        </Box>
+          <Button size="small" variant="outlined" onClick={addLink}>+ Link</Button>
+        </div>
       )}
 
-      <CardContent>
-        <Box
-          ref={editorRef}
+      <CardContent className="p-0">
+        <div
+          ref={bodyRef}
           contentEditable={editing}
           suppressContentEditableWarning
-          sx={{
-            minHeight: "120px",
-            outline: "none",
-            padding: 1,
-            borderRadius: 1,
-            "&:focus": { border: "1px solid #1976d2" },
-          }}
-          onInput={handleBodyChange}
+          className={`min-h-[120px] outline-none p-2 rounded ${color} text-black`}
+          onInput={updateBody}
         />
       </CardContent>
 
-      <Box display="flex" flexWrap="wrap" gap={1} mt={2}>
+      <div className="flex flex-wrap gap-2 mt-2">
         {links.map((link, i) => (
-          <Button key={i} variant="outlined" sx={{ borderRadius: "16px" }}>
+          <a
+            key={i}
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1 bg-white border border-green-2 rounded-full underline text-blue-600 hover:text-blue-800"
+          >
             {link}
-          </Button>
+          </a>
         ))}
-      </Box>
+      </div>
 
       {editing && (
-        <Box display="flex" gap={1} mt={2}>
-          {muiColors.map((c) => (
-            <Box
+        <div className="flex gap-2 mt-3">
+          {NOTE_COLORS.map((c) => (
+            <button
               key={c}
-              sx={{
-                width: 24,
-                height: 24,
-                bgcolor: c,
-                borderRadius: "50%",
-                cursor: "pointer",
-                border: "1px solid #ddd",
+              className={`w-6 h-6 rounded-full border cursor-pointer ${c}`}
+              onClick={() => {
+                setColor(c);
+                onUpdate?.({ color: c });
               }}
-              onClick={() => handleColorChange(c)}
             />
           ))}
-        </Box>
+        </div>
       )}
+
+      <div className="absolute bottom-2 right-2 cursor-se-resize p-1 opacity-60 hover:opacity-100 transition" onMouseDown={onResizeStart} onClick={(e) => e.stopPropagation()} style={{ userSelect: "none" }} > 
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600" > 
+          <path d="M18 20 L20 18" /> 
+          <path d="M14 20 L20 14" /> 
+          <path d="M10 20 L20 10" /> 
+        </svg> 
+      </div>
     </Card>
   );
 }
