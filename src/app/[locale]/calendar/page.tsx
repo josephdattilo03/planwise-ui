@@ -11,15 +11,15 @@ const CalendarView = dynamic(
 
 export default function CalendarPage() {
   return (
-    <main className="min-h-screen bg-off-white flex w-full">
+    <div className="flex flex-row w-full h-full">
       <FiltersProvider>
         <CalendarFilterComponent />
-        <div className="flex-1 ml-80 p-8">
+        <div className="flex-1 p-8">
           <div className="max-w-7xl mx-auto h-full">
             <CalendarView />
           </div>
         </div>
       </FiltersProvider>
-    </main>
+    </div>
   );
 }

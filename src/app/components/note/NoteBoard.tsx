@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button} from "@mui/material";
+import { Button } from "@mui/material";
 import EditableNote from "./EditableNote";
 import ArchiveSidebar from "./ArchiveSidebar";
 
@@ -32,17 +32,12 @@ export default function NoteBoard() {
   useEffect(() => {
     localStorage.setItem("notes", JSON.stringify(notes));
   }, [notes]);
-  
+
   useEffect(() => {
     localStorage.setItem("archived_notes", JSON.stringify(archivedNotes));
   }, [archivedNotes]);
 
-  const NOTE_COLORS = [
-    "bg-pink",
-    "bg-blue",
-    "bg-cream",
-    "bg-lilac",
-    ];
+  const NOTE_COLORS = ["bg-pink", "bg-blue", "bg-cream", "bg-lilac"];
 
   const addNote = () => {
     setNotes([
@@ -61,12 +56,12 @@ export default function NoteBoard() {
   };
 
   const updateNote = (id: string, updatedFields: Partial<NoteType>) => {
-  setNotes((prev) =>
-    prev.map((note) =>
-      note.id === id ? { ...note, ...updatedFields } : note
-    )
-  );
-};
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === id ? { ...note, ...updatedFields } : note
+      )
+    );
+  };
 
   const deleteNote = (id: string) => {
     setNotes(notes.filter((note) => note.id !== id));
@@ -99,42 +94,43 @@ export default function NoteBoard() {
   };
 
   return (
-    <div className="h-screen w-screen relative bg-white">
-        <ArchiveSidebar
-            archivedNotes={archivedNotes}
-            restoreNote={restoreNote}
-            isOpen={sidebarOpen}
-            toggleSidebar={() => setSidebarOpen((s) => !s)}
-        />
+    <div className="h-full w-full flex flex-row">
+      <ArchiveSidebar
+        archivedNotes={archivedNotes}
+        restoreNote={restoreNote}
+        isOpen={sidebarOpen}
+        toggleSidebar={() => setSidebarOpen((s) => !s)}
+      />
 
-        <div
-            className={`transition-all duration-300 ${
-            sidebarOpen ? "ml-64" : "ml-12"
-            }`}
-        >
+      <div
+        className={`transition-all duration-300 ${
+          sidebarOpen ? "ml-64" : "ml-12"
+        }`}
+      >
         <button
           onClick={addNote}
-          className="fixed top-24 left-20 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300"
-          style={{
-            left: sidebarOpen ? "280px" : "60px",
-          }}
+          className={`fixed top-24 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 ${sidebarOpen ? "left-[300px]" : "left-10"}`}
         >
           + Add Note
         </button>
 
         {notes.map((note) => (
-            <div
-                key={note.id}
-                className="absolute cursor-grab"
-                style={{ left: note.x, top: note.y }}
-                onMouseDown={(e) => {
-                    const moveHandler = (ev: MouseEvent) => handleDrag(ev, note.id);
-                    document.addEventListener("mousemove", moveHandler);
-                    document.addEventListener("mouseup", () => {
-                    document.removeEventListener("mousemove", moveHandler);
-                    }, { once: true });
-                }}
-            >
+          <div
+            key={note.id}
+            className="absolute cursor-grab"
+            style={{ left: note.x, top: note.y }}
+            onMouseDown={(e) => {
+              const moveHandler = (ev: MouseEvent) => handleDrag(ev, note.id);
+              document.addEventListener("mousemove", moveHandler);
+              document.addEventListener(
+                "mouseup",
+                () => {
+                  document.removeEventListener("mousemove", moveHandler);
+                },
+                { once: true }
+              );
+            }}
+          >
             <EditableNote
               initialTitle={note.title}
               initialBody={note.body}
