@@ -6,6 +6,7 @@ import NewTaskComponent from "../../components/tasks/NewTaskComponent";
 import { Board, Tag, Task } from "../../types";
 import { fetchBoards } from "../../services/boards/boardService";
 import { fetchTags } from "../../services/tags/tagService";
+import { fetchTasks } from "../../services/tasks/taskService";
 import TaskList from "../../components/tasks/TaskList";
 import TaskFilterComponent from "../../components/tasks/TaskFilterComponent";
 import { FiltersProvider } from "../../providers/filters/FiltersContext";
@@ -29,19 +30,9 @@ export default function TasksPage() {
         setBoards(boardData);
         setTags(tagData);
 
-        // Load and hydrate tasks after boards and tags are loaded
-        const stored = JSON.parse(localStorage.getItem("tasks") || "[]");
-        const hydratedTasks = stored.map((t: any) => ({
-          ...t,
-          dueDate: new Date(t.dueDate),
-          board: boardData.find((b) => b.id === t.boardId) || {
-            id: t.boardId,
-            name: "Unknown Board",
-            color: "#ccc",
-          },
-          tags: tagData.filter((tag) => t.tagIds?.includes(tag.id)) || [],
-        }));
-        setTasks(hydratedTasks);
+        // Load tasks using the service
+        const taskData = await fetchTasks(boardData, tagData);
+        setTasks(taskData);
       } catch (err) {
         console.error(err);
       }
@@ -61,19 +52,9 @@ export default function TasksPage() {
   };
 
   /** Return to list and reload tasks */
-  const returnToList = () => {
-    const stored = JSON.parse(localStorage.getItem("tasks") || "[]");
-    const hydratedTasks = stored.map((t: any) => ({
-      ...t,
-      dueDate: new Date(t.dueDate),
-      board: boards.find((b) => b.id === t.boardId) || {
-        id: t.boardId,
-        name: "Unknown Board",
-        color: "#ccc",
-      },
-      tags: tags.filter((tag) => t.tagIds?.includes(tag.id)) || [],
-    }));
-    setTasks(hydratedTasks);
+  const returnToList = async () => {
+    const taskData = await fetchTasks(boards, tags);
+    setTasks(taskData);
     setMode("list");
   };
 
@@ -83,7 +64,7 @@ export default function TasksPage() {
       <div className="p-6 space-y-4">
         {/* Task Filters */}
         <FiltersProvider>
-        <TaskFilterComponent></TaskFilterComponent>
+          <TaskFilterComponent></TaskFilterComponent>
         </FiltersProvider>
         <h1 className="text-2xl font-semibold text-dark-green-1">
           Task Testing UI
