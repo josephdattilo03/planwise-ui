@@ -37,15 +37,22 @@ type Event = {
   start: Date;
   end: Date;
   resource?: {
-    board?: "personal" | "work" | "senior-design" | "school" | "other";
-    color?: "green" | "blue" | "orange" | "purple" | "lilac";
+    board?: "personal" | "work" | "senior-design" | "school" | "other" | string;
+    color?: "green" | "blue" | "orange" | "purple" | "lilac" | string; // Allow hex colors too
+    type?: "task" | "event";
+    task?: any; // For task events
   };
 };
 
-const boardColors: Record<string, "green" | "blue" | "orange" | "purple" | "lilac"> = {
-  "personal": "green",
+interface CalendarViewProps {
+  taskEvents?: Event[];
+}
+
+const boardColors: Record<string, "green" | "blue" | "orange" | "purple" | "lilac" | string> = {
+  "personal": "#9BF2FF", // Use actual Personal board color (sky blue)
   "work": "blue",
-  "senior-design": "orange",
+  "pennos": "#FFA500", // PennOS orange
+  "senior-design": "#A7C957", // Senior Design yellow/green
   "school": "purple",
   "other": "lilac",
 };
@@ -55,37 +62,37 @@ const initialEvents: Event[] = [
     title: "Daily Standup",
     start: new Date(new Date().setHours(8, 0, 0, 0)),
     end: new Date(new Date().setHours(8, 30, 0, 0)),
-    resource: { board: "personal", color: "green" },
+    resource: { board: "personal", color: boardColors["personal"] },
   },
   {
     title: "Team Meeting",
     start: new Date(new Date().setHours(10, 0, 0, 0)),
     end: new Date(new Date().setHours(11, 0, 0, 0)),
-    resource: { board: "work", color: "blue" },
+    resource: { board: "pennos", color: boardColors["pennos"] },
   },
   {
     title: "Lunch Break",
     start: new Date(new Date().setHours(12, 0, 0, 0)),
     end: new Date(new Date().setHours(13, 0, 0, 0)),
-    resource: { board: "other", color: "lilac" },
+    resource: { board: "personal", color: boardColors["personal"] },
   },
   {
     title: "Project Review",
     start: new Date(new Date().setDate(new Date().getDate() + 1)),
     end: new Date(new Date().setDate(new Date().getDate() + 1)),
-    resource: { board: "senior-design", color: "orange" },
+    resource: { board: "senior-design", color: boardColors["senior-design"] },
   },
   {
     title: "Client Call",
     start: new Date(new Date().setDate(new Date().getDate() + 2)),
     end: new Date(new Date().setDate(new Date().getDate() + 2)),
-    resource: { board: "personal", color: "green" },
+    resource: { board: "personal", color: boardColors["personal"] },
   },
   {
     title: "Weekly Review",
     start: new Date(new Date().setDate(new Date().getDate() + 3)),
     end: new Date(new Date().setDate(new Date().getDate() + 3)),
-    resource: { board: "work", color: "blue" },
+    resource: { board: "pennos", color: boardColors["pennos"] },
   },
   {
     title: "Weekend Planning",
@@ -117,7 +124,7 @@ function EventWrapper({ event }: EventProps<Event>) {
   );
 }
 
-export default function PlanwiseCalendar() {
+export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps) {
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -145,10 +152,13 @@ export default function PlanwiseCalendar() {
     board: 'personal' as const,
   });
 
+  // Merge all events (both manually added events and tasks)
+  const allEvents = [...events, ...taskEvents];
+
   // Filter events based on selected boards
   const filteredEvents = selectedBoardIds.size === 0
-    ? events // Show all events if no boards are selected
-    : events.filter(event => {
+    ? allEvents // Show all events if no boards are selected
+    : allEvents.filter(event => {
         if (!event.resource?.board) return false;
 
         // Find the board with matching name and check if it's selected
@@ -202,6 +212,17 @@ export default function PlanwiseCalendar() {
     };
 
     const color = event.resource?.color || 'green';
+
+    if (color.startsWith('#')) {
+      return {
+        style: {
+          backgroundColor: color,
+          borderColor: color,
+          color: 'black',
+        },
+      };
+    }
+
     return {
       style: colorMap[color] || colorMap.green,
     };
@@ -212,11 +233,11 @@ export default function PlanwiseCalendar() {
       elevation={3}
       sx={{
         width: '100%',
-        maxHeight: 'calc(100vh - 200px)',
+        maxHeight: 'calc(100vh - 100px)',
         backgroundColor: 'var(--off-white)',
         border: '1px solid var(--green-3)',
         borderRadius: '16px',
-        p: 6,
+        p: 4,
         overflowY: 'auto',
       }}
     >
@@ -234,22 +255,7 @@ export default function PlanwiseCalendar() {
           {getCurrentLabel()}
         </Typography>
 
-        <Box display="flex" alignItems="center" gap={2}>
-          <Button
-            onClick={() => setDate(new Date())}
-            variant="contained"
-            size="small"
-            sx={{
-              backgroundColor: 'var(--green-3)',
-              color: 'var(--dark-green-1)',
-              '&:hover': {
-                backgroundColor: 'var(--green-4)',
-              },
-            }}
-          >
-            Today
-          </Button>
-
+      <Box display="flex" alignItems="center" gap={2}>
           <Box display="flex" alignItems="center">
             <Button
               onClick={() => {
@@ -270,6 +276,7 @@ export default function PlanwiseCalendar() {
                 px: 1,
                 py: 0.5,
                 color: 'var(--dark-green-1)',
+                fontSize: '1rem',
               }}
             >
               ‹
@@ -293,6 +300,7 @@ export default function PlanwiseCalendar() {
                 px: 1,
                 py: 0.5,
                 color: 'var(--dark-green-1)',
+                fontSize: '1rem',
               }}
             >
               ›
@@ -308,6 +316,7 @@ export default function PlanwiseCalendar() {
                 backgroundColor: view === "day" ? 'var(--green-2)' : 'var(--off-white)',
                 color: view === "day" ? 'var(--off-white)' : 'var(--dark-green-1)',
                 borderColor: 'var(--green-3)',
+                fontSize: '1rem',
               }}
             >
               Day
@@ -320,6 +329,7 @@ export default function PlanwiseCalendar() {
                 backgroundColor: view === "week" ? 'var(--green-2)' : 'var(--off-white)',
                 color: view === "week" ? 'var(--off-white)' : 'var(--dark-green-1)',
                 borderColor: 'var(--green-3)',
+                fontSize: '1rem',
               }}
             >
               Week
@@ -332,6 +342,7 @@ export default function PlanwiseCalendar() {
                 backgroundColor: view === "month" ? 'var(--green-2)' : 'var(--off-white)',
                 color: view === "month" ? 'var(--off-white)' : 'var(--dark-green-1)',
                 borderColor: 'var(--green-3)',
+                fontSize: '1rem',
               }}
             >
               Month
@@ -354,6 +365,7 @@ export default function PlanwiseCalendar() {
               backgroundColor: '#4CAF50',
               color: 'white',
               fontWeight: 600,
+              fontSize: '1rem',
               textTransform: 'none',
               '&:hover': {
                 backgroundColor: '#45a049',
@@ -388,7 +400,7 @@ export default function PlanwiseCalendar() {
         eventPropGetter={eventStyleGetter}
         className="rbc-planwise"
         style={{
-          height: view === 'week' ? 'calc(100vh - 200px)' : view === 'month' ? 'calc(100vh - 200px)' : view === 'day' ? 'calc(100vh - 300px)' : 'auto',
+          height: view === 'week' ? 'calc(100vh - 200px)' : view === 'month' ? 'calc(100vh - 200px)' : view === 'day' ? 'calc(100vh - 200px)' : 'auto',
         }}
       />
 
