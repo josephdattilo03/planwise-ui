@@ -4,6 +4,7 @@ import { Calendar, dateFnsLocalizer, View, EventProps } from "react-big-calendar
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { useState } from "react";
+import { useFilters } from "../../providers/filters/useFilters";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
   Button,
@@ -14,6 +15,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 
 const locales = { "en-US": enUS };
@@ -31,8 +37,17 @@ type Event = {
   start: Date;
   end: Date;
   resource?: {
+    board?: "personal" | "work" | "senior-design" | "school" | "other";
     color?: "green" | "blue" | "orange" | "purple" | "lilac";
   };
+};
+
+const boardColors: Record<string, "green" | "blue" | "orange" | "purple" | "lilac"> = {
+  "personal": "green",
+  "work": "blue",
+  "senior-design": "orange",
+  "school": "purple",
+  "other": "lilac",
 };
 
 const initialEvents: Event[] = [
@@ -40,43 +55,43 @@ const initialEvents: Event[] = [
     title: "Daily Standup",
     start: new Date(new Date().setHours(8, 0, 0, 0)),
     end: new Date(new Date().setHours(8, 30, 0, 0)),
-    resource: { color: "green" },
+    resource: { board: "personal", color: "green" },
   },
   {
     title: "Team Meeting",
     start: new Date(new Date().setHours(10, 0, 0, 0)),
     end: new Date(new Date().setHours(11, 0, 0, 0)),
-    resource: { color: "blue" },
+    resource: { board: "work", color: "blue" },
   },
   {
     title: "Lunch Break",
     start: new Date(new Date().setHours(12, 0, 0, 0)),
     end: new Date(new Date().setHours(13, 0, 0, 0)),
-    resource: { color: "lilac" },
+    resource: { board: "other", color: "lilac" },
   },
   {
     title: "Project Review",
     start: new Date(new Date().setDate(new Date().getDate() + 1)),
     end: new Date(new Date().setDate(new Date().getDate() + 1)),
-    resource: { color: "orange" },
+    resource: { board: "senior-design", color: "orange" },
   },
   {
     title: "Client Call",
     start: new Date(new Date().setDate(new Date().getDate() + 2)),
     end: new Date(new Date().setDate(new Date().getDate() + 2)),
-    resource: { color: "green" },
+    resource: { board: "personal", color: "green" },
   },
   {
     title: "Weekly Review",
     start: new Date(new Date().setDate(new Date().getDate() + 3)),
     end: new Date(new Date().setDate(new Date().getDate() + 3)),
-    resource: { color: "blue" },
+    resource: { board: "work", color: "blue" },
   },
   {
     title: "Weekend Planning",
     start: new Date(new Date().setDate(new Date().getDate() + 4)),
     end: new Date(new Date().setDate(new Date().getDate() + 4)),
-    resource: { color: "orange" },
+    resource: { board: "other", color: "lilac" },
   },
 ];
 
@@ -106,6 +121,40 @@ export default function PlanwiseCalendar() {
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [showAddEvent, setShowAddEvent] = useState(false);
+
+  // Get boards and selected board IDs from filter context
+  const { boards, selectedBoardIds } = useFilters();
+
+  // Initialize times to be on 15-minute intervals
+  const getInitialTime = () => {
+    const now = new Date();
+    const minutes = now.getMinutes();
+    const roundedMinutes = Math.round(minutes / 15) * 15;
+    now.setMinutes(roundedMinutes);
+    now.setSeconds(0);
+    now.setMilliseconds(0);
+    return now;
+  };
+
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    start: getInitialTime(),
+    end: new Date(getInitialTime().getTime() + (60 * 60 * 1000)), // 1 hour later
+    board: 'personal' as const,
+  });
+
+  // Filter events based on selected boards
+  const filteredEvents = selectedBoardIds.size === 0
+    ? events // Show all events if no boards are selected
+    : events.filter(event => {
+        if (!event.resource?.board) return false;
+
+        // Find the board with matching name and check if it's selected
+        const matchedBoard = boards.find(board => board.name.toLowerCase() === event.resource!.board);
+        return matchedBoard ? selectedBoardIds.has(parseInt(matchedBoard.id)) : false;
+      });
 
   const getCurrentLabel = () => {
     if (view === "month") {
@@ -118,6 +167,44 @@ export default function PlanwiseCalendar() {
     } else {
       return format(date, "MMMM d, yyyy", { locale: enUS });
     }
+  };
+
+  const handleSaveEvent = () => {
+    if (newEvent.title.trim()) {
+      const color = boardColors[newEvent.board];
+      const event: Event = {
+        title: newEvent.title,
+        start: newEvent.start,
+        end: newEvent.end,
+        resource: { board: newEvent.board, color },
+      };
+      setEvents(prev => [...prev, event]);
+      setShowAddEvent(false);
+    }
+  };
+
+  const handleDeleteEvent = (eventToDelete: Event) => {
+    setEvents(prev => prev.filter(event =>
+      !(event.title === eventToDelete.title &&
+        event.start.getTime() === eventToDelete.start.getTime() &&
+        event.end.getTime() === eventToDelete.end.getTime())
+    ));
+    setSelectedEvent(null);
+  };
+
+  const eventStyleGetter = (event: Event) => {
+    const colorMap: Record<string, { backgroundColor: string; borderColor: string; color: string }> = {
+      green: { backgroundColor: '#4CAF50', borderColor: '#45a049', color: 'white' },
+      blue: { backgroundColor: '#2196F3', borderColor: '#1976D2', color: 'white' },
+      orange: { backgroundColor: '#FF9800', borderColor: '#F57C00', color: 'white' },
+      purple: { backgroundColor: '#9C27B0', borderColor: '#7B1FA2', color: 'white' },
+      lilac: { backgroundColor: '#E1BEE7', borderColor: '#CE93D8', color: '#333' },
+    };
+
+    const color = event.resource?.color || 'green';
+    return {
+      style: colorMap[color] || colorMap.green,
+    };
   };
 
   return (
@@ -250,13 +337,45 @@ export default function PlanwiseCalendar() {
               Month
             </Button>
           </Box>
+
+          <Button
+            onClick={() => {
+              setNewEvent({
+                title: '',
+                start: new Date(),
+                end: new Date(),
+                board: 'personal',
+              });
+              setShowAddEvent(true);
+            }}
+            variant="contained"
+            size="small"
+            sx={{
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              fontWeight: 600,
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#45a049',
+                transform: 'scale(1.02)',
+                boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)',
+              },
+              '&:active': {
+                transform: 'scale(0.98)',
+              },
+              transition: 'all 0.2s ease',
+              ml: 2,
+            }}
+          >
+            + Add Event
+          </Button>
         </Box>
       </Box>
 
       {/* Calendar */}
       <Calendar
         localizer={localizer}
-        events={initialEvents}
+        events={filteredEvents}
         startAccessor="start"
         endAccessor="end"
         view={view}
@@ -266,6 +385,7 @@ export default function PlanwiseCalendar() {
         defaultView="month"
         toolbar={false}
         onSelectEvent={setSelectedEvent}
+        eventPropGetter={eventStyleGetter}
         className="rbc-planwise"
         style={{
           height: view === 'week' ? 'calc(100vh - 200px)' : view === 'month' ? 'calc(100vh - 200px)' : view === 'day' ? 'calc(100vh - 300px)' : 'auto',
@@ -296,12 +416,121 @@ export default function PlanwiseCalendar() {
             <strong>End:</strong> {selectedEvent ? format(selectedEvent.end, "MMM d, yyyy h:mm a", { locale: enUS }) : ''}
           </Typography>
           <Typography variant="body2">
-            <strong>Color:</strong> {selectedEvent?.resource?.color || "default"}
+            <strong>Board:</strong> {selectedEvent?.resource?.board ?
+              selectedEvent.resource.board.charAt(0).toUpperCase() + selectedEvent.resource.board.slice(1) :
+              "Default"}
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center' }}>
-          <Button onClick={() => setSelectedEvent(null)} color="primary">
+        <DialogActions sx={{ justifyContent: 'center', gap: 2 }}>
+          <Button
+            onClick={() => handleDeleteEvent(selectedEvent!)}
+            variant="contained"
+            sx={{
+              backgroundColor: '#f44336',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#d32f2f',
+              },
+            }}
+          >
+            Delete Event
+          </Button>
+          <Button
+            onClick={() => setSelectedEvent(null)}
+            variant="outlined"
+            sx={{ color: 'var(--dark-green-1)', borderColor: 'var(--green-3)' }}
+          >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Event Modal */}
+      <Dialog
+        open={showAddEvent}
+        onClose={() => setShowAddEvent(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            color: 'var(--dark-green-1)',
+            textAlign: 'center',
+            fontWeight: 600,
+          }}
+        >
+          Add Event
+        </DialogTitle>
+        <DialogContent>
+          <Box component="form" sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              fullWidth
+              label="Event Title"
+              value={newEvent.title}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
+              required
+            />
+            <TextField
+              fullWidth
+              label="Start Date & Time"
+              type="datetime-local"
+              value={format(newEvent.start, "yyyy-MM-dd'T'HH:mm")}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, start: new Date(e.target.value) }))}
+              InputProps={{
+                inputProps: { step: 900 }
+              }}
+              InputLabelProps={{ shrink: true }}
+              required
+            />
+            <TextField
+              fullWidth
+              label="End Date & Time"
+              type="datetime-local"
+              value={format(newEvent.end, "yyyy-MM-dd'T'HH:mm")}
+              onChange={(e) => setNewEvent(prev => ({ ...prev, end: new Date(e.target.value) }))}
+              InputProps={{
+                inputProps: { step: "900" }
+              }}
+              InputLabelProps={{ shrink: true }}
+              required
+            />
+            <FormControl fullWidth>
+              <InputLabel>Board</InputLabel>
+              <Select
+                value={newEvent.board}
+                label="Board"
+                onChange={(e) => setNewEvent(prev => ({ ...prev, board: e.target.value as typeof prev.board }))}
+              >
+                <MenuItem value="personal">Personal (Green)</MenuItem>
+                <MenuItem value="work">Work (Blue)</MenuItem>
+                <MenuItem value="senior-design">Senior Design (Orange/Yellow)</MenuItem>
+                <MenuItem value="school">School (Purple)</MenuItem>
+                <MenuItem value="other">Other (Lilac)</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', gap: 2 }}>
+          <Button
+            onClick={() => setShowAddEvent(false)}
+            variant="outlined"
+            sx={{ color: 'var(--dark-green-1)', borderColor: 'var(--green-3)' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveEvent}
+            variant="contained"
+            disabled={!newEvent.title.trim()}
+            sx={{
+              backgroundColor: 'var(--green-3)',
+              color: 'var(--dark-green-1)',
+              '&:hover': {
+                backgroundColor: 'var(--green-4)',
+              },
+            }}
+          >
+            Save Event
           </Button>
         </DialogActions>
       </Dialog>
