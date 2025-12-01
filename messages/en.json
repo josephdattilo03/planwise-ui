@@ -13,5 +13,12 @@
     "task-to-do": "To-Do",
     "task-in-progress": "In Progress",
     "task-done": "Done"
+  },
+  "DueFilterSection": {
+    "due-filter-1": "Today",
+    "due-filter-2": "This Week",
+    "due-filter-3": "This Month",
+    "from-filter-title": "From:",
+    "to-filter-title": "To:"
   }
 }
