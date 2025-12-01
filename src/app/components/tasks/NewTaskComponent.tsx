@@ -31,8 +31,13 @@ import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import TagEditDialog from "../tags/TagEditDialog";
 
 const filter = createFilterOptions<TagOption>();
+interface NewTaskComponentProps {
+  onSaveSuccess?: () => void;
+}
 
-export default function NewTaskComponent() {
+export default function NewTaskComponent({
+  onSaveSuccess,
+}: NewTaskComponentProps) {
   const {
     isEditMode,
 
@@ -64,6 +69,7 @@ export default function NewTaskComponent() {
     editTag,
 
     resetTaskState,
+    clearTaskState,
   } = useTask();
 
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +85,7 @@ export default function NewTaskComponent() {
   /** Validate */
   const validate = () => {
     if (!title.trim()) return "Task title is required";
-    if (newBoardId === -1) return "Please choose a board";
+    if (newBoardId === "") return "Please choose a board";
     return null;
   };
 
@@ -117,7 +123,8 @@ export default function NewTaskComponent() {
         existingTasks.push(payload);
         localStorage.setItem("tasks", JSON.stringify(existingTasks));
 
-        alert("Task created successfully!");
+        clearTaskState();
+        onSaveSuccess?.();
       } else {
         // EDIT MODE
         const payload = {
@@ -149,7 +156,8 @@ export default function NewTaskComponent() {
 
         localStorage.setItem("tasks", JSON.stringify(existingTasks));
 
-        alert("Task edited successfully!");
+        clearTaskState();
+        onSaveSuccess?.();
       }
     } catch (err) {
       console.error(err);
@@ -160,7 +168,7 @@ export default function NewTaskComponent() {
   };
 
   return (
-    <aside className="w-full h-full ml-auto max-w-xs border border-green-4 bg-off-white flex flex-col pt-4">
+    <aside className="w-full h-full max-w-xs border border-green-4 bg-off-white flex flex-col pt-4">
       {/* Header */}
       <Typography
         variant="h6"
@@ -309,7 +317,7 @@ export default function NewTaskComponent() {
             <Autocomplete
               options={boards}
               value={selectedBoard}
-              onChange={(e, value) => changeBoard(value?.id ?? -1)}
+              onChange={(e, value) => changeBoard(value?.id ?? "")}
               size="small"
               getOptionLabel={(option) => option.name}
               isOptionEqualToValue={(opt, val) => opt.id === val.id}

@@ -53,7 +53,7 @@ export default function TasksPage() {
   };
 
   /** Return to list and reload tasks */
-  const returnToList = async () => {
+  const handleSaveSuccess = async () => {
     const taskData = await fetchTasks(boards, tags);
     setTasks(taskData);
     setMode("create");
@@ -62,12 +62,12 @@ export default function TasksPage() {
   /** LIST VIEW */
   if (view === "list") {
     return (
-      <div className="flex flex-row w-full h-full">
+      <div className="flex flex-row w-full h-full overflow-hidden">
         {/* Task Filters */}
         <FiltersProvider>
           <TaskFilterComponent></TaskFilterComponent>
         </FiltersProvider>
-        <div className="flex flex-col">
+        <div className="flex flex-col overflow-y-scroll w-full px-6 py-4">
           <h1 className="text-2xl font-semibold text-dark-green-1">
             Task Testing UI
           </h1>
@@ -86,17 +86,22 @@ export default function TasksPage() {
               <p className="text-gray-500">No tasks found in localStorage.</p>
             )}
 
-            {<TaskList taskList={tasks}></TaskList>}
+            {
+              <TaskList
+                taskList={tasks}
+                onSelectTask={handleSelectTask}
+              ></TaskList>
+            }
           </div>
         </div>
         {mode === "create" && (
           <TaskProvider task={null}>
-            <NewTaskComponent />
+            <NewTaskComponent onSaveSuccess={handleSaveSuccess} />
           </TaskProvider>
         )}
         {mode === "edit" && editingTask && (
           <TaskProvider task={editingTask}>
-            <NewTaskComponent />
+            <NewTaskComponent onSaveSuccess={handleSaveSuccess} />
           </TaskProvider>
         )}
       </div>

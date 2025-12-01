@@ -8,6 +8,7 @@ type TreeItemProps = {
   expandedFolders: Set<string>;
   toggleFolder: (id: string) => void;
   onSelectNode: (node: WorkspaceNode) => void;
+  onSelectBoard: (boardId: string) => void;
 };
 
 export default function TreeItem({
@@ -15,6 +16,7 @@ export default function TreeItem({
   expandedFolders,
   toggleFolder,
   onSelectNode,
+  onSelectBoard,
 }: TreeItemProps) {
   const isFolder = node.type === "folder";
   const isExpanded = isFolder && expandedFolders.has(node.id);
@@ -26,6 +28,9 @@ export default function TreeItem({
         onClick={() => {
           if (isFolder) {
             toggleFolder(node.id);
+          } else {
+            // It's a board - call onSelectBoard with the board ID
+            onSelectBoard((node as BoardNode).board.id);
           }
           onSelectNode(node);
         }}
@@ -54,6 +59,7 @@ export default function TreeItem({
               expandedFolders={expandedFolders}
               toggleFolder={toggleFolder}
               onSelectNode={onSelectNode}
+              onSelectBoard={onSelectBoard}
             />
           ))}
         </div>
