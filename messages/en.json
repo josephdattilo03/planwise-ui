@@ -12,6 +12,7 @@
   "TaskCard": {
     "task-to-do": "To-Do",
     "task-in-progress": "In Progress",
-    "task-done": "Done"
+    "task-done": "Done",
+    "task-pending": "Pending"
   }
 }

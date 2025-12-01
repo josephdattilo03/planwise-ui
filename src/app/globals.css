@@ -31,6 +31,9 @@
   --task-status-done-button: #dcfce7ff;
   --task-status-done-stroke: #b8ebcaff;
   --task-status-done-text: #166534ff;
+  --task-status-pending-button: #fce2dc;
+  --task-status-pending-stroke: #ebc7b8;
+  --task-status-pending-text: #652a16;
   --task-due-button: #ffedd5ff;
   --task-due-stroke: #fed7aaff;
   --task-date-almost-due-text: #9a3412ff;
@@ -139,6 +142,10 @@
   --color-task-status-done-button: var(--task-status-done-button);
   --color-task-status-done-stroke: var(--task-status-done-stroke);
   --color-task-status-done-text: var(--task-status-done-text);
+
+  --color-task-status-pending-button: var(--task-status-pending-button);
+  --color-task-status-pending-stroke: var(--task-status-pending-stroke);
+  --color-task-status-pending-text: var(--task-status-pending-text);
 
   --color-task-due-button: var(--task-due-button);
   --color-task-due-stroke: var(--task-due-stroke);
