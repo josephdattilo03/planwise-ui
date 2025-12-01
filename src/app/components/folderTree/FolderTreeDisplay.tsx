@@ -1,35 +1,41 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import { FolderNode, BoardNode, WorkspaceNode } from "../../types/workspace";
 import TreeItem from "./TreeItem";
-import { fetchRootFolder, fetchChildrenByParentId } from "../../services/folders/folderService";
+import {
+  fetchRootFolder,
+  fetchChildrenByParentId,
+} from "../../services/folders/folderService";
 
-export default function FolderTreeDisplay() {
+interface Props {
+  onSelectBoard: (node: string) => void;
+}
+
+export default function FolderTreeDisplay({ onSelectBoard }: Props) {
   const [workspace, setWorkspace] = useState<FolderNode | null>(null);
   const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
-    return new Set(['root']);
+    return new Set(["root"]);
   });
   const [selectedNode, setSelectedNode] = useState<WorkspaceNode | null>(null);
-
 
   // Load children for a specific folder
   const loadChildren = async (folderId: string) => {
     // Don't load if already loading
     if (loadingFolders.has(folderId)) return;
-    
-    setLoadingFolders(prev => new Set(prev).add(folderId));
-    
+
+    setLoadingFolders((prev) => new Set(prev).add(folderId));
+
     try {
       const children = await fetchChildrenByParentId(folderId);
-      
+
       // Update the workspace tree with the loaded children
-      setWorkspace(prevWorkspace => {
+      setWorkspace((prevWorkspace) => {
         if (!prevWorkspace) return null;
         return updateFolderChildren(prevWorkspace, folderId, children);
       });
     } finally {
-      setLoadingFolders(prev => {
+      setLoadingFolders((prev) => {
         const newSet = new Set(prev);
         newSet.delete(folderId);
         return newSet;
@@ -60,20 +66,20 @@ export default function FolderTreeDisplay() {
 
     return {
       ...node,
-      children: node.children.map(child => {
-        if (child.type === 'folder') {
+      children: node.children.map((child) => {
+        if (child.type === "folder") {
           return updateFolderChildren(child as FolderNode, targetId, children);
         }
         return child;
-      })
+      }),
     };
   };
 
   // Toggle folder expansion and load children if needed
   const toggleFolder = async (folderId: string) => {
     const wasExpanded = expandedFolders.has(folderId);
-    
-    setExpandedFolders(prev => {
+
+    setExpandedFolders((prev) => {
       const newSet = new Set(prev);
       if (wasExpanded) {
         newSet.delete(folderId);
@@ -99,12 +105,13 @@ export default function FolderTreeDisplay() {
 
   return (
     <div className="h-screen">
-        <TreeItem
-          node={workspace}
-          expandedFolders={expandedFolders}
-          toggleFolder={toggleFolder}
-          onSelectNode={setSelectedNode}
-        />
+      <TreeItem
+        node={workspace}
+        expandedFolders={expandedFolders}
+        toggleFolder={toggleFolder}
+        onSelectNode={setSelectedNode}
+        onSelectBoard={onSelectBoard}
+      />
     </div>
   );
 }

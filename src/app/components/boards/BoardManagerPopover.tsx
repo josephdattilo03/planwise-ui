@@ -12,9 +12,9 @@ type Props = {
   onClose: () => void;
 
   boards: Board[];
-  selectedBoardIds: Set<number>;
+  selectedBoardIds: Set<string>;
 
-  onToggleBoard: (id: number) => void;
+  onToggleBoard: (id: string) => void;
 };
 
 export default function BoardManagerPopover({
@@ -88,7 +88,7 @@ export default function BoardManagerPopover({
             />
           )}
           renderValue={(value, getItemProps) => (
-            <span className="pl-1 italic">{`${value.length} ${value.length > 1 ? "tags" : "tag"} selected`}</span>
+            <span className="pl-1 italic">{`${value.length} ${value.length > 1 ? "boards" : "board"} selected`}</span>
           )}
           sx={{
             "& .MuiFormLabel-root": {

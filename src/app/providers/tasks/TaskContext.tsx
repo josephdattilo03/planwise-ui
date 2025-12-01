@@ -36,7 +36,7 @@ type TaskContextType = {
   priorityLevel: number;
   status: string;
 
-  newBoardId: number;
+  newBoardId: string;
   newTagIds: Set<number>;
 
   /** All boards and tags available */
@@ -53,7 +53,7 @@ type TaskContextType = {
   setPriorityLevel: (v: number) => void;
   setStatus: (v: string) => void;
 
-  changeBoard: (id: number) => void;
+  changeBoard: (id: string) => void;
   toggleTag: (id: number) => void;
 
   createTag: (data: Partial<Tag>) => Promise<Tag>;
@@ -96,7 +96,7 @@ export function TaskProvider({
   const [status, setStatus] = useState<string>(task?.progress ?? "to-do");
 
   /** Board / Tag form fields */
-  const [newBoardId, setNewBoardId] = useState<number>(task?.board?.id ?? -1);
+  const [newBoardId, setNewBoardId] = useState<string>(task?.board?.id ?? "");
 
   const [newTagIds, setNewTagIds] = useState<Set<number>>(
     new Set(task?.tags?.map((t) => t.id) ?? [])
@@ -135,12 +135,12 @@ export function TaskProvider({
     setPriorityLevel(task?.priorityLevel ?? 0);
     setStatus(task?.progress ?? "to-do");
 
-    setNewBoardId(task?.board?.id ?? -1);
+    setNewBoardId(task?.board?.id ?? "");
     setNewTagIds(new Set(task?.tags?.map((t) => t.id) ?? []));
   }, [task]);
 
   /** Board selection */
-  const changeBoard = (id: number) => {
+  const changeBoard = (id: string) => {
     setNewBoardId(id);
   };
 
@@ -174,7 +174,7 @@ export function TaskProvider({
     setPriorityLevel(task?.priorityLevel ?? 0);
     setStatus(task?.progress ?? "to-do");
 
-    setNewBoardId(currTask?.board?.id ?? -1);
+    setNewBoardId(currTask?.board?.id ?? "");
     setNewTagIds(new Set(currTask?.tags?.map((t) => t.id) ?? []));
   };
 
