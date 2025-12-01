@@ -56,11 +56,12 @@ type TaskContextType = {
   changeBoard: (id: string) => void;
   toggleTag: (id: number) => void;
 
-  createTag: (data: Partial<Tag>) => Promise<Tag>;
-  editTag: (tag: Tag) => Promise<void>;
+  createTag: (data: Partial<Tag>) => Tag;
+  editTag: (tag: Tag) => void;
 
   /** Reset form fields to current task (Edit mode) or defaults (Create mode) */
   resetTaskState: () => void;
+  clearTaskState: () => void;
 };
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -154,16 +155,16 @@ export function TaskProvider({
   };
 
   // Create tag
-  const createTag = async (data: Partial<Tag>) => {
+  const createTag = (data: Partial<Tag>) => {
     const newTag = createTagService(data);
-    setTags(await fetchTags());
+    setTags((prev) => [...prev, newTag]);
     return newTag;
   };
 
   // Edit tag
-  const editTag = async (tag: Tag) => {
+  const editTag = (tag: Tag) => {
     updateTagService(tag);
-    setTags(await fetchTags());
+    setTags((prev) => prev.map((t) => (t.id === tag.id ? tag : t)));
   };
 
   /** Reset form back to original task OR empty create mode */
@@ -176,6 +177,17 @@ export function TaskProvider({
 
     setNewBoardId(currTask?.board?.id ?? "");
     setNewTagIds(new Set(currTask?.tags?.map((t) => t.id) ?? []));
+  };
+
+  const clearTaskState = () => {
+    setTitle("");
+    setDescription("");
+    setDueDate(new Date());
+    setPriorityLevel(0);
+    setStatus("to-do");
+
+    setNewBoardId("");
+    setNewTagIds(new Set([]));
   };
 
   return (
@@ -214,6 +226,7 @@ export function TaskProvider({
         createTag,
         editTag,
         resetTaskState,
+        clearTaskState,
       }}
     >
       {children}
