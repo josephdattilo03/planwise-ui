@@ -29,3 +29,23 @@ export async function fetchBoards() {
 
   return raw.map(toBoard);
 }
+
+export function createBoard(name: string, color: string): Board {
+  // Get existing boards from localStorage
+  const existingRaw = JSON.parse(localStorage.getItem("boards") || "[]");
+
+  // Generate a unique ID
+  const newId = `board-${Date.now()}`;
+
+  const newBoard: Board = {
+    id: newId,
+    name,
+    color,
+  };
+
+  // Add new board and save back to localStorage
+  const updatedBoards = [...existingRaw, newBoard];
+  localStorage.setItem("boards", JSON.stringify(updatedBoards));
+
+  return newBoard;
+}

@@ -45,11 +45,28 @@ export async function fetchRootFolder(): Promise<FolderNode | null> {
       },
       {
         parentId: "folder-1",
-        board: { id: "board-2", name: "Mobile App", color: "#10b981" },
+        board: { id: "board-2", name: "PennOS", color: "#FFA500" },
+      },
+      {
+        parentId: "folder-1",
+        board: { id: "board-3", name: "DSGN 1070", color: "#E4CCFD" },
       },
       {
         parentId: "root",
-        board: { id: "board-3", name: "Quick Notes", color: "#8b5cf6" },
+        board: { id: "board-5", name: "Personal", color: "#9BF2FF" },
+      },
+      {
+        parentId: "root",
+        board: { id: "board-4", name: "House", color: "#1E40AF" },
+      },
+
+      {
+        parentId: "root",
+        board: { id: "board-6", name: "Recruiting", color: "#9AC2FF" },
+      },
+      {
+        parentId: "root",
+        board: { id: "board-7", name: "Grad School", color: "#2AC200" },
       },
     ];
     localStorage.setItem("boardNodes", JSON.stringify(boards));

@@ -9,9 +9,13 @@ import {
 
 interface Props {
   onSelectBoard: (node: string) => void;
+  refreshKey?: number;
 }
 
-export default function FolderTreeDisplay({ onSelectBoard }: Props) {
+export default function FolderTreeDisplay({
+  onSelectBoard,
+  refreshKey,
+}: Props) {
   const [workspace, setWorkspace] = useState<FolderNode | null>(null);
   const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
@@ -52,7 +56,7 @@ export default function FolderTreeDisplay({ onSelectBoard }: Props) {
       }
     };
     loadRoot();
-  }, []);
+  }, [refreshKey]);
 
   // Recursively update a folder's children in the tree
   const updateFolderChildren = (

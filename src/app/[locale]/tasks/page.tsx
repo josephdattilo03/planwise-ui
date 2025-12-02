@@ -68,18 +68,6 @@ export default function TasksPage() {
           <TaskFilterComponent></TaskFilterComponent>
         </FiltersProvider>
         <div className="flex flex-col overflow-y-scroll w-full px-6 py-4">
-          <h1 className="text-2xl font-semibold text-dark-green-1">
-            Task Testing UI
-          </h1>
-
-          {/* Create button */}
-          <button
-            onClick={handleCreateTask}
-            className="px-4 py-2 rounded-md bg-green-1 text-white hover:bg-green-2"
-          >
-            + Create Task
-          </button>
-
           {/* Task list */}
           <div className="mt-4 space-y-2">
             {tasks.length === 0 && (

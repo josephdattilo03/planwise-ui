@@ -20,6 +20,16 @@
   --Sky-Blue: #76a5eaff;
   --Lilac: #e4ccfdff;
   --Orange: #ffa500ff;
+  --Pastel-Red: #ffb3b3;
+  --Pastel-Orange: #ffcba4;
+  --Pastel-Yellow: #ffe5a0;
+  --Pastel-Green: #c1e1c1;
+  --Pastel-Cyan: #a8d8ea;
+  --Pastel-Blue: #a0c4ff;
+  --Pastel-Indigo: #bdb2ff;
+  --Pastel-Violet: #e4b8d5;
+  --Pastel-Coral: #f5cac3;
+  --Pastel-Rose: #d4a5a5;
 
   --task-stroke: #e5e7eb;
   --task-status-to-do-button: #dbeafeff;
@@ -129,6 +139,18 @@
   --color-sky-blue: var(--Sky-Blue);
   --color-lilac: var(--Lilac);
   --color-orange: var(--Orange);
+
+  /* Board Pastel Colors */
+  --color-pastel-red: var(--Pastel-Red);
+  --color-pastel-orange: var(--Pastel-Orange);
+  --color-pastel-yellow: var(--Pastel-Yellow);
+  --color-pastel-green: var(--Pastel-Green);
+  --color-pastel-cyan: var(--Pastel-Cyan);
+  --color-pastel-blue: var(--Pastel-Blue);
+  --color-pastel-indigo: var(--Pastel-Indigo);
+  --color-pastel-violet: var(--Pastel-Violet);
+  --color-pastel-coral: var(--Pastel-Coral);
+  --color-pastel-rose: var(--Pastel-Rose);
 
   /* Task-Status Colors */
   --color-task-status-to-do-button: var(--task-status-to-do-button);
