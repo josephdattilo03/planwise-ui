@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect} from "react";
+import { useState, useRef, useEffect } from 'react';
 import {
   Card,
   CardContent,
   IconButton,
   Button,
   Typography,
-} from "@mui/material";
-import FormatBoldIcon from "@mui/icons-material/FormatBold";
-import FormatItalicIcon from "@mui/icons-material/FormatItalic";
-import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
+} from '@mui/material';
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatItalicIcon from '@mui/icons-material/FormatItalic';
+import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
 import EditIcon from '@mui/icons-material/Edit';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function EditableNote({
-  initialTitle = "",
-  initialBody = "",
-  initialColor = "bg-pink",
+  initialTitle = '',
+  initialBody = '',
+  initialColor = 'bg-pink',
   initialLinks = [],
   lastEdited = new Date().toLocaleDateString(),
   onDelete,
@@ -30,7 +30,7 @@ export default function EditableNote({
   initialColor?: string;
   initialLinks?: string[];
   lastEdited?: string;
-  onDelete?: () => void; 
+  onDelete?: () => void;
   onArchive?: () => void;
   onUpdate?: (updated: any) => void;
 }) {
@@ -41,10 +41,10 @@ export default function EditableNote({
   const [links, setLinks] = useState(initialLinks);
   const [timestamp, setTimestamp] = useState(lastEdited);
   const [noteWidth, setNoteWidth] = useState(380);
-const [noteHeight, setNoteHeight] = useState(300); 
+  const [noteHeight, setNoteHeight] = useState(300);
 
-const bodyRef = useRef<HTMLDivElement | null>(null);
-const titleRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const titleRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!editing && bodyRef.current) bodyRef.current.innerHTML = body;
@@ -52,71 +52,79 @@ const titleRef = useRef<HTMLDivElement | null>(null);
     if (editing && titleRef.current) titleRef.current.innerHTML = title;
   }, [editing]);
 
-const applyStyle = (style: "bold" | "italic" | "underline") => {
-  document.execCommand(style);
-  updateBody();
-};
+  const applyStyle = (style: 'bold' | 'italic' | 'underline') => {
+    document.execCommand(style);
+    updateBody();
+  };
 
   const updateBody = () => {
-    const html = bodyRef.current?.innerHTML || "";
+    const html = bodyRef.current?.innerHTML || '';
     setBody(html);
     onUpdate?.({ body: html, timestamp: new Date().toLocaleString() });
   };
 
-const updateTitle = () => {
-  const html = titleRef.current?.innerHTML || "";
-  setTitle(html); 
-  onUpdate?.({ title: html });
-};
-
-const onResizeStart = (e: React.MouseEvent<HTMLDivElement>) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  const startX = e.clientX;
-  const startY = e.clientY;
-  const startWidth = noteWidth;
-  const startHeight = noteHeight;
-
-  const handleMouseMove = (ev: MouseEvent) => {
-    const deltaX = ev.clientX - startX;
-    const deltaY = ev.clientY - startY;
-
-    const newWidth = Math.max(240, startWidth + deltaX);
-    const newHeight = Math.max(180, startHeight + deltaY);
-
-    setNoteWidth(newWidth);
-    setNoteHeight(newHeight);
+  const updateTitle = () => {
+    const html = titleRef.current?.innerHTML || '';
+    setTitle(html);
+    onUpdate?.({ title: html });
   };
 
-  const handleMouseUp = () => {
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
+  const onResizeStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = noteWidth;
+    const startHeight = noteHeight;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      const deltaX = ev.clientX - startX;
+      const deltaY = ev.clientY - startY;
+
+      const newWidth = Math.max(240, startWidth + deltaX);
+      const newHeight = Math.max(180, startHeight + deltaY);
+
+      setNoteWidth(newWidth);
+      setNoteHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp, { once: true });
   };
 
-  document.addEventListener("mousemove", handleMouseMove);
-  document.addEventListener("mouseup", handleMouseUp, { once: true });
-};
+  const addLink = () => {
+    const url = prompt('Enter link:');
+    if (!url) return;
+    const newLinks = [...links, url];
+    setLinks(newLinks);
+    onUpdate?.({ links: newLinks });
+  };
 
-
-
-const addLink = () => {
-  const url = prompt("Enter link:");
-  if (!url) return;
-  const newLinks = [...links, url];
-  setLinks(newLinks);
-  onUpdate?.({ links: newLinks });
-};
-
-  const NOTE_COLORS = ["bg-pink", "bg-blue", "bg-cream", "bg-lilac"];
+  const NOTE_COLORS = [
+    'bg-pastel-red',
+    'bg-pastel-orange',
+    'bg-pastel-yellow',
+    'bg-pastel-green',
+    'bg-pastel-cyan',
+    'bg-pastel-blue',
+    'bg-pastel-indigo',
+    'bg-pastel-violet',
+    'bg-pink',
+  ];
 
   return (
     <Card
       className={`${color} shadow-lg rounded-2xl p-4 relative${
-        editing ? "bg-opacity-80 ring-3 ring-gray-300" : ""
+        editing ? 'bg-opacity-80 ring-3 ring-gray-300 z-0' : ''
       }`}
       style={{ width: `${noteWidth}px`, height: `${noteHeight}px` }}
-      onDoubleClick={() => setEditing(true)} 
+      onDoubleClick={() => setEditing(true)}
     >
       <div className="flex justify-between items-center mb-1">
         {editing ? (
@@ -141,7 +149,10 @@ const addLink = () => {
           <IconButton onClick={onArchive}>
             <ArchiveIcon />
           </IconButton>
-          <IconButton className="text-red-500 hover:text-red-700" onClick={onDelete}>
+          <IconButton
+            className="text-red-500 hover:text-red-700"
+            onClick={onDelete}
+          >
             <DeleteIcon />
           </IconButton>
         </div>
@@ -151,19 +162,27 @@ const addLink = () => {
 
       {editing && (
         <div className="flex gap-2 mb-2">
-          <IconButton onClick={() => applyStyle("bold")}><FormatBoldIcon /></IconButton>
-          <IconButton onClick={() => applyStyle("italic")}><FormatItalicIcon /></IconButton>
-          <IconButton onClick={() => applyStyle("underline")}><FormatUnderlinedIcon /></IconButton>
-          <Button size="small" variant="outlined" onClick={addLink}>+ Link</Button>
+          <IconButton onClick={() => applyStyle('bold')}>
+            <FormatBoldIcon />
+          </IconButton>
+          <IconButton onClick={() => applyStyle('italic')}>
+            <FormatItalicIcon />
+          </IconButton>
+          <IconButton onClick={() => applyStyle('underline')}>
+            <FormatUnderlinedIcon />
+          </IconButton>
+          <Button size="small" variant="outlined" onClick={addLink}>
+            + Link
+          </Button>
         </div>
       )}
 
-      <CardContent className="p-0">
+      <CardContent className="p-0 h-[calc(100%-145px)]">
         <div
           ref={bodyRef}
           contentEditable={editing}
           suppressContentEditableWarning
-          className={`min-h-[120px] outline-none p-2 rounded ${color} text-black`}
+          className={`w-full h-full overflow-auto outline-none p-2 rounded ${color} text-black`}
           onInput={updateBody}
         />
       </CardContent>
@@ -183,7 +202,7 @@ const addLink = () => {
       </div>
 
       {editing && (
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-2 mt-auto mb-2">
           {NOTE_COLORS.map((c) => (
             <button
               key={c}
@@ -197,12 +216,25 @@ const addLink = () => {
         </div>
       )}
 
-      <div className="absolute bottom-2 right-2 cursor-se-resize p-1 opacity-60 hover:opacity-100 transition" onMouseDown={onResizeStart} onClick={(e) => e.stopPropagation()} style={{ userSelect: "none" }} > 
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-600" > 
-          <path d="M18 20 L20 18" /> 
-          <path d="M14 20 L20 14" /> 
-          <path d="M10 20 L20 10" /> 
-        </svg> 
+      <div
+        className="absolute bottom-2 right-2 cursor-se-resize p-1 opacity-60 hover:opacity-100"
+        onMouseDown={onResizeStart}
+        onClick={(e) => e.stopPropagation()}
+        style={{ userSelect: 'none' }}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="text-gray-600"
+        >
+          <path d="M18 20 L20 18" />
+          <path d="M14 20 L20 14" />
+          <path d="M10 20 L20 10" />
+        </svg>
       </div>
     </Card>
   );

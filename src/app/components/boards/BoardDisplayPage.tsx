@@ -16,19 +16,7 @@ interface BoardDisplayPageProps {
   boardId: string;
 }
 
-type ProgressStatus = "to-do" | "in-progress" | "done" | "pending";
-
-interface Column {
-  id: ProgressStatus;
-  title: string;
-}
-
-const COLUMNS: Column[] = [
-  { id: "to-do", title: "To Do" },
-  { id: "in-progress", title: "In Progress" },
-  { id: "done", title: "Done" },
-  { id: "pending", title: "Pending" },
-];
+const COLUMNS: Task["progress"][] = ["to-do", "in-progress", "done", "pending"];
 
 const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -63,11 +51,11 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
     loadData();
   }, [boardId]);
 
-  const getTasksByProgress = (progress: ProgressStatus): Task[] => {
+  const getTasksByProgress = (progress: Task["progress"]): Task[] => {
     return tasks.filter((task) => task.progress === progress);
   };
 
-  const handleAddTask = (progress: ProgressStatus) => (title: string) => {
+  const handleAddTask = (progress: Task["progress"]) => (title: string) => {
     const currentBoard = boards.find((b) => b.id === boardId);
     if (!currentBoard) return;
 
@@ -102,15 +90,15 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
         <p>{currentBoard?.name}</p>
       </div>
       <div className="flex gap-4 h-full pb-6 pt-2 px-6 overflow-x-scroll">
-        {COLUMNS.map((column) => {
-          const columnTasks = getTasksByProgress(column.id);
+        {COLUMNS.map((col) => {
+          const columnTasks = getTasksByProgress(col);
           return (
             <Paper
-              key={column.id}
+              key={col}
               elevation={2}
               className="w-80 flex flex-col max-h-full overflow-hidden shrink-0"
             >
-              <ColHeader title={column.title} count={columnTasks.length} />
+              <ColHeader taskID={col} count={columnTasks.length} />
               <Divider />
               <BoardCardList tasks={columnTasks} />
               {/* <Divider />

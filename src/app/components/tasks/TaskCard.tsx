@@ -13,11 +13,13 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
   const getProgressClass = (progress: Task["progress"]) => {
     switch (progress) {
       case "to-do":
-        return "bg-(--color-task-status-to-do-button text-(--color-task-status-to-do-text) inset-ring-(--color-task-status-to-do-stroke)";
+        return "bg-task-status-to-do-button text-task-status-to-do-text inset-ring-task-status-to-do-stroke";
       case "in-progress":
-        return "bg-(--color-task-status-in-prog-button text-(--color-task-status-in-prog-text) inset-ring-(--color-task-status-in-prog-stroke)";
+        return "bg-task-status-in-prog-button text-task-status-in-prog-text inset-ring-task-status-in-prog-stroke";
       case "done":
-        return "bg-(--color-task-status-done-button text-(--color-task-status-done-text) inset-ring-(--color-task-status-done-stroke)";
+        return "bg-task-status-done-button text-task-status-done-text inset-ring-task-status-done-stroke";
+      case "pending":
+        return "bg-task-status-pending-button text-task-status-pending-text inset-ring-task-status-pending-stroke";
       default:
         return "";
     }
@@ -35,7 +37,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
         <div className="flex flex-row gap-3 items-center text-nowrap">
           <span
             className={
-              "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring" +
+              "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring " +
               getProgressClass(task.progress)
             }
           >

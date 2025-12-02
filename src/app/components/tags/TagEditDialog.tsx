@@ -69,12 +69,17 @@ export default function TagEditDialog({ open, tag, onClose, onSave }: Props) {
           <label className="text-sm text-dark-green-2 font-medium">
             Background Color
           </label>
-          <input
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-            className="w-12 h-10 rounded cursor-pointer border border-green-3"
-          />
+          <div className="flex items-center gap-2 mt-2">
+            <input
+              type="color"
+              value={backgroundColor}
+              onChange={(e) => setBackgroundColor(e.target.value)}
+              className="w-10 h-8 rounded cursor-pointer border border-green-3"
+            />
+            <span className="text-xs text-dark-green-2 uppercase">
+              {backgroundColor}
+            </span>
+          </div>
         </Box>
       </DialogContent>
 

@@ -2,7 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import type { Board, Tag } from "../../types";
-import { fetchBoards } from "../../services/boards/boardService";
+import {
+  fetchBoards,
+  createBoard as createBoardService,
+} from "../../services/boards/boardService";
 import {
   fetchTags,
   createTag as createTagService,
@@ -41,6 +44,7 @@ type FiltersContextType = {
   editTag: (tag: Tag) => Promise<void>;
 
   clearAll: () => void;
+  createBoard: (name: string, color: string) => Board;
 };
 
 const FiltersContext = createContext<FiltersContextType | undefined>(undefined);
@@ -55,7 +59,9 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     new Set()
   );
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
-  const [selectedPriorities, setSelectedPriorities] = useState<Set<number>>(new Set())
+  const [selectedPriorities, setSelectedPriorities] = useState<Set<number>>(
+    new Set()
+  );
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [smartRecs, setSmartRecs] = useState(true);
   const [selectedDueDateRange, setSelectedDueDateRange] = useState<DateRange>({
@@ -99,11 +105,11 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   // Toggle priority
   const togglePriority = (priority: number) => {
     setSelectedPriorities((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       next.has(priority) ? next.delete(priority) : next.add(priority);
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
   // Toggle tag
   const toggleTag = (id: number) => {
@@ -138,6 +144,12 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     setSmartRecs(false);
     setSelectedBoardIds(new Set());
     setSelectedTagIds(new Set());
+  };
+
+  const createBoard = (name: string, color: string): Board => {
+    const newBoard = createBoardService(name, color);
+    setBoards((prev) => [...prev, newBoard]);
+    return newBoard;
   };
 
   return (
