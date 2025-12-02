@@ -30,7 +30,7 @@ type FiltersContextType = {
   selectedDueDateRange: DateRange;
   toggleDateRange: (dateRange: DateRange) => void;
 
-  selectedBoardIds: Set<number>;
+  selectedBoardIds: Set<string>;
   selectedTagIds: Set<number>;
   selectedDate: Date | null;
   smartRecs: boolean;
@@ -55,7 +55,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedBoardIds, setSelectedBoardIds] = useState<Set<number>>(
+  const [selectedBoardIds, setSelectedBoardIds] = useState<Set<string>>(
     new Set()
   );
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
@@ -144,6 +144,14 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     setSmartRecs(false);
     setSelectedBoardIds(new Set());
     setSelectedTagIds(new Set());
+    setSelectedPriorities(new Set())
+    setSelectedDueDateRange(
+      {
+        startDate: null,
+        endDate: null,
+        rangeSelected: null
+      }
+    )
   };
 
   const createBoard = (name: string, color: string): Board => {

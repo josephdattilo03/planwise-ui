@@ -41,7 +41,7 @@ export async function fetchTasks(
   const dummyTasks = [
     // Website Redesign board (board-1)
     {
-      id: 1,
+      id: "1",
       name: "Design homepage mockup",
       description:
         "Create wireframes and high-fidelity mockups for the new homepage",
@@ -52,7 +52,7 @@ export async function fetchTasks(
       tagIds: [1, 2],
     },
     {
-      id: 2,
+      id: "2",
       name: "Implement responsive navbar",
       description: "Build mobile-first navigation component",
       progress: "in-progress",
@@ -62,7 +62,7 @@ export async function fetchTasks(
       tagIds: [2, 5],
     },
     {
-      id: 3,
+      id: "3",
       name: "Fix footer alignment bug",
       description: "Footer links not aligned on mobile",
       progress: "to-do",
@@ -72,7 +72,7 @@ export async function fetchTasks(
       tagIds: [3, 7],
     },
     {
-      id: 4,
+      id: "4",
       name: "User testing feedback",
       description: "Waiting for stakeholder review",
       progress: "pending",
@@ -84,7 +84,7 @@ export async function fetchTasks(
 
     // Mobile App board (board-2)
     {
-      id: 5,
+      id: "5",
       name: "Setup React Native project",
       description: "Initialize project with Expo",
       progress: "done",
@@ -94,7 +94,7 @@ export async function fetchTasks(
       tagIds: [5],
     },
     {
-      id: 6,
+      id: "6",
       name: "Implement push notifications",
       description: "Integrate with Firebase Cloud Messaging",
       progress: "to-do",
@@ -104,7 +104,7 @@ export async function fetchTasks(
       tagIds: [6],
     },
     {
-      id: 7,
+      id: "7",
       name: "App store screenshots",
       description: "Create promotional screenshots for app stores",
       progress: "to-do",
@@ -116,7 +116,7 @@ export async function fetchTasks(
 
     // Quick Notes board (board-3)
     {
-      id: 8,
+      id: "8",
       name: "Research competitor apps",
       description: "Analyze top 5 competing apps",
       progress: "in-progress",
@@ -126,7 +126,7 @@ export async function fetchTasks(
       tagIds: [8],
     },
     {
-      id: 9,
+      id: "9",
       name: "Meeting notes: Sprint planning",
       description: "Document action items from sprint planning",
       progress: "done",

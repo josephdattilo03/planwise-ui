@@ -18,9 +18,15 @@ export default function TasksPage() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
 
+
+  useEffect(() => {
+  console.log('Tasks updated:', tasks.length, tasks.map(t => t.id));
+}, [tasks]);
+
   /** Load tasks from localStorage */
   useEffect(() => {
     async function load() {
+      console.log('Loading tasks...');
       try {
         const [boardData, tagData] = await Promise.all([
           fetchBoards(),
@@ -29,6 +35,7 @@ export default function TasksPage() {
         setBoards(boardData);
         setTags(tagData);
         const taskData = await fetchTasks(boardData, tagData);
+        console.log('Fetched tasks:', taskData.length, taskData.map(t => t.id));
         setTasks(taskData);
       } catch (err) {
         console.error(err);
