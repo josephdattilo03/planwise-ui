@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@mui/material";
-import EditableNote from "./EditableNote";
-import ArchiveSidebar from "./ArchiveSidebar";
+import { useState, useEffect } from 'react';
+import { Button } from '@mui/material';
+import EditableNote from './EditableNote';
+import ArchiveSidebar from './ArchiveSidebar';
 
 type NoteType = {
   id: string;
@@ -22,32 +22,39 @@ export default function NoteBoard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
-    const savedNotes = localStorage.getItem("notes");
-    const savedArchived = localStorage.getItem("archived_notes");
+    const savedNotes = localStorage.getItem('notes');
+    const savedArchived = localStorage.getItem('archived_notes');
 
     if (savedNotes) setNotes(JSON.parse(savedNotes));
     if (savedArchived) setArchivedNotes(JSON.parse(savedArchived));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("notes", JSON.stringify(notes));
+    localStorage.setItem('notes', JSON.stringify(notes));
   }, [notes]);
 
   useEffect(() => {
-    localStorage.setItem("archived_notes", JSON.stringify(archivedNotes));
+    localStorage.setItem('archived_notes', JSON.stringify(archivedNotes));
   }, [archivedNotes]);
 
-  const NOTE_COLORS = ["bg-pink", "bg-blue", "bg-cream", "bg-lilac"];
+  const NOTE_COLORS = ['bg-pink', 'bg-blue', 'bg-cream', 'bg-lilac'];
 
   const addNote = () => {
+    const noteWidth = 380;
+    const BUTTON_RIGHT = 37;
+    const BUTTON_TOP = 150;
+
+    const x =
+      window.innerWidth - BUTTON_RIGHT - noteWidth - 20 + Math.random() * 50;
+    const y = BUTTON_TOP + Math.random() * 20;
     setNotes([
       ...notes,
       {
         id: crypto.randomUUID(),
-        x: 300,
-        y: 100,
-        title: "New Note",
-        body: "",
+        x: x,
+        y: y,
+        title: 'New Note',
+        body: '',
         color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
         timestamp: new Date().toLocaleString(),
         links: [],
@@ -85,11 +92,28 @@ export default function NoteBoard() {
 
   const handleDrag = (e: MouseEvent, id: string) => {
     setNotes((prev) =>
-      prev.map((note) =>
-        note.id === id
-          ? { ...note, x: note.x + e.movementX, y: note.y + e.movementY }
-          : note
-      )
+      prev.map((note) => {
+        if (note.id !== id) return note;
+
+        const updated = {
+          ...note,
+          x: note.x + e.movementX,
+          y: note.y + e.movementY,
+        };
+
+        const sidebarWidth = sidebarOpen ? 286 : 0;
+        const topLimit = 80;
+        const noteWidth = 380;
+        const noteHeight = 300;
+
+        const maxX = window.innerWidth - noteWidth;
+        const maxY = window.innerHeight - noteHeight;
+
+        updated.x = Math.min(Math.max(updated.x, sidebarWidth), maxX);
+        updated.y = Math.min(Math.max(updated.y, topLimit), maxY);
+
+        return updated;
+      })
     );
   };
 
@@ -104,12 +128,12 @@ export default function NoteBoard() {
 
       <div
         className={`transition-all duration-300 ${
-          sidebarOpen ? "ml-64" : "ml-12"
+          sidebarOpen ? 'ml-64' : 'ml-12'
         }`}
       >
         <button
           onClick={addNote}
-          className={`fixed top-24 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 ${sidebarOpen ? "left-[300px]" : "left-10"}`}
+          className={`fixed top-24 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md right-10 z-9999`}
         >
           + Add Note
         </button>
@@ -121,11 +145,11 @@ export default function NoteBoard() {
             style={{ left: note.x, top: note.y }}
             onMouseDown={(e) => {
               const moveHandler = (ev: MouseEvent) => handleDrag(ev, note.id);
-              document.addEventListener("mousemove", moveHandler);
+              document.addEventListener('mousemove', moveHandler);
               document.addEventListener(
-                "mouseup",
+                'mouseup',
                 () => {
-                  document.removeEventListener("mousemove", moveHandler);
+                  document.removeEventListener('mousemove', moveHandler);
                 },
                 { once: true }
               );
