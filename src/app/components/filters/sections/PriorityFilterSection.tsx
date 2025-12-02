@@ -1,30 +1,24 @@
 import React, { useState } from 'react'
 import FilterSection from '../FilterSection'
-import { IconButton } from '@mui/material';
-import RemoveCircleOutlineRoundedIcon from "@mui/icons-material/RemoveCircleOutlineRounded";
 import { useFilters } from '@/src/app/providers/filters/useFilters';
+import FilterButton from '../FilterButton';
 
 export default function PriorityFilterSection() {
-    const {selectedPriorities, togglePriority} = useFilters()
+    const { selectedPriorities, togglePriority } = useFilters()
     return (
         <div>
             <FilterSection
                 title="Priority">
+                <div className='flex flex-row gap-1'>
                     {Array.from({ length: 4 }, (_, index) => (
-                <IconButton
-                    key={index}
-                    size="small"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                    }}
-                    className="p-0"
-                >
-                    <RemoveCircleOutlineRoundedIcon
-                        className="w-4 h-4"
-                    />
-                    <span>hey there this is a thing</span>
-                </IconButton>
-))}
+                        <FilterButton 
+                        onClick={() => togglePriority(index)}
+                        color={selectedPriorities.has(index) ? "error":"default"}
+                        key={index}
+                        label={"!".repeat(index + 1)}>
+                        </FilterButton>
+                    ))}
+                </div>
             </FilterSection>
         </div>
     )
