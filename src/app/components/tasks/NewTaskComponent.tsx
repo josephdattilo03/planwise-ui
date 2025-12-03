@@ -180,7 +180,6 @@ export default function NewTaskComponent({
       >
         + {isEditMode ? "Edit Task" : "Create New Task"}
       </Typography>
-
       {/* Form fills the rest of the column */}
       <form
         onSubmit={handleSubmit}

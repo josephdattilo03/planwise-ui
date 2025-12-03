@@ -9,6 +9,7 @@ import { fetchTasks } from "../../services/tasks/taskService";
 import TaskList from "../../components/tasks/TaskList";
 import TaskFilterComponent from "../../components/tasks/TaskFilterComponent";
 import { FiltersProvider } from "../../providers/filters/FiltersContext";
+import FormButton from "@/src/common/button/FormButton";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -18,15 +19,18 @@ export default function TasksPage() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
 
-
   useEffect(() => {
-  console.log('Tasks updated:', tasks.length, tasks.map(t => t.id));
-}, [tasks]);
+    console.log(
+      "Tasks updated:",
+      tasks.length,
+      tasks.map((t) => t.id)
+    );
+  }, [tasks]);
 
   /** Load tasks from localStorage */
   useEffect(() => {
     async function load() {
-      console.log('Loading tasks...');
+      console.log("Loading tasks...");
       try {
         const [boardData, tagData] = await Promise.all([
           fetchBoards(),
@@ -35,7 +39,11 @@ export default function TasksPage() {
         setBoards(boardData);
         setTags(tagData);
         const taskData = await fetchTasks(boardData, tagData);
-        console.log('Fetched tasks:', taskData.length, taskData.map(t => t.id));
+        console.log(
+          "Fetched tasks:",
+          taskData.length,
+          taskData.map((t) => t.id)
+        );
         setTasks(taskData);
       } catch (err) {
         console.error(err);
@@ -67,38 +75,27 @@ export default function TasksPage() {
         <div className="flex flex-row w-full h-full overflow-hidden">
           {/* Task Filters */}
           <TaskFilterComponent />
-          
+
           <div className="flex flex-col overflow-y-scroll w-full px-6 py-4">
-            <h1 className="text-2xl font-semibold text-dark-green-1">
-              Task Testing UI
-            </h1>
-            
             {/* Create button */}
-            <button
+            <FormButton
               onClick={handleCreateTask}
-              className="px-4 py-2 rounded-md bg-green-1 text-white hover:bg-green-2"
-            >
-              + Create Task
-            </button>
-            
+              text={"Add"}
+              variant="confirm"
+            />
+
             {/* Task list - now has access to FiltersContext */}
             <div className="mt-4 space-y-2">
-              {tasks.length === 0 && (
-                <p className="text-gray-500">No tasks found in localStorage.</p>
-              )}
-              <TaskList
-                taskList={tasks}
-                onSelectTask={handleSelectTask}
-              />
+              <TaskList taskList={tasks} onSelectTask={handleSelectTask} />
             </div>
           </div>
-          
+
           {mode === "create" && (
             <TaskProvider task={null}>
               <NewTaskComponent onSaveSuccess={handleSaveSuccess} />
             </TaskProvider>
           )}
-          
+
           {mode === "edit" && editingTask && (
             <TaskProvider task={editingTask}>
               <NewTaskComponent onSaveSuccess={handleSaveSuccess} />
@@ -108,6 +105,6 @@ export default function TasksPage() {
       </FiltersProvider>
     );
   }
-  
+
   return null;
 }
