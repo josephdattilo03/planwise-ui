@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@mui/material';
-import EditableNote from './EditableNote';
-import ArchiveSidebar from './ArchiveSidebar';
+import { useState, useEffect } from "react";
+import { Button } from "@mui/material";
+import EditableNote from "./EditableNote";
+import ArchiveSidebar from "./ArchiveSidebar";
 
 type NoteType = {
   id: string;
@@ -22,22 +22,22 @@ export default function NoteBoard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
-    const savedNotes = localStorage.getItem('notes');
-    const savedArchived = localStorage.getItem('archived_notes');
+    const savedNotes = localStorage.getItem("notes");
+    const savedArchived = localStorage.getItem("archived_notes");
 
     if (savedNotes) setNotes(JSON.parse(savedNotes));
     if (savedArchived) setArchivedNotes(JSON.parse(savedArchived));
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('notes', JSON.stringify(notes));
+    localStorage.setItem("notes", JSON.stringify(notes));
   }, [notes]);
 
   useEffect(() => {
-    localStorage.setItem('archived_notes', JSON.stringify(archivedNotes));
+    localStorage.setItem("archived_notes", JSON.stringify(archivedNotes));
   }, [archivedNotes]);
 
-  const NOTE_COLORS = ['bg-pink', 'bg-blue', 'bg-cream', 'bg-lilac'];
+  const NOTE_COLORS = ["bg-pink", "bg-blue", "bg-cream", "bg-lilac"];
 
   const addNote = () => {
     const noteWidth = 380;
@@ -53,8 +53,8 @@ export default function NoteBoard() {
         id: crypto.randomUUID(),
         x: x,
         y: y,
-        title: 'New Note',
-        body: '',
+        title: "New Note",
+        body: "",
         color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
         timestamp: new Date().toLocaleString(),
         links: [],
@@ -128,12 +128,12 @@ export default function NoteBoard() {
 
       <div
         className={`transition-all duration-300 ${
-          sidebarOpen ? 'ml-64' : 'ml-12'
+          sidebarOpen ? "ml-64" : "ml-12"
         }`}
       >
         <button
           onClick={addNote}
-          className={`fixed top-24 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md right-10 z-9999`}
+          className={`fixed top-24 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md right-10 z-999`}
         >
           + Add Note
         </button>
@@ -145,11 +145,11 @@ export default function NoteBoard() {
             style={{ left: note.x, top: note.y }}
             onMouseDown={(e) => {
               const moveHandler = (ev: MouseEvent) => handleDrag(ev, note.id);
-              document.addEventListener('mousemove', moveHandler);
+              document.addEventListener("mousemove", moveHandler);
               document.addEventListener(
-                'mouseup',
+                "mouseup",
                 () => {
-                  document.removeEventListener('mousemove', moveHandler);
+                  document.removeEventListener("mousemove", moveHandler);
                 },
                 { once: true }
               );
