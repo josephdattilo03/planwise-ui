@@ -4,6 +4,7 @@ import BoardsFilterSection from '../filters/sections/BoardsFilterSection';
 import TagsFilterSection from '../filters/sections/TagsFilterSection';
 import { useFilters } from "../../providers/filters/useFilters";
 import PriorityFilterSection from '../filters/sections/PriorityFilterSection';
+import DueFilterSection from '../filters/sections/DueFilterSection';
 
 export default function TaskFilterComponent() {
   const { loading, error, smartRecs, setSmartRecs, clearAll } = useFilters();
@@ -20,6 +21,7 @@ export default function TaskFilterComponent() {
         <BoardsFilterSection/>
         <TagsFilterSection/>
         <PriorityFilterSection/>
+        <DueFilterSection/>
     </FilterSidebar>
   )
 }

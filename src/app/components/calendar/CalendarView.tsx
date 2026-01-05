@@ -181,7 +181,8 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
 
   const handleSaveEvent = () => {
     if (newEvent.title.trim()) {
-      const color = boardColors[newEvent.board];
+      const board = boards.find(b => b.name.toLowerCase() === newEvent.board);
+      const color = board?.color || boardColors[newEvent.board];
       const event: Event = {
         title: newEvent.title,
         start: newEvent.start,
@@ -513,11 +514,11 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
                 label="Board"
                 onChange={(e) => setNewEvent(prev => ({ ...prev, board: e.target.value as typeof prev.board }))}
               >
-                <MenuItem value="personal">Personal (Green)</MenuItem>
-                <MenuItem value="work">Work (Blue)</MenuItem>
-                <MenuItem value="senior-design">Senior Design (Orange/Yellow)</MenuItem>
-                <MenuItem value="school">School (Purple)</MenuItem>
-                <MenuItem value="other">Other (Lilac)</MenuItem>
+                {boards.map((board) => (
+                  <MenuItem key={board.id} value={board.name.toLowerCase()}>
+                    {board.name}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>

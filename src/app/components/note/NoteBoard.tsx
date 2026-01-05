@@ -154,7 +154,7 @@ export default function NoteBoard() {
       >
         <button
           onClick={addNote}
-          className={`fixed top-24 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md right-10 z-9999`}
+          className={`fixed top-24 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md right-10 z-999`}
         >
           + Add Note
         </button>

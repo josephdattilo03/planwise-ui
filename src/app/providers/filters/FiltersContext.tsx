@@ -12,6 +12,12 @@ import {
   updateTag as updateTagService,
 } from "../../services/tags/tagService";
 
+interface DateRange {
+  startDate: Date | null;
+  endDate: Date | null;
+  rangeSelected: number | null;
+}
+
 type FiltersContextType = {
   loading: boolean;
   error: string | null;
@@ -19,7 +25,12 @@ type FiltersContextType = {
   boards: Board[];
   tags: Tag[];
 
-  selectedBoardIds: Set<number>;
+  selectedPriorities: Set<number>;
+  togglePriority: (priority: number) => void;
+  selectedDueDateRange: DateRange;
+  toggleDateRange: (dateRange: DateRange) => void;
+
+  selectedBoardIds: Set<string>;
   selectedTagIds: Set<number>;
   selectedDate: Date | null;
   smartRecs: boolean;
@@ -44,15 +55,20 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedBoardIds, setSelectedBoardIds] = useState<Set<number>>(
+  const [selectedBoardIds, setSelectedBoardIds] = useState<Set<string>>(
     new Set()
   );
   const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
   const [selectedPriorities, setSelectedPriorities] = useState<Set<number>>(
     new Set()
   );
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [smartRecs, setSmartRecs] = useState(true);
+  const [selectedDueDateRange, setSelectedDueDateRange] = useState<DateRange>({
+    startDate: null,
+    endDate: null,
+    rangeSelected: null,
+  });
 
   // Fetch the boards & tags once
   useEffect(() => {
@@ -104,6 +120,11 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Toggle date range
+  const toggleDateRange = (dateRange: DateRange) => {
+    setSelectedDueDateRange(dateRange);
+  };
+
   // Create tag
   const createTag = (data: Partial<Tag>) => {
     const newTag = createTagService(data);
@@ -123,6 +144,12 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     setSmartRecs(false);
     setSelectedBoardIds(new Set());
     setSelectedTagIds(new Set());
+    setSelectedPriorities(new Set());
+    setSelectedDueDateRange({
+      startDate: null,
+      endDate: null,
+      rangeSelected: null,
+    });
   };
 
   const createBoard = (name: string, color: string): Board => {
@@ -148,7 +175,8 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
         togglePriority,
         setSelectedDate,
         setSmartRecs,
-        setSelectedPriorities,
+        selectedDueDateRange,
+        toggleDateRange,
         createTag,
         editTag,
         clearAll,
