@@ -9,12 +9,32 @@ type NoteType = {
   id: string;
   x: number;
   y: number;
+  width: number;
+  height: number;
   title: string;
   body: string;
   color?: string;
   timestamp?: string;
   links?: string[];
 };
+
+const DEFAULT_W = 380;
+const DEFAULT_H = 300;
+
+function normalizeNote(n: any): NoteType {
+  const x = Number(n.x);
+  const y = Number(n.y);
+  const width = Number(n.width);
+  const height = Number(n.height);
+
+  return {
+    ...n,
+    x: Number.isFinite(x) ? x : 100,
+    y: Number.isFinite(y) ? y : 120,
+    width: Number.isFinite(width) ? width : DEFAULT_W,
+    height: Number.isFinite(height) ? height : DEFAULT_H,
+  };
+}
 
 export default function NoteBoard() {
   const [notes, setNotes] = useState<NoteType[]>([]);
@@ -25,8 +45,9 @@ export default function NoteBoard() {
     const savedNotes = localStorage.getItem('notes');
     const savedArchived = localStorage.getItem('archived_notes');
 
-    if (savedNotes) setNotes(JSON.parse(savedNotes));
-    if (savedArchived) setArchivedNotes(JSON.parse(savedArchived));
+    if (savedNotes) setNotes(JSON.parse(savedNotes).map(normalizeNote));
+    if (savedArchived)
+      setArchivedNotes(JSON.parse(savedArchived).map(normalizeNote));
   }, []);
 
   useEffect(() => {
@@ -53,6 +74,8 @@ export default function NoteBoard() {
         id: crypto.randomUUID(),
         x: x,
         y: y,
+        width: 380,
+        height: 300,
         title: 'New Note',
         body: '',
         color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
@@ -101,13 +124,11 @@ export default function NoteBoard() {
           y: note.y + e.movementY,
         };
 
-        const sidebarWidth = sidebarOpen ? 286 : 0;
+        const sidebarWidth = sidebarOpen ? 280 : 0;
         const topLimit = 80;
-        const noteWidth = 380;
-        const noteHeight = 300;
 
-        const maxX = window.innerWidth - noteWidth;
-        const maxY = window.innerHeight - noteHeight;
+        const maxX = window.innerWidth - note.width;
+        const maxY = window.innerHeight - note.height;
 
         updated.x = Math.min(Math.max(updated.x, sidebarWidth), maxX);
         updated.y = Math.min(Math.max(updated.y, topLimit), maxY);
@@ -127,8 +148,8 @@ export default function NoteBoard() {
       />
 
       <div
-        className={`transition-all duration-300 ${
-          sidebarOpen ? 'ml-64' : 'ml-12'
+        className={`transition-all duration-300 relative w-full h-screen ${
+          sidebarOpen ? 280 : 0
         }`}
       >
         <button
@@ -160,6 +181,8 @@ export default function NoteBoard() {
               initialBody={note.body}
               initialColor={note.color}
               initialLinks={note.links}
+              width={note.width}
+              height={note.height}
               lastEdited={note.timestamp}
               onArchive={() => archiveNote(note.id)}
               onDelete={() => deleteNote(note.id)}

@@ -20,6 +20,8 @@ export default function EditableNote({
   initialBody = '',
   initialColor = 'bg-pink',
   initialLinks = [],
+  width = 380,
+  height = 300,
   lastEdited = new Date().toLocaleDateString(),
   onDelete,
   onArchive,
@@ -29,6 +31,8 @@ export default function EditableNote({
   initialBody?: string;
   initialColor?: string;
   initialLinks?: string[];
+  width?: number;
+  height?: number;
   lastEdited?: string;
   onDelete?: () => void;
   onArchive?: () => void;
@@ -40,8 +44,8 @@ export default function EditableNote({
   const [editing, setEditing] = useState(false);
   const [links, setLinks] = useState(initialLinks);
   const [timestamp, setTimestamp] = useState(lastEdited);
-  const [noteWidth, setNoteWidth] = useState(380);
-  const [noteHeight, setNoteHeight] = useState(300);
+  const [noteWidth, setNoteWidth] = useState(width);
+  const [noteHeight, setNoteHeight] = useState(height);
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLDivElement | null>(null);
@@ -51,6 +55,14 @@ export default function EditableNote({
     if (!editing && titleRef.current) titleRef.current.innerHTML = title;
     if (editing && titleRef.current) titleRef.current.innerHTML = title;
   }, [editing]);
+
+  useEffect(() => {
+    setNoteWidth(width);
+  }, [width]);
+
+  useEffect(() => {
+    setNoteHeight(height);
+  }, [height]);
 
   const applyStyle = (style: 'bold' | 'italic' | 'underline') => {
     document.execCommand(style);
@@ -87,6 +99,7 @@ export default function EditableNote({
 
       setNoteWidth(newWidth);
       setNoteHeight(newHeight);
+      onUpdate?.({ width: newWidth, height: newHeight });
     };
 
     const handleMouseUp = () => {
