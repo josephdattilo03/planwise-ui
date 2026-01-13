@@ -52,6 +52,8 @@ export default function TasksPage() {
     load();
   }, []);
 
+
+
   const handleSelectTask = (task: Task) => {
     setEditingTask(task);
     setMode("edit");

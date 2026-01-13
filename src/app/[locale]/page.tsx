@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -9,6 +9,11 @@ import {
   Paper,
   Button,
   Chip,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import EventIcon from "@mui/icons-material/Event";
 import TaskIcon from "@mui/icons-material/Task";
@@ -19,6 +24,15 @@ import GoogleIcon from "@mui/icons-material/Google";
 import Image from "next/image";
 import { signOut, useSession, signIn } from "next-auth/react";
 
+import { fetchTasks, createTask } from "../services/tasks/taskService";
+import { fetchEvents } from "../services/events/eventService";
+import { fetchBoards } from "../services/boards/boardService";
+import { fetchTags } from "../services/tags/tagService";
+import { Task } from "../types/task";
+import { Event } from "../types/event";
+import { Board } from "../types/board";
+import { Tag } from "../types/tag";
+
 export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -27,46 +41,141 @@ export default function Home() {
     ? session?.user?.name.split(" ")[0]
     : "there";
 
-  const [recentTasks] = useState([
-    {
-      name: "Finish dashboard design",
-      priority: "High",
-      dueDate: "Dec 3, 2025",
-    },
-    {
-      name: "Update documentation",
-      priority: "Medium",
-      dueDate: "Dec 8, 2025",
-    },
-    { name: "Review pull requests", priority: "Low", dueDate: "Dec 12, 2025" },
-    {
-      name: "Prepare client presentation",
-      priority: "High",
-      dueDate: "Dec 6, 2025",
-    },
-    { name: "Test new features", priority: "Medium", dueDate: "Dec 14, 2025" },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTaskName, setNewTaskName] = useState("");
+  const [selectedBoardId, setSelectedBoardId] = useState<string>("");
+  const [selectedPriority, setSelectedPriority] = useState<number>(1);
+  const [newNoteTitle, setNewNoteTitle] = useState("");
+  const [newNoteBody, setNewNoteBody] = useState("");
 
-  const [recentNotes] = useState([
-    { title: "Meeting notes - Q4 planning", date: "Dec 1, 2025" },
-    { title: "Project ideas brainstorming", date: "Nov 28, 2025" },
-    { title: "API documentation", date: "Nov 25, 2025" },
-  ]);
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [boardsData, tagsData] = await Promise.all([
+          fetchBoards(),
+          fetchTags(),
+        ]);
 
-  const mainNote = recentNotes[0];
+        const [tasksData, eventsData] = await Promise.all([
+          fetchTasks(boardsData, tagsData),
+          fetchEvents(boardsData),
+        ]);
+
+        setBoards(boardsData);
+        setTags(tagsData);
+        setTasks(tasksData);
+        setEvents(eventsData);
+
+        // Initialize selected board to first board
+        if (boardsData.length > 0 && !selectedBoardId) {
+          setSelectedBoardId(boardsData[0].id);
+        }
+
+        // Load notes from localStorage
+        const savedNotes = localStorage.getItem('notes');
+        if (savedNotes) {
+          const parsedNotes = JSON.parse(savedNotes);
+          setNotes(parsedNotes);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (status === "authenticated") {
+      loadData();
+    }
+  }, [status]);
+
+  // Get recent tasks (next 5 upcoming tasks)
+  const recentTasks = tasks
+    .filter(task => task.dueDate >= new Date())
+    .sort((a, b) => a.dueDate - b.dueDate)
+    .slice(0, 5);
+
+  // Get recent notes (last 3 edited)
+  const recentNotes = notes
+    .sort((a, b) => {
+      const dateA = new Date(a.timestamp || 0).getTime();
+      const dateB = new Date(b.timestamp || 0).getTime();
+      return dateB - dateA;
+    })
+    .slice(0, 3);
+
+  const mainNote = recentNotes[0] || {
+    title: "No notes yet",
+    body: "Create your first note to get started!",
+    timestamp: new Date().toLocaleString()
+  };
   const noteTags = recentNotes.slice(1);
 
-  // Calculate days with tasks for the current month
-  const currentMonthYear = new Date().toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-  const taskDays = recentTasks
-    .map((task) => {
-      const date = new Date(task.dueDate);
-      return date.getDate();
-    })
-    .filter((day) => day >= 1 && day <= 31);
+  const handleAddTask = async () => {
+    if (!newTaskName.trim()) return;
+
+    try {
+      const selectedBoard = boards.find(board => board.id === selectedBoardId) || boards[0];
+      const newTask = createTask({
+        name: newTaskName.trim(),
+        board: selectedBoard,
+        dueDate: new Date(Date.now() + 86400000), // Tomorrow
+        priorityLevel: selectedPriority,
+      });
+
+      // Refresh tasks list with proper board/tag data
+      const [refreshedBoards, refreshedTags] = await Promise.all([
+        fetchBoards(),
+        fetchTags(),
+      ]);
+      const refreshedTasks = await fetchTasks(refreshedBoards, refreshedTags);
+      setTasks(refreshedTasks);
+      setNewTaskName("");
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+  };
+
+  const handleAddNote = () => {
+    if (!newNoteTitle.trim()) return;
+
+    const NOTE_COLORS = ['bg-pink', 'bg-blue', 'bg-cream', 'bg-lilac'];
+
+    const newNote = {
+      id: crypto.randomUUID(),
+      x: 100 + Math.random() * 200, // Random position like NoteBoard
+      y: 120 + Math.random() * 100,
+      width: 380,
+      height: 300,
+      title: newNoteTitle.trim(),
+      body: newNoteBody.trim() || "Start writing your note here...",
+      color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
+      timestamp: new Date().toISOString(),
+      links: [],
+    };
+
+    // Get existing notes and add new one
+    const savedNotes = localStorage.getItem('notes');
+    const existingNotes = savedNotes ? JSON.parse(savedNotes) : [];
+    const updatedNotes = [newNote, ...existingNotes];
+
+    // Save to localStorage
+    localStorage.setItem('notes', JSON.stringify(updatedNotes));
+
+    // Update state
+    setNotes(updatedNotes);
+
+    // Clear inputs
+    setNewNoteTitle("");
+    setNewNoteBody("");
+  };
+
+
 
   if (status === "loading") {
     return (
@@ -106,29 +215,40 @@ export default function Home() {
   return (
     <Box
       sx={{
-        px: 4,
+        px: { xs: 1, sm: 2, md: 3, lg: 4 },
         pt: 2,
         pb: 2,
         backgroundColor: "var(--off-white)",
         display: "flex",
         flexDirection: "column",
+        height: "100vh", // Exact viewport height
+        overflow: "hidden", // Prevent any scrolling
       }}
     >
-      <Box mt={2} />
+      <Box mt={1} />
 
       {/* Main grid */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: {
-            // xs: "1fr",
-            // md: "1fr 1fr",
-            lg: "0.5fr 0.8fr 1.4fr",
+            xs: "1fr", // Single column on mobile
+            sm: "1fr", // Single column on small tablets
+            md: "0.75fr 0.95fr 1.3fr", 
+            lg: "0.65fr 0.9fr 1.45fr", 
+            xl: "0.55fr 0.85fr 1.6fr", 
           },
-          gap: 4,
-          alignItems: "flex-start",
-          flex: 1,
-          minHeight: 0,
+          gridTemplateRows: {
+            xs: "auto auto auto", // Three rows on mobile
+            sm: "auto auto auto", // Three rows on small tablets
+            md: "1fr 1fr", // Two equal rows on medium screens
+            lg: "1fr 1fr", // Two equal rows on large screens
+            xl: "1fr 1fr", // Two equal rows on XL screens
+          },
+          gap: { xs: 2, sm: 3, md: 3 },
+          alignItems: "stretch",
+          flex: 1, 
+          minHeight: 0, // Allow shrinking
         }}
       >
         {/* LEFT COLUMN – greeting + schedule alert */}
@@ -168,7 +288,6 @@ export default function Home() {
                 },
               }}
               onClick={() => {
-                // Ready for future navigation implementation
               }}
             />
           </Box>
@@ -199,25 +318,6 @@ export default function Home() {
                 let’s get things done today ☺
               </Typography>
 
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{
-                  mb: 3,
-                  textTransform: "none",
-                  borderRadius: 999,
-                  backgroundColor: "#2e7d32",
-                  py: 1.5,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "white",
-                  "&:hover": { backgroundColor: "#1b5e20" },
-                }}
-                onClick={() => router.push("/notes")}
-              >
-                + Create New Note
-              </Button>
-
               <Typography
                 variant="h6"
                 sx={{
@@ -231,10 +331,19 @@ export default function Home() {
               </Typography>
 
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {["Senior Design", "Team Workspace"].map((name) => (
+                {[
+                  { name: "Senior Design", boardId: "board-1", description: "Click to access board" },
+                  { name: "My Workspace", boardId: null, description: "Click to access workspace" }
+                ].map((item) => (
                   <Box
-                    key={name}
-                    onClick={() => router.push("/tasks")}
+                    key={item.name}
+                    onClick={() => {
+                      if (item.boardId) {
+                        router.push(`/folders?board=${item.boardId}`);
+                      } else {
+                        router.push("/folders");
+                      }
+                    }}
                     sx={{
                       cursor: "pointer",
                       p: 2,
@@ -257,13 +366,13 @@ export default function Home() {
                         mb: 0.5,
                       }}
                     >
-                      {name}
+                      {item.name}
                     </Typography>
                     <Typography
                       variant="caption"
                       sx={{ fontSize: 14, color: "var(--dark-green-2)" }}
                     >
-                      Click to access tasks
+                      {item.description}
                     </Typography>
                   </Box>
                 ))}
@@ -278,34 +387,30 @@ export default function Home() {
               borderRadius: "20px",
               background: "linear-gradient(135deg, #ffe1c4, #ffd0bf)",
               border: "2px solid rgba(122, 58, 0, 0.2)",
+              maxHeight: "200px",
+              overflow: "hidden",
             }}
             elevation={3}
           >
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: 3, pb: 2 }}>
               <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "#7a3a00", mb: 2 }}
+                variant="h6"
+                sx={{ fontWeight: 700, color: "#7a3a00", mb: 1, fontSize: "1rem" }}
               >
                 ⚠️ Schedule Alert
               </Typography>
 
               <Typography
-                variant="body1"
+                variant="body2"
                 sx={{
                   mb: 2,
                   color: "#6b3a17",
-                  lineHeight: 1.5,
-                  fontWeight: 500,
+                  lineHeight: 1.4,
+                  fontSize: "0.875rem",
                 }}
               >
-                Our algorithm shows that the your schedule for the next 10 days
-                are quite busy. Please remember to take care.
+                Your schedule for the next 10 days looks busy. Take care!
               </Typography>
-
-              <Typography
-                variant="body2"
-                sx={{ mb: 3, color: "#8b4513", fontStyle: "italic" }}
-              ></Typography>
 
               <Button
                 variant="contained"
@@ -314,8 +419,8 @@ export default function Home() {
                   textTransform: "none",
                   borderRadius: 999,
                   backgroundColor: "#e65c2c",
-                  py: 2,
-                  fontSize: 14,
+                  py: 1.5,
+                  fontSize: 13,
                   fontWeight: 600,
                   "&:hover": { backgroundColor: "#d24f21" },
                 }}
@@ -334,7 +439,6 @@ export default function Home() {
             border: "2px solid var(--green-3)",
             backgroundColor: "#fdf5e6",
             cursor: "pointer",
-            minHeight: "85vh",
             display: "flex",
             flexDirection: "column",
           }}
@@ -342,7 +446,12 @@ export default function Home() {
           onClick={() => router.push("/tasks")}
         >
           <CardContent
-            sx={{ p: 4, flexGrow: 1, display: "flex", flexDirection: "column" }}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column"
+            }}
           >
             <Box>
               <Typography
@@ -365,29 +474,61 @@ export default function Home() {
                   mb: 3,
                 }}
               >
-                {["MON 1", "TUE 2", "WED 3", "THUR 4", "FRI 5"].map(
-                  (label, idx) => {
-                    const isActive = idx === 0;
-                    return (
-                      <Paper
-                        key={label}
-                        sx={{
-                          textAlign: "center",
-                          p: 1,
-                          borderRadius: 2,
-                          backgroundColor: isActive ? "var(--green-2)" : "#fff",
-                          color: "black",
-                          fontSize: 14,
-                          fontWeight: isActive ? 700 : 500,
-                          boxShadow: "none",
-                          border: "1px solid rgba(0,0,0,0.06)",
-                        }}
-                      >
-                        {label}
-                      </Paper>
-                    );
-                  }
-                )}
+                {Array.from({ length: 5 }).map((_, idx) => {
+                  const date = new Date();
+                  date.setDate(date.getDate() + idx);
+                  const isToday = idx === 0;
+                  const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+                  const dayNumber = date.getDate();
+
+                  // Count tasks due on this specific day
+                  const tasksForDay = tasks.filter(task => {
+                    const taskDate = new Date(task.dueDate);
+                    return taskDate.toDateString() === date.toDateString();
+                  }).length;
+
+                  return (
+                    <Paper
+                      key={idx}
+                      sx={{
+                        textAlign: "center",
+                        p: 1,
+                        borderRadius: 2,
+                        backgroundColor: isToday ? "var(--green-2)" : "#fff",
+                        color: "black",
+                        fontSize: 14,
+                        fontWeight: isToday ? 700 : 500,
+                        boxShadow: "none",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                        position: "relative",
+                      }}
+                    >
+                      {dayName} {dayNumber}
+                      {tasksForDay > 0 && (
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: -8,
+                            right: -8,
+                            width: 20,
+                            height: 20,
+                            borderRadius: "50%",
+                            backgroundColor: "var(--green-2)",
+                            color: "white",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "2px solid white",
+                          }}
+                        >
+                          {tasksForDay}
+                        </Box>
+                      )}
+                    </Paper>
+                  );
+                })}
               </Box>
 
               <Box
@@ -395,130 +536,272 @@ export default function Home() {
                   display: "flex",
                   flexDirection: "column",
                   gap: 1.5,
-                  mb: 3,
+                  mb: 2,
                 }}
               >
-                {recentTasks.map((task: any) => (
-                  <Paper
-                    key={task.name}
+                {recentTasks.length > 0 ? recentTasks.map((task) => {
+                  // Convert priority number to string
+                  const priorityLabels = { 0: "Low", 1: "Medium", 2: "High", 3: "Now" };
+                  const priorityString = priorityLabels[task.priorityLevel as keyof typeof priorityLabels] || "Low";
+
+                  return (
+                    <Paper
+                      key={task.id}
+                      sx={{
+                        p: 1.5,
+                        borderRadius: 3,
+                        backgroundColor: "#fff",
+                        border: "1px solid rgba(0,0,0,0.08)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0.5,
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
+                          transform: "translateY(-2px)",
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontSize: 14,
+                            fontWeight: 600,
+                            color: "var(--dark-green-1)",
+                          }}
+                        >
+                          {task.name}
+                        </Typography>
+                        <TaskIcon
+                          sx={{ fontSize: 14, color: "var(--green-2)" }}
+                        />
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 500,
+                              color: "var(--dark-green-2)",
+                              fontSize: 11,
+                            }}
+                          >
+                            {task.board.name}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "var(--dark-green-2)" }}
+                          >
+                            Due {task.dueDate.toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "flex-start",
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontWeight: 700,
+                              color:
+                                priorityString === "High"
+                                  ? "#d32f2f"
+                                  : priorityString === "Medium"
+                                    ? "#f57c00"
+                                    : "#2e7d32",
+                              px: 2,
+                              py: 0.5,
+                              borderRadius: 10,
+                              backgroundColor:
+                                priorityString === "High"
+                                  ? "rgba(211, 47, 47, 0.1)"
+                                  : priorityString === "Medium"
+                                    ? "rgba(245, 124, 0, 0.1)"
+                                    : "rgba(46, 125, 50, 0.1)",
+                              fontSize: 11,
+                            }}
+                          >
+                            {priorityString}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  );
+                }) : (
+                  <Typography
+                    variant="body2"
                     sx={{
-                      p: 2,
-                      borderRadius: 3,
-                      backgroundColor: "#fff",
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
-                        transform: "translateY(-2px)",
-                      },
+                      color: "var(--dark-green-2)",
+                      textAlign: "center",
+                      py: 4,
+                      fontStyle: "italic"
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: "var(--dark-green-1)",
-                        }}
-                      >
-                        {task.name}
-                      </Typography>
-                      <TaskIcon
-                        sx={{ fontSize: 14, color: "var(--green-2)" }}
-                      />
-                    </Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 700,
-                          color:
-                            task.priority === "High"
-                              ? "#d32f2f"
-                              : task.priority === "Medium"
-                                ? "#f57c00"
-                                : "#2e7d32",
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 10,
-                          backgroundColor:
-                            task.priority === "High"
-                              ? "rgba(211, 47, 47, 0.1)"
-                              : task.priority === "Medium"
-                                ? "rgba(245, 124, 0, 0.1)"
-                                : "rgba(46, 125, 50, 0.1)",
-                          fontSize: 11,
-                        }}
-                      >
-                        {task.priority}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "var(--dark-green-2)" }}
-                      >
-                        Due {task.dueDate}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                ))}
+                    No upcoming tasks
+                  </Typography>
+                )}
               </Box>
             </Box>
 
             <Box
               sx={{
-                display: "flex",
-                gap: 1.5,
-                alignItems: "center",
                 mt: "auto",
               }}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
-              <Paper
+              {/* Board and Priority selectors */}
+              <Box
                 sx={{
-                  flex: 1,
-                  borderRadius: 999,
-                  px: 2.5,
-                  py: 1.5,
-                  backgroundColor: "#fff",
-                  border: "1px solid rgba(0,0,0,0.08)",
-                  boxShadow: "none",
+                  display: "flex",
+                  gap: 1,
+                  mb: 1.5,
                 }}
               >
-                <Typography variant="body2" sx={{ color: "rgba(0,0,0,0.5)" }}>
-                  Add a task...
-                </Typography>
-              </Paper>
-              <Button
-                variant="contained"
+                <FormControl size="small" sx={{ minWidth: 100, flex: 1 }}>
+                  <InputLabel sx={{ fontSize: "12px" }}>Board</InputLabel>
+                  <Select
+                    value={selectedBoardId}
+                    label="Board"
+                    onChange={(e: any) => setSelectedBoardId(e.target.value)}
+                    sx={{
+                      borderRadius: 2,
+                      fontSize: "12px",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(0,0,0,0.08)",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(0,0,0,0.15)",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "var(--green-2)",
+                      },
+                    }}
+                  >
+                    {boards.map((board) => (
+                      <MenuItem key={board.id} value={board.id} sx={{ fontSize: "12px" }}>
+                        {board.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: 100, flex: 1 }}>
+                  <InputLabel sx={{ fontSize: "12px" }}>Priority</InputLabel>
+                  <Select
+                    value={selectedPriority}
+                    label="Priority"
+                    onChange={(e: any) => setSelectedPriority(Number(e.target.value))}
+                    sx={{
+                      borderRadius: 2,
+                      fontSize: "12px",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(0,0,0,0.08)",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(0,0,0,0.15)",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "var(--green-2)",
+                      },
+                    }}
+                  >
+                    <MenuItem value={0} sx={{ fontSize: "12px" }}>Low</MenuItem>
+                    <MenuItem value={1} sx={{ fontSize: "12px" }}>Medium</MenuItem>
+                    <MenuItem value={2} sx={{ fontSize: "12px" }}>High</MenuItem>
+                    <MenuItem value={3} sx={{ fontSize: "12px" }}>Now</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* Task input and button */}
+              <Box
                 sx={{
-                  textTransform: "none",
-                  borderRadius: 999,
-                  backgroundColor: "var(--green-2)",
-                  px: 2.5,
-                  py: 1.5,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "black",
-                  "&:hover": { backgroundColor: "var(--green-3)" },
+                  display: "flex",
+                  gap: 1.5,
+                  alignItems: "center",
                 }}
               >
-                Add
-              </Button>
+                <TextField
+                  fullWidth
+                  placeholder="Add a task..."
+                  value={newTaskName}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    e.stopPropagation();
+                    setNewTaskName(e.target.value);
+                  }}
+                  onKeyPress={(e: React.KeyboardEvent) => {
+                    if (e.key === 'Enter') {
+                      e.stopPropagation();
+                      handleAddTask();
+                    }
+                  }}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 999,
+                      backgroundColor: "#fff",
+                      "& fieldset": {
+                        borderColor: "rgba(0,0,0,0.08)",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "rgba(0,0,0,0.15)",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "var(--green-2)",
+                      },
+                    },
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    handleAddTask();
+                  }}
+                  disabled={!newTaskName.trim()}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: 999,
+                    backgroundColor: "var(--green-2)",
+                    px: 2.5,
+                    py: 1.5,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "black",
+                    "&:hover": {
+                      backgroundColor: "var(--green-3)"
+                    },
+                    "&:disabled": {
+                      backgroundColor: "rgba(0,0,0,0.12)",
+                      color: "rgba(0,0,0,0.26)"
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </Box>
             </Box>
           </CardContent>
         </Card>
@@ -532,7 +815,7 @@ export default function Home() {
               border: "3px solid var(--green-2)",
               backgroundColor: "#fffdf7",
               cursor: "pointer",
-              flex: 1.5,
+              flex: 1.3,
               boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             }}
             elevation={4}
@@ -540,35 +823,35 @@ export default function Home() {
           >
             <CardContent
               sx={{
-                p: 2,
-                height: "100%",
+                p: { xs: 1, sm: 1.5, md: 2 },
                 display: "flex",
                 flexDirection: "column",
+                height: "100%",
               }}
             >
               <Box
-                sx={{ mb: 1, display: "flex", alignItems: "center", gap: 2 }}
+                sx={{ mb: 0.5, display: "flex", alignItems: "center", gap: 1.5 }}
               >
-                <EventIcon sx={{ color: "var(--green-2)", fontSize: 24 }} />
+                <EventIcon sx={{ color: "var(--green-2)", fontSize: 20 }} />
                 <Typography
                   variant="h6"
                   sx={{
                     color: "var(--dark-green-2)",
                     fontWeight: 600,
-                    fontSize: "1.1rem",
+                    fontSize: "1rem",
                   }}
                 >
                   Calendar Preview
                 </Typography>
               </Box>
 
-              <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                <Box sx={{ mb: 2 }}>
+              <Box sx={{ flex: 1, display: "flex", flexDirection: "column", mt: 1 }}>
+                <Box sx={{ mb: 1 }}>
                   <Typography
                     variant="body2"
                     sx={{
                       color: "var(--dark-green-2)",
-                      fontSize: "0.875rem",
+                      fontSize: "0.8rem",
                       fontWeight: 600,
                     }}
                   >
@@ -581,12 +864,12 @@ export default function Home() {
 
                 <Box
                   sx={{
-                    borderRadius: "16px",
-                    border: "3px solid var(--dark-green-1)",
-                    p: 2,
+                    borderRadius: "12px",
+                    border: "2px solid var(--dark-green-1)",
+                    p: 1,
                     backgroundColor: "#fff",
                     flex: 1,
-                    boxShadow: "inset 0 0 10px rgba(0,0,0,0.05)",
+                    boxShadow: "inset 0 0 8px rgba(0,0,0,0.03)",
                   }}
                 >
                   {/* Weekdays */}
@@ -613,65 +896,212 @@ export default function Home() {
                     ))}
                   </Box>
 
-                  {/* Calendar days grid - smaller */}
+                  {/* Calendar days grid with real events */}
                   <Box
                     sx={{
                       display: "grid",
                       gridTemplateColumns: "repeat(7, 1fr)",
-                      gap: 1,
+                      gap: 0.5,
                       fontSize: 12,
                     }}
                   >
-                    {Array.from({ length: 35 }).map((_, i) => {
-                      const day = i + 1;
-                      const isToday = day === new Date().getDate() && i < 31;
-                      const isEventDay = taskDays.includes(day);
+                    {(() => {
+                      const now = new Date();
+                      const currentMonth = now.getMonth();
+                      const currentYear = now.getFullYear();
 
-                      return (
-                        <Box
-                          key={day}
-                          sx={{
-                            minHeight: 60,
-                            borderRadius: 2,
-                            display: "flex",
-                            alignItems: "flex-start",
-                            justifyContent: "center",
-                            p: 0.5,
-                            border: isToday
-                              ? "3px solid var(--dark-green-1)"
-                              : "1px solid var(--green-4)",
-                            backgroundColor: day <= 31 ? "#f9f9f9" : "#e9e9e9",
-                            position: "relative",
-                            ...(day > 31 && { opacity: 0.3 }),
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
+                      // Get the first day of the current month
+                      const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+                      // Get the day of the week (0 = Sunday, 1 = Monday, etc.)
+                      const startDayOfWeek = firstDayOfMonth.getDay();
+
+                      // Calculate the date for the first box (might be from previous month)
+                      const startDate = new Date(firstDayOfMonth);
+                      startDate.setDate(1 - startDayOfWeek); // Go back to Sunday
+
+                      return Array.from({ length: 35 }).map((_, i) => {
+                        const currentDate = new Date(startDate);
+                        currentDate.setDate(startDate.getDate() + i);
+
+                        const day = currentDate.getDate();
+                        const month = currentDate.getMonth();
+                        const year = currentDate.getFullYear();
+
+                        const isCurrentMonth = month === currentMonth && year === currentYear;
+                        const isToday = currentDate.toDateString() === now.toDateString();
+
+                        // Get real events and tasks for this specific date
+                        const dayEvents = [
+                          // Real events
+                          ...events
+                            .filter(event => {
+                              const eventDate = new Date(event.startTime);
+                              return eventDate.toDateString() === currentDate.toDateString();
+                            })
+                            .map(event => {
+                              // Check for specific event names first
+                              const eventTitle = event.description.toLowerCase();
+                              if (eventTitle.includes('team standup') || eventTitle.includes('standup meeting')) {
+                                return {
+                                  title: `📅 ${event.description}`,
+                                  color: "#E1BEE7", // lilac
+                                  type: "event"
+                                };
+                              }
+                              if (eventTitle.includes('project milestone') || eventTitle.includes('milestone')) {
+                                return {
+                                  title: `📅 ${event.description}`,
+                                  color: "#FFA500", // orange
+                                  type: "event"
+                                };
+                              }
+
+                              // Use same color logic as calendar page - events use board.name directly
+                              const boardName = event.board.name.toLowerCase();
+                              const boardColors: Record<string, string> = {
+                                "personal": "#9BF2FF",
+                                "work": "#2196F3",
+                                "pennos": "#FFA500",
+                                "senior-design": "#A7C957",
+                                "school": "#9C27B0",
+                                "other": "#E1BEE7",
+                              };
+                              const eventColor = boardColors[boardName] || "#4CAF50";
+
+                              return {
+                                title: `📅 ${event.description}`,
+                                color: eventColor,
+                                type: "event"
+                              };
+                            }),
+                          // Real tasks
+                          ...tasks
+                            .filter(task => {
+                              const taskDate = new Date(task.dueDate);
+                              return taskDate.toDateString() === currentDate.toDateString();
+                            })
+                            .slice(0, 1) // Limit to 1 task per day for preview
+                            .map(task => {
+                              // Use same color logic as calendar page
+                              const board = boards.find(b => b.id === task.board.id);
+                              const boardName = board?.name.toLowerCase() || 'default';
+                              const boardColors: Record<string, string> = {
+                                "personal": "#9BF2FF",
+                                "work": "#2196F3",
+                                "pennos": "#FFA500",
+                                "senior-design": "#A7C957",
+                                "school": "#9C27B0",
+                                "other": "#E1BEE7",
+                              };
+                              const taskColor = boardColors[boardName] || "#4CAF50";
+
+                              return {
+                                title: `📋 ${task.name}`,
+                                color: taskColor,
+                                type: "task"
+                              };
+                            })
+                        ].slice(0, 1); // Max 1 event per day for preview
+
+                        return (
+                          <Box
+                            key={i}
                             sx={{
-                              fontWeight: isToday || isEventDay ? 700 : 500,
-                              color: isToday ? "white" : "var(--dark-green-1)",
-                              fontSize: "14px",
+                              height: 50,
+                              width: "100%",
+                              borderRadius: 2,
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              p: 0.3,
+                              border: "1px solid var(--green-4)",
+                              backgroundColor: isCurrentMonth
+                                ? "#f9f9f9"
+                                : "#e9e9e9",
+                              position: "relative",
+                              ...(isCurrentMonth ? {} : { opacity: 0.3 }),
                             }}
                           >
-                            {day <= 31 ? day : ""}
-                          </Typography>
-                          {isEventDay && (
                             <Box
                               sx={{
-                                position: "absolute",
-                                bottom: 4,
-                                width: 8,
-                                height: 8,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: 24,
+                                height: 24,
                                 borderRadius: "50%",
-                                backgroundColor: "#ff9800",
+                                backgroundColor: isToday ? "#2196F3" : "transparent",
+                                mb: dayEvents.length > 0 ? 0.5 : 0,
                               }}
-                            />
-                          )}
-                        </Box>
-                      );
-                    })}
+                            >
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontWeight: isToday ? 700 : 500,
+                                  color: isToday ? "white" : "var(--dark-green-1)",
+                                  fontSize: "14px",
+                                  lineHeight: 1,
+                                }}
+                              >
+                                {day}
+                              </Typography>
+                            </Box>
+
+                            {/* Show events for this date */}
+                            {dayEvents.map((event, eventIndex) => (
+                              <Box
+                                key={eventIndex}
+                                sx={{
+                                  width: "100%",
+                                  backgroundColor: event.color,
+                                  borderRadius: "4px",
+                                  px: 0.5,
+                                  py: 0.2,
+                                  mb: 0.2,
+                                  border: "1px solid rgba(0,0,0,0.1)",
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontSize: "9px",
+                                    fontWeight: 600,
+                                    color: event.color === "#9BF2FF" ? "#333" : "#fff",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    display: "block",
+                                  }}
+                                >
+                                  {event.title}
+                                </Typography>
+                              </Box>
+                            ))}
+
+                            {/* Fallback dot for days with tasks/events */}
+                            {dayEvents.length === 0 && tasks.some(task => {
+                              const taskDate = new Date(task.dueDate);
+                              return taskDate.toDateString() === currentDate.toDateString();
+                            }) && (
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  bottom: 4,
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: "50%",
+                                  backgroundColor: "#ff9800",
+                                }}
+                              />
+                            )}
+                          </Box>
+                        );
+                      });
+                    })()}
                   </Box>
                 </Box>
+
+
               </Box>
             </CardContent>
           </Card>
@@ -683,7 +1113,7 @@ export default function Home() {
               border: "2px solid var(--green-3)",
               backgroundColor: "#ffeef6",
               cursor: "pointer",
-              minHeight: "28vh",
+              flex: 1,
             }}
             elevation={2}
             onClick={() => router.push("/notes")}
@@ -698,7 +1128,11 @@ export default function Home() {
                   fontWeight: 600,
                 }}
               >
-                LAST EDITED NOVEMBER 30, 2025
+                LAST EDITED {mainNote.timestamp ? new Date(mainNote.timestamp).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+                }).toUpperCase() : 'RECENTLY'}
               </Typography>
 
               <Typography
@@ -713,26 +1147,78 @@ export default function Home() {
                 sx={{
                   fontSize: 14,
                   color: "var(--dark-green-2)",
-                  mb: 3,
+                  mb: 2,
                   lineHeight: 1.6,
                 }}
               >
-                The group discussed upcoming deadlines and confirmed that the
-                revised project timeline still aligns with stakeholder
-                expectations.
-                <br />
-                A quick review of open bugs highlighted two issues that need to
-                be addressed before the next release.
-                <br />
-                Everyone agreed to schedule brief check-ins on Thursday to
-                ensure the handoff between design and engineering remains
-                smooth.
+                {mainNote.body ? mainNote.body.substring(0, 200) + (mainNote.body.length > 200 ? '...' : '') :
+                  'Create your first note to get started with organizing your thoughts!'}
               </Typography>
 
+              {/* Create new note inputs */}
+              <Box
+                sx={{
+                  mb: 2,
+                }}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                <TextField
+                  fullWidth
+                  placeholder="Quick note title..."
+                  value={newNoteTitle}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    e.stopPropagation();
+                    setNewNoteTitle(e.target.value);
+                  }}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    mb: 1,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "& fieldset": {
+                        borderColor: "rgba(0,0,0,0.08)",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "rgba(0,0,0,0.15)",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "var(--green-2)",
+                      },
+                    },
+                  }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    handleAddNote();
+                  }}
+                  disabled={!newNoteTitle.trim()}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: 999,
+                    backgroundColor: "#2e7d32",
+                    py: 1,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "white",
+                    "&:hover": { backgroundColor: "#1b5e20" },
+                    "&:disabled": {
+                      backgroundColor: "rgba(0,0,0,0.12)",
+                      color: "rgba(0,0,0,0.26)"
+                    }
+                  }}
+                >
+                  + Create Note
+                </Button>
+              </Box>
+
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-                {noteTags.map((note: any) => (
+                {noteTags.length > 0 ? noteTags.map((note) => (
                   <Chip
-                    key={note.title}
+                    key={note.id || note.title}
                     label={note.title}
                     size="small"
                     sx={{
@@ -744,7 +1230,18 @@ export default function Home() {
                       py: 1,
                     }}
                   />
-                ))}
+                )) : (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "var(--dark-green-2)",
+                      fontStyle: "italic",
+                      fontSize: 12
+                    }}
+                  >
+                    {recentNotes.length <= 1 ? 'Create more notes to see them here' : 'No additional recent notes'}
+                  </Typography>
+                )}
               </Box>
             </CardContent>
           </Card>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import FilterSidebar from "../../components/filters/FilterSidebar";
 import FolderTreeDisplay from "../../components/folderTree/FolderTreeDisplay";
 import BoardDisplayPage from "../../components/boards/BoardDisplayPage";
@@ -11,9 +12,18 @@ import FormButton from "@/src/common/button/FormButton";
 import BoardCreateDialog from "../../components/boards/BoardCreateDialog";
 
 export default function FoldersPage() {
+  const searchParams = useSearchParams();
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Handle board parameter from URL
+  useEffect(() => {
+    const boardParam = searchParams.get('board');
+    if (boardParam) {
+      setSelectedBoardId(boardParam);
+    }
+  }, [searchParams]);
 
   const handleBoardSelect = (boardId: string) => {
     setSelectedBoardId(boardId);

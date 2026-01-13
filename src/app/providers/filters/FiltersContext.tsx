@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Board, Tag } from "../../types";
 import {
   fetchBoards,
@@ -35,7 +36,7 @@ type FiltersContextType = {
   selectedDate: Date | null;
   smartRecs: boolean;
 
-  toggleBoard: (id: number) => void;
+  toggleBoard: (id: string) => void;
   toggleTag: (id: number) => void;
   setSelectedDate: (date: Date | null) => void;
   setSmartRecs: (v: boolean) => void;
@@ -50,6 +51,7 @@ type FiltersContextType = {
 const FiltersContext = createContext<FiltersContextType | undefined>(undefined);
 
 export function FiltersProvider({ children }: { children: React.ReactNode }) {
+  const searchParams = useSearchParams();
   const [boards, setBoards] = useState<Board[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,6 +84,12 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
 
         setBoards(boardData);
         setTags(tagData);
+
+        // Check for board parameter in URL and set filter
+        const boardParam = searchParams.get('board');
+        if (boardParam && boardData.some((board: Board) => board.id === boardParam)) {
+          setSelectedBoardIds(new Set([boardParam]));
+        }
       } catch (err) {
         console.error(err);
         setError("Failed to load filter data");
@@ -91,10 +99,10 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     }
 
     load();
-  }, []);
+  }, [searchParams]);
 
   // Toggle board
-  const toggleBoard = (id: number) => {
+  const toggleBoard = (id: string) => {
     setSelectedBoardIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -126,16 +134,17 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Create tag
-  const createTag = (data: Partial<Tag>) => {
+  const createTag = async (data: Partial<Tag>) => {
     const newTag = createTagService(data);
     setTags((prev) => [...prev, newTag]);
-    return newTag;
+    return Promise.resolve(newTag);
   };
 
   // Edit tag
-  const editTag = (tag: Tag) => {
+  const editTag = async (tag: Tag) => {
     updateTagService(tag);
     setTags((prev) => prev.map((t) => (t.id === tag.id ? tag : t)));
+    return Promise.resolve();
   };
 
   // Clear all filters
@@ -180,6 +189,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
         createTag,
         editTag,
         clearAll,
+        createBoard,
       }}
     >
       {children}
