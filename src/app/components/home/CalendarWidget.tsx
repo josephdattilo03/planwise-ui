@@ -17,22 +17,22 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
   return (
     <Card
       sx={{
-        borderRadius: "16px",
-        border: "3px solid var(--green-2)",
-        backgroundColor: "#fffdf7",
+        borderRadius: "20px",
+        border: "1px solid var(--card-border)",
+        backgroundColor: "var(--home-calendar-bg)",
         cursor: "pointer",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
-      elevation={4}
+      elevation={0}
       onClick={() => router.push("/calendar")}
     >
       <CardContent sx={{ p: 2 }}>
         <Box sx={{ mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
-          <EventIcon sx={{ color: "var(--green-2)", fontSize: 18 }} />
+          <EventIcon sx={{ color: "var(--Green-2)", fontSize: 18 }} />
           <Typography
             variant="h6"
             sx={{
-              color: "var(--dark-green-2)",
+              color: "var(--Dark-Green-2)",
               fontWeight: 600,
               fontSize: "0.95rem",
             }}
@@ -44,7 +44,7 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
         <Typography
           variant="body2"
           sx={{
-            color: "var(--dark-green-2)",
+            color: "var(--Dark-Green-2)",
             fontSize: "0.75rem",
             fontWeight: 600,
             mb: 1,
@@ -59,10 +59,10 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
         <Box
           sx={{
             borderRadius: "8px",
-            border: "2px solid var(--dark-green-1)",
+            border: "1px solid rgba(0,0,0,0.08)",
             p: 0.5,
-            backgroundColor: "#fff",
-            boxShadow: "inset 0 0 4px rgba(0,0,0,0.03)",
+            backgroundColor: "var(--menu-bg)",
+            boxShadow: "inset 0 0 4px rgba(0,0,0,0.05)",
           }}
         >
           {/* Weekdays */}
@@ -80,7 +80,7 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
                 sx={{
                   textAlign: "center",
                   fontWeight: 700,
-                  color: "var(--dark-green-1)",
+                  color: "var(--Dark-Green-1)",
                   fontSize: "10px",
                 }}
               >
@@ -168,9 +168,10 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
+                      justifyContent: "flex-start",
                       p: 0.3,
-                      border: "1px solid var(--green-4)",
-                      backgroundColor: isCurrentMonth ? "#f9f9f9" : "#e9e9e9",
+                      border: "1px solid var(--card-border)",
+                      backgroundColor: isCurrentMonth ? "var(--input-bg)" : "var(--menu-bg)",
                       position: "relative",
                       ...(isCurrentMonth ? {} : { opacity: 0.3 }),
                     }}
@@ -184,14 +185,14 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
                         height: 20,
                         borderRadius: "50%",
                         backgroundColor: isToday ? "#2196F3" : "transparent",
-                        mb: dayEvents.length > 0 ? 0.3 : 0,
+                        flexShrink: 0,
                       }}
                     >
                       <Typography
                         variant="caption"
                         sx={{
                           fontWeight: isToday ? 700 : 500,
-                          color: isToday ? "white" : "var(--dark-green-1)",
+                          color: isToday ? "white" : "var(--Dark-Green-1)",
                           fontSize: "12px",
                           lineHeight: 1,
                         }}
@@ -200,34 +201,38 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
                       </Typography>
                     </Box>
 
-                    {dayEvents.map((event, eventIndex) => (
-                      <Box
-                        key={eventIndex}
-                        sx={{
-                          width: "100%",
-                          backgroundColor: event.color,
-                          borderRadius: "2px",
-                          px: 0.3,
-                          py: 0.1,
-                          border: "1px solid rgba(0,0,0,0.1)",
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontSize: "7px",
-                            fontWeight: 600,
-                            color: event.color === "#9BF2FF" ? "#333" : "#fff",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            display: "block",
-                          }}
-                        >
-                          {event.title}
-                        </Typography>
+                    {dayEvents.length > 0 && (
+                      <Box sx={{ width: "100%", mt: 0.3 }}>
+                        {dayEvents.map((event, eventIndex) => (
+                          <Box
+                            key={eventIndex}
+                            sx={{
+                              width: "100%",
+                              backgroundColor: event.color,
+                              borderRadius: "2px",
+                              px: 0.3,
+                              py: 0.1,
+                              border: "1px solid rgba(0,0,0,0.1)",
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: "7px",
+                                fontWeight: 600,
+                                color: event.color === "#9BF2FF" ? "#333" : "#fff",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                display: "block",
+                              }}
+                            >
+                              {event.title}
+                            </Typography>
+                          </Box>
+                        ))}
                       </Box>
-                    ))}
+                    )}
                   </Box>
                 );
               });

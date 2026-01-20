@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import {
   Card,
   CardContent,
   IconButton,
   Button,
   Typography,
-} from '@mui/material';
-import FormatBoldIcon from '@mui/icons-material/FormatBold';
-import FormatItalicIcon from '@mui/icons-material/FormatItalic';
-import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
-import EditIcon from '@mui/icons-material/Edit';
-import ArchiveIcon from '@mui/icons-material/Archive';
-import DeleteIcon from '@mui/icons-material/Delete';
+} from "@mui/material";
+import FormatBoldIcon from "@mui/icons-material/FormatBold";
+import FormatItalicIcon from "@mui/icons-material/FormatItalic";
+import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
+import EditIcon from "@mui/icons-material/Edit";
+import ArchiveIcon from "@mui/icons-material/Archive";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function EditableNote({
-  initialTitle = '',
-  initialBody = '',
-  initialColor = 'bg-pink',
+  initialTitle = "",
+  initialBody = "",
+  initialColor = "bg-pink",
   initialLinks = [],
   width = 380,
   height = 300,
@@ -64,19 +64,19 @@ export default function EditableNote({
     setNoteHeight(height);
   }, [height]);
 
-  const applyStyle = (style: 'bold' | 'italic' | 'underline') => {
+  const applyStyle = (style: "bold" | "italic" | "underline") => {
     document.execCommand(style);
     updateBody();
   };
 
   const updateBody = () => {
-    const html = bodyRef.current?.innerHTML || '';
+    const html = bodyRef.current?.innerHTML || "";
     setBody(html);
     onUpdate?.({ body: html, timestamp: new Date().toLocaleString() });
   };
 
   const updateTitle = () => {
-    const html = titleRef.current?.innerHTML || '';
+    const html = titleRef.current?.innerHTML || "";
     setTitle(html);
     onUpdate?.({ title: html });
   };
@@ -103,16 +103,16 @@ export default function EditableNote({
     };
 
     const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp, { once: true });
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp, { once: true });
   };
 
   const addLink = () => {
-    const url = prompt('Enter link:');
+    const url = prompt("Enter link:");
     if (!url) return;
     const newLinks = [...links, url];
     setLinks(newLinks);
@@ -120,21 +120,21 @@ export default function EditableNote({
   };
 
   const NOTE_COLORS = [
-    'bg-pastel-red',
-    'bg-pastel-orange',
-    'bg-pastel-yellow',
-    'bg-pastel-green',
-    'bg-pastel-cyan',
-    'bg-pastel-blue',
-    'bg-pastel-indigo',
-    'bg-pastel-violet',
-    'bg-pink',
+    "bg-pastel-red",
+    "bg-pastel-orange",
+    "bg-pastel-yellow",
+    "bg-pastel-green",
+    "bg-pastel-cyan",
+    "bg-pastel-blue",
+    "bg-pastel-indigo",
+    "bg-pastel-violet",
+    "bg-pink",
   ];
 
   return (
     <Card
       className={`${color} shadow-lg rounded-2xl p-4 relative${
-        editing ? 'bg-opacity-80 ring-3 ring-gray-300 z-0' : ''
+        editing ? "bg-opacity-80 ring-3 ring-gray-300 z-0" : ""
       }`}
       style={{ width: `${noteWidth}px`, height: `${noteHeight}px` }}
       onDoubleClick={() => setEditing(true)}
@@ -156,35 +156,42 @@ export default function EditableNote({
         )}
 
         <div className="flex gap-1 ml-2">
-          <IconButton onClick={() => setEditing((s) => !s)}>
+          <IconButton onClick={() => setEditing((s) => !s)} className="text-dark-green-1">
             <EditIcon />
           </IconButton>
-          <IconButton onClick={onArchive}>
+          <IconButton onClick={onArchive} className="text-dark-green-1">
             <ArchiveIcon />
           </IconButton>
           <IconButton
-            className="text-red-500 hover:text-red-700"
             onClick={onDelete}
+            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
           >
             <DeleteIcon />
           </IconButton>
         </div>
       </div>
 
-      <p className="text-xs text-gray-600 mb-2">LAST EDITED {timestamp}</p>
+      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+        LAST EDITED {timestamp}
+      </p>
 
       {editing && (
         <div className="flex gap-2 mb-2">
-          <IconButton onClick={() => applyStyle('bold')}>
+          <IconButton onClick={() => applyStyle("bold")} className="text-dark-green-1">
             <FormatBoldIcon />
           </IconButton>
-          <IconButton onClick={() => applyStyle('italic')}>
+          <IconButton onClick={() => applyStyle("italic")} className="text-dark-green-1">
             <FormatItalicIcon />
           </IconButton>
-          <IconButton onClick={() => applyStyle('underline')}>
+          <IconButton onClick={() => applyStyle("underline")} className="text-dark-green-1">
             <FormatUnderlinedIcon />
           </IconButton>
-          <Button size="small" variant="outlined" onClick={addLink}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={addLink}
+            className="text-dark-green-1 border-dark-green-2"
+          >
             + Link
           </Button>
         </div>
@@ -195,7 +202,7 @@ export default function EditableNote({
           ref={bodyRef}
           contentEditable={editing}
           suppressContentEditableWarning
-          className={`w-full h-full overflow-auto outline-none p-2 rounded ${color} text-black`}
+          className={`w-full h-full overflow-auto outline-none p-2 rounded ${color} text-black dark:text-dark-green-1`}
           onInput={updateBody}
         />
       </CardContent>
@@ -207,7 +214,7 @@ export default function EditableNote({
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1 bg-white border border-green-2 rounded-full underline text-blue-600 hover:text-blue-800"
+            className="px-3 py-1 bg-white dark:bg-dark-green-2 border border-green-2 rounded-full underline text-blue-600 dark:text-sky-blue hover:text-blue-800 dark:hover:text-sky-blue"
           >
             {link}
           </a>
@@ -219,7 +226,7 @@ export default function EditableNote({
           {NOTE_COLORS.map((c) => (
             <button
               key={c}
-              className={`w-6 h-6 rounded-full border cursor-pointer ${c}`}
+              className={`w-6 h-6 min-w-6 min-h-6 rounded-full border border-gray-300 dark:border-gray-600 cursor-pointer ${c}`}
               onClick={() => {
                 setColor(c);
                 onUpdate?.({ color: c });
@@ -233,7 +240,7 @@ export default function EditableNote({
         className="absolute bottom-2 right-2 cursor-se-resize p-1 opacity-60 hover:opacity-100"
         onMouseDown={onResizeStart}
         onClick={(e) => e.stopPropagation()}
-        style={{ userSelect: 'none' }}
+        style={{ userSelect: "none" }}
       >
         <svg
           width="16"
@@ -242,7 +249,7 @@ export default function EditableNote({
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="text-gray-600"
+          className="text-gray-600 dark:text-gray-400"
         >
           <path d="M18 20 L20 18" />
           <path d="M14 20 L20 14" />

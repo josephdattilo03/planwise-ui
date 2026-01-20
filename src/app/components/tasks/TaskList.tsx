@@ -76,7 +76,7 @@ export default function TaskList({ taskList, onSelectTask }: TaskListProps) {
 
   if (filteredTasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-gray-500">
+      <div className="flex flex-col items-center justify-center p-8 text-gray-500 dark:text-gray-400">
         <p className="text-lg">No tasks match the current filters</p>
         <p className="text-sm mt-2">Try adjusting your filter criteria</p>
       </div>

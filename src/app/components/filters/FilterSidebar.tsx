@@ -42,7 +42,7 @@ export default function FilterSidebar({
   const hasTopContent = topContent || showClearAll || showSmartRecommendations;
 
   return (
-    <aside className="w-full h-full max-w-2xs border border-green-4 bg-off-white flex flex-col pt-4">
+    <aside className="w-full h-full max-w-2xs border-r border-green-4 dark:border-sidebar-border bg-sidebar-bg flex flex-col pt-4">
       {/* ───── Top STATIC section ───── */}
       {showStaticTop && hasTopContent && (
         <div className="w-full flex flex-col gap-4 px-4 pb-2">
@@ -79,7 +79,7 @@ export default function FilterSidebar({
       )}
 
       {/* ───── BOTTOM SCROLL SECTION FOR FILTERS ───── */}
-      <div className="scroll-shadows w-full overflow-y-auto flex flex-col gap-4 px-4 pb-4 pt-2">
+      <div className="scroll-shadows w-full overflow-y-auto flex flex-col gap-4 px-4 pb-4 pt-2 bg-sidebar-bg">
         {children}
       </div>
     </aside>

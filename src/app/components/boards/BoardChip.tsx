@@ -28,7 +28,7 @@ export default function BoardChip({
 }: BoardChipProps) {
     return (
         <div
-            className={`${fullWidth ? "w-full " : ""}group flex items-center justify-between text-chip-info`}
+            className={`${fullWidth ? "w-full " : ""}group flex items-center justify-between text-chip-info text-dark-green-1 dark:text-dark-green-1`}
         >
             <div className="flex items-center gap-1">
                 <div

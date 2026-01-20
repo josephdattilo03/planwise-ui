@@ -13,7 +13,7 @@ import {
   ListItemText,
   Divider,
 } from "@mui/material";
-import { ReactNode, useState } from "react";
+import { ReactElement, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
@@ -35,11 +35,14 @@ import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 import { useSession, signOut } from "next-auth/react";
+import ThemeToggle from "../ThemeToggle";
+import { useTheme } from "../ThemeProvider";
+
 
 interface NavItem {
   key: string;
-  icon: ReactNode;
-  iconFilled: ReactNode;
+  icon: ReactElement;
+  iconFilled: ReactElement;
   href: string;
 }
 
@@ -83,6 +86,8 @@ export default function NavBarComponent() {
   const { data: session, status } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const { theme } = useTheme();
+
 
   // Don't render navbar if not authenticated
   if (status === "loading" || !session) {
@@ -100,7 +105,7 @@ export default function NavBarComponent() {
   return (
     <Box className="flex flex-row justify-between font-sans text-4 w-full h-fit bg-off-white py-3 px-8 border-b-2 border-green-2">
       <Image
-        src="/logo.svg"
+        src={theme === "dark" ? "/Logo-Dark.svg" : "/logo.svg"}
         alt="Planwise logo"
         width={170}
         height={43}
@@ -110,10 +115,15 @@ export default function NavBarComponent() {
         value={pathname}
         className="my-3 min-h-0 h-auto items-center"
         textColor="inherit"
-        indicatorColor="none"
+        indicatorColor="primary"
         variant="scrollable"
         scrollButtons="auto"
         aria-label="scroll here"
+        sx={{
+          "& .MuiTabs-indicator": {
+            display: "none",
+          },
+        }}
       >
         {navItems.map((item) => {
           const fullHref =
@@ -142,7 +152,7 @@ export default function NavBarComponent() {
                 borderRadius: "6px",
                 backgroundColor: selected ? "var(--Green-4)" : "transparent",
                 "&:hover": {
-                  backgroundColor: selected ? "var(--Green-4)" : "#A7C9574D",
+                  backgroundColor: selected ? "var(--Green-4)" : theme === "dark" ? "#6A9A7A4D" : "#A7C9574D",
                   color: "var(--Dark-Green-1)",
                 },
               }}
@@ -160,16 +170,16 @@ export default function NavBarComponent() {
 
         <div
           onClick={handleClick}
-          className="flex flex-row gap-2 p-2 border border-dark-green-2 bg-white rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
+          className="flex flex-row gap-2 p-2 border border-dark-green-2 bg-white dark:bg-card-bg rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-menu-item-hover transition-colors"
           aria-controls={open ? "user-menu" : undefined}
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
         >
           <div className="text-right">
-            <p className="font-medium text-dark-green-2">
+            <p className="font-medium text-dark-green-2 dark:text-dark-green-1">
               {session?.user?.name}
             </p>
-            <p className="text-sm text-gray-600">{session?.user?.email}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{session?.user?.email}</p>
           </div>
 
           {session?.user?.image && (
@@ -205,6 +215,17 @@ export default function NavBarComponent() {
               mt: 0.5,
               zIndex: 9999,
               borderRadius: "12px",
+              backgroundColor: "var(--menu-bg)",
+              border: "1px solid var(--sidebar-border)",
+              "& .MuiMenuItem-root": {
+                color: "var(--Dark-Green-1)",
+                "&:hover": {
+                  backgroundColor: "var(--menu-item-hover)",
+                },
+              },
+              "& .MuiDivider-root": {
+                borderColor: "var(--sidebar-border)",
+              },
             },
           },
         }}
@@ -215,6 +236,8 @@ export default function NavBarComponent() {
           </ListItemIcon>
           <ListItemText>Profile & Settings</ListItemText>
         </MenuItem>
+        <Divider />
+        <ThemeToggle onClose={handleClose} />
         <Divider />
         <MenuItem
           onClick={() => {

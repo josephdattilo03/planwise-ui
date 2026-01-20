@@ -13,6 +13,7 @@ import { routing } from "@/src/i18n";
 import NavBarComponent from "@/src/common/NavBar/NavBarComponent";
 import ThemeRegistry from "@/src/common/ThemeRegistry";
 import NextAuthSessionProvider from "@/src/app/providers/SessionProvider";
+import { ThemeProvider } from "@/src/common/ThemeProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -43,14 +44,16 @@ export default async function LocaleLayout({ children, params }: Props) {
       <body
         className={`${plexSans.variable} ${plexMono.variable} antialiased h-screen flex flex-col`}
       >
-        <ThemeRegistry>
-          <NextAuthSessionProvider>
-            <NextIntlClientProvider locale={locale} messages={messages}>
-              <NavBarComponent />
-              <main className="flex-1 overflow-auto font-sans">{children}</main>
-            </NextIntlClientProvider>
-          </NextAuthSessionProvider>
-        </ThemeRegistry>
+        <ThemeProvider>
+          <ThemeRegistry>
+            <NextAuthSessionProvider>
+              <NextIntlClientProvider locale={locale} messages={messages}>
+                <NavBarComponent />
+                <main className="flex-1 overflow-auto font-sans">{children}</main>
+              </NextIntlClientProvider>
+            </NextAuthSessionProvider>
+          </ThemeRegistry>
+        </ThemeProvider>
       </body>
     </html>
   );

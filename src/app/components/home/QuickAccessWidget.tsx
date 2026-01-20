@@ -8,16 +8,17 @@ export default function QuickAccessWidget() {
     <Card
       sx={{
         borderRadius: "20px",
-        border: "2px solid var(--green-3)",
-        backgroundColor: "#f7f9f3",
+        border: "1px solid var(--card-border)",
+        backgroundColor: "var(--home-quick-bg)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
-      elevation={2}
+      elevation={0}
     >
       <CardContent sx={{ p: 3 }}>
         <Typography
           variant="body2"
           sx={{
-            color: "var(--dark-green-2)",
+            color: "var(--Dark-Green-2)",
             lineHeight: 1.4,
             mb: 2,
             fontSize: 20,
@@ -35,7 +36,7 @@ export default function QuickAccessWidget() {
           sx={{
             mb: 1.5,
             fontWeight: 600,
-            color: "var(--dark-green-1)",
+            color: "var(--Dark-Green-1)",
             fontSize: "1rem",
           }}
         >
@@ -60,12 +61,13 @@ export default function QuickAccessWidget() {
                 cursor: "pointer",
                 p: 2,
                 borderRadius: 2,
-                backgroundColor: "#fff",
-                border: "1px solid rgba(0,0,0,0.08)",
+                backgroundColor: "var(--menu-bg)",
+                border: "1px solid var(--card-border)",
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
+                  boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
                   transform: "translateY(-1px)",
+                  backgroundColor: "var(--menu-item-hover)",
                 },
               }}
             >
@@ -74,7 +76,7 @@ export default function QuickAccessWidget() {
                 sx={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: "var(--dark-green-1)",
+                  color: "var(--Dark-Green-1)",
                   mb: 0.5,
                 }}
               >
@@ -82,7 +84,7 @@ export default function QuickAccessWidget() {
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ fontSize: 14, color: "var(--dark-green-2)" }}
+                sx={{ fontSize: 14, color: "var(--Dark-Green-2)" }}
               >
                 {item.description}
               </Typography>

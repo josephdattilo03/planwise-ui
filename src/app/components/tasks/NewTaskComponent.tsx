@@ -17,13 +17,11 @@ import {
   createFilterOptions,
   IconButton,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import { useTask } from "../../providers/tasks/useTask";
-import TagManagerPopover from "../tags/TagManagerPopover";
-import BoardManagerPopover from "../boards/BoardManagerPopover";
 import FormButton from "@/src/common/button/FormButton";
 import BoardChip from "../boards/BoardChip";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { Tag, TagOption } from "../../types";
 import TagChip from "../tags/TagChip";
 
@@ -79,7 +77,7 @@ export default function NewTaskComponent({
 
   const selectedBoard = boards.find((b) => b.id === newBoardId) || null;
 
-  const selectedTagOptions = tags.filter((t) => newTagIds.has(t.id));
+  const selectedTagOptions: TagOption[] = tags.filter((t) => newTagIds.has(t.id));
   const selectedTags = tags.filter((t) => newTagIds.has(t.id));
 
   /** Validate */
@@ -168,11 +166,11 @@ export default function NewTaskComponent({
   };
 
   return (
-    <aside className="w-full h-full max-w-xs border border-green-4 bg-off-white flex flex-col pt-4">
+    <aside className="w-full h-full max-w-xs border-l border-green-4 bg-sidebar-bg flex flex-col pt-4">
       {/* Header */}
       <Typography
         variant="h6"
-        className="text-section-sub-header px-4 bg-off-white pb-2"
+        className="text-section-sub-header px-4 pb-2 bg-sidebar-bg"
         sx={{
           color: "var(--Dark-Green-1)",
           textTransform: "uppercase",
@@ -272,26 +270,45 @@ export default function NewTaskComponent({
           </FormControl>
 
           {/* DUE DATE */}
-          <TextField
-            type="date"
+          <DatePicker
             label="DUE DATE"
-            value={
-              dueDate ? new Date(dueDate).toISOString().substring(0, 10) : ""
-            }
-            onChange={(e) => setDueDate(new Date(e.target.value))}
-            fullWidth
-            variant="filled"
-            color="success"
-            slotProps={{ inputLabel: { shrink: true } }}
-            sx={{
-              "& .MuiFormLabel-root": {
-                textTransform: "uppercase",
-                fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+            value={dueDate ? new Date(dueDate) : null}
+            onChange={(newValue) => {
+              if (newValue) {
+                setDueDate(newValue);
+              }
+            }}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                variant: "filled",
+                color: "success",
+                sx: {
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "var(--input-bg)",
+                    color: "var(--input-text)",
+                    "& fieldset": {
+                      borderColor: "var(--input-border)",
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "var(--Green-2)",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "var(--Green-2)",
+                    },
+                    "& .MuiInputAdornment-root .MuiIconButton-root": {
+                      color: "var(--input-text)",
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "var(--input-text)",
+                  },
+                },
               },
-              "& .MuiInputBase-input": {
-                fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+              openPickerIcon: {
+                sx: {
+                  color: "var(--input-text)",
+                },
               },
             }}
           />
@@ -369,7 +386,7 @@ export default function NewTaskComponent({
               },
             }}
           >
-            <Autocomplete
+            <Autocomplete<TagOption, true, false, true>
               multiple
               freeSolo
               selectOnFocus
@@ -415,40 +432,42 @@ export default function NewTaskComponent({
                   <li key={key} {...optionProps}>
                     <div className="group flex w-full items-center justify-between gap-2 font-sans">
                       <TagChip tag={option} />
-                      <IconButton
-                        size="small"
-                        sx={{ "& .MuiSvgIcon-root": { fontSize: 16 } }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsEditTag(option); // open edit dialog
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <MoreHorizRoundedIcon fontSize="small" />
-                      </IconButton>
+                      {!option.inputValue && option.id !== -1 && (
+                        <IconButton
+                          size="small"
+                          sx={{ "& .MuiSvgIcon-root": { fontSize: 16 } }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditTag(option); // open edit dialog
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizRoundedIcon fontSize="small" />
+                        </IconButton>
+                      )}
                     </div>
                   </li>
                 );
               }}
               onChange={(event, newValue) => {
                 // Handle “create new tag” first
-                let createdTag: Tag | null = null;
+                let createdTagId: number | null = null;
 
                 newValue.forEach((option) => {
                   if (typeof option === "string") {
                     const name = option.trim();
                     if (!name) return;
-                    createdTag = createTag({ name });
+                    createdTagId = createTag({ name }).id;
                   } else if (option.inputValue) {
                     const name = option.inputValue.trim();
                     if (!name) return;
-                    createdTag = createTag({ name });
+                    createdTagId = createTag({ name }).id;
                   }
                 });
 
-                if (createdTag) {
+                if (createdTagId !== null) {
                   // ensure newly created tag is selected
-                  toggleTag(createdTag.id);
+                  toggleTag(createdTagId);
                   return;
                 }
 
@@ -456,7 +475,7 @@ export default function NewTaskComponent({
                 const newIdSet = new Set(
                   newValue
                     .filter(
-                      (opt): opt is Tag =>
+                      (opt): opt is TagOption =>
                         typeof opt !== "string" && !opt.inputValue
                     )
                     .map((t) => t.id)
@@ -553,11 +572,10 @@ export default function NewTaskComponent({
         <div className="flex gap-4">
           <Button
             type="submit"
-            className={`w-full rounded-full py-2 text-small-header transition ${
-              submitting
-                ? "bg-gray-400 text-gray-200"
-                : "bg-green-1 text-white hover:bg-green-2"
-            }`}
+            className={`w-full rounded-full py-2 text-small-header transition ${submitting
+              ? "bg-gray-400 text-gray-200"
+              : "bg-green-1 text-white hover:bg-green-2"
+              }`}
             disabled={submitting}
           >
             {submitting

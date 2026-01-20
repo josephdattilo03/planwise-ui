@@ -101,14 +101,14 @@ export default function FolderTreeDisplay({
 
   if (!workspace) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-gray-500">Loading workspace...</div>
+      <div className="flex h-screen items-center justify-center bg-sidebar-bg">
+        <div className="text-gray-500 dark:text-gray-400">Loading workspace...</div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen">
+    <div className="h-screen bg-sidebar-bg">
       <TreeItem
         node={workspace}
         expandedFolders={expandedFolders}

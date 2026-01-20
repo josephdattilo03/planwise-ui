@@ -73,7 +73,7 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-gray-500">Loading board...</div>
+        <div className="text-gray-500 dark:text-gray-400">Loading board...</div>
       </div>
     );
   }

@@ -106,8 +106,15 @@ export default function Home() {
 
   // Get recent tasks (next 5 upcoming tasks)
   const recentTasks = tasks
-    .filter(task => task.dueDate >= new Date())
-    .sort((a, b) => a.dueDate - b.dueDate)
+    .filter(task => {
+      const dueDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
+      return dueDate >= new Date();
+    })
+    .sort((a, b) => {
+      const dateA = a.dueDate instanceof Date ? a.dueDate : new Date(a.dueDate);
+      const dateB = b.dueDate instanceof Date ? b.dueDate : new Date(b.dueDate);
+      return dateA.getTime() - dateB.getTime();
+    })
     .slice(0, 5);
 
   // Get recent notes (last 3 edited)
@@ -134,7 +141,7 @@ export default function Home() {
       const newTask = createTask({
         name: newTaskName.trim(),
         board: selectedBoard,
-        dueDate: new Date(Date.now() + 86400000), 
+        dueDate: new Date(Date.now() + 86400000),
         priorityLevel: selectedPriority,
       });
 
@@ -226,7 +233,7 @@ export default function Home() {
     <Box
       sx={{
         p: { xs: 2, sm: 3, md: 4 },
-        backgroundColor: "var(--off-white)",
+        backgroundColor: "var(--Off-White)",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",

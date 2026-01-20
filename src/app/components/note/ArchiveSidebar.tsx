@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import Drawer from '@mui/material/Drawer';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import ArchivedNoteChip from './ArchivedNoteChip';
+import * as React from "react";
+import Drawer from "@mui/material/Drawer";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ArchivedNoteChip from "./ArchivedNoteChip";
 
-const DRAWER_WIDTH = 280;
+const DRAWER_WIDTH = 288;
 
 export default function ArchiveSidebar({
   archivedNotes,
@@ -22,23 +22,27 @@ export default function ArchiveSidebar({
   toggleSidebar: () => void;
 }) {
   return (
-    <>
+    <aside className="w-full h-full max-w-2xs relative">
       <Drawer
         variant="persistent"
         anchor="left"
         open={isOpen}
         ModalProps={{ keepMounted: true }}
-        PaperProps={{
-          sx: {
-            width: DRAWER_WIDTH,
-            height: 'calc(100vh - 78.57px)',
-            top: '78.57px',
-            borderRight: '1px solid',
-            borderColor: 'rgba(0,0,0,0.12)',
-            bgcolor: 'background.paper',
-            overflowX: 'hidden',
+        sx={{
+          height: "100%",
+          "& .MuiDrawer-paper": {
+            position: "relative",
+            height: "100%",
+            borderRight: "1px solid",
+            borderColor: "rgba(0,0,0,0.12)",
+            bgcolor: "background.paper",
+            overflowX: "hidden",
           },
-          className: 'border-green-4 bg-off-white',
+        }}
+        slotProps={{
+          paper: {
+            className: "border-green-4 dark:border-sidebar-border bg-sidebar-bg w-full max-w-2xs",
+          },
         }}
       >
         <Box className="flex flex-col pt-4 h-full">
@@ -47,7 +51,7 @@ export default function ArchiveSidebar({
           </p>
 
           {archivedNotes.length === 0 ? (
-            <p className="text-body text-gray-500 px-6">No archived notes</p>
+            <p className="text-body text-gray-500 dark:text-gray-400 px-6">No archived notes</p>
           ) : (
             <Box className="flex flex-col">
               {archivedNotes.map((note) => (
@@ -65,26 +69,26 @@ export default function ArchiveSidebar({
 
       <Box
         sx={{
-          position: 'fixed',
-          top: '50%',
-          transform: 'translateY(-50%)',
+          position: "fixed",
+          top: "50%",
+          transform: "translateY(-50%)",
           left: isOpen ? DRAWER_WIDTH : 0,
           zIndex: (theme) => theme.zIndex.drawer + 2,
           transition: (theme) =>
-            theme.transitions.create('left', {
+            theme.transitions.create("left", {
               duration: theme.transitions.duration.shortest,
             }),
         }}
-        className="border border-green-4 bg-off-white border-l-0 rounded-r-lg shadow-md"
+        className="border border-green-4 dark:border-sidebar-border bg-sidebar-bg border-l-0 rounded-r-lg shadow-md"
       >
         <IconButton
           onClick={toggleSidebar}
           sx={{ px: 1.25, py: 1 }}
-          aria-label={isOpen ? 'Close archive sidebar' : 'Open archive sidebar'}
+          aria-label={isOpen ? "Close archive sidebar" : "Open archive sidebar"}
         >
           {isOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
         </IconButton>
       </Box>
-    </>
+    </aside>
   );
 }

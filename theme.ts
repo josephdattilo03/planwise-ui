@@ -5,9 +5,4 @@ export const theme = createTheme({
     fontFamily: "var(--font-plex-sans), sans-serif",
     fontSize: 12,
   },
-  palette: {
-    success: {
-      main: "#386641ff",
-    },
-  },
 });

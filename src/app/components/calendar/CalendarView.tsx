@@ -235,8 +235,8 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
       sx={{
         width: '100%',
         maxHeight: 'calc(100vh - 100px)',
-        backgroundColor: 'var(--off-white)',
-        border: '1px solid var(--green-3)',
+        backgroundColor: 'var(--Off-White)',
+        border: '1px solid var(--Green-3)',
         borderRadius: '16px',
         p: 4,
         overflowY: 'auto',
@@ -247,7 +247,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
         <Typography
           variant="h6"
           sx={{
-            color: 'var(--dark-green-1)',
+            color: 'var(--Dark-Green-1)',
             textTransform: 'uppercase',
             fontSize: '1.25rem',
             fontWeight: 600,
@@ -276,7 +276,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
                 minWidth: 'auto',
                 px: 1,
                 py: 0.5,
-                color: 'var(--dark-green-1)',
+                color: 'var(--Dark-Green-1)',
                 fontSize: '1rem',
               }}
             >
@@ -300,7 +300,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
                 minWidth: 'auto',
                 px: 1,
                 py: 0.5,
-                color: 'var(--dark-green-1)',
+                color: 'var(--Dark-Green-1)',
                 fontSize: '1rem',
               }}
             >
@@ -314,9 +314,9 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
               variant={view === "day" ? "contained" : "outlined"}
               size="small"
               sx={{
-                backgroundColor: view === "day" ? 'var(--green-2)' : 'var(--off-white)',
-                color: view === "day" ? 'var(--off-white)' : 'var(--dark-green-1)',
-                borderColor: 'var(--green-3)',
+                backgroundColor: view === "day" ? 'var(--Green-2)' : 'var(--Off-White)',
+                color: view === "day" ? 'var(--Off-White)' : 'var(--Dark-Green-1)',
+                borderColor: 'var(--Green-3)',
                 fontSize: '1rem',
               }}
             >
@@ -327,9 +327,9 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
               variant={view === "week" ? "contained" : "outlined"}
               size="small"
               sx={{
-                backgroundColor: view === "week" ? 'var(--green-2)' : 'var(--off-white)',
-                color: view === "week" ? 'var(--off-white)' : 'var(--dark-green-1)',
-                borderColor: 'var(--green-3)',
+                backgroundColor: view === "week" ? 'var(--Green-2)' : 'var(--Off-White)',
+                color: view === "week" ? 'var(--Off-White)' : 'var(--Dark-Green-1)',
+                borderColor: 'var(--Green-3)',
                 fontSize: '1rem',
               }}
             >
@@ -340,9 +340,9 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
               variant={view === "month" ? "contained" : "outlined"}
               size="small"
               sx={{
-                backgroundColor: view === "month" ? 'var(--green-2)' : 'var(--off-white)',
-                color: view === "month" ? 'var(--off-white)' : 'var(--dark-green-1)',
-                borderColor: 'var(--green-3)',
+                backgroundColor: view === "month" ? 'var(--Green-2)' : 'var(--Off-White)',
+                color: view === "month" ? 'var(--Off-White)' : 'var(--Dark-Green-1)',
+                borderColor: 'var(--Green-3)',
                 fontSize: '1rem',
               }}
             >
@@ -414,7 +414,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
       >
         <DialogTitle
           sx={{
-            color: 'var(--dark-green-1)',
+            color: 'var(--Dark-Green-1)',
             textAlign: 'center',
             fontWeight: 600,
           }}
@@ -451,7 +451,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
           <Button
             onClick={() => setSelectedEvent(null)}
             variant="outlined"
-            sx={{ color: 'var(--dark-green-1)', borderColor: 'var(--green-3)' }}
+            sx={{ color: 'var(--Dark-Green-1)', borderColor: 'var(--Green-3)' }}
           >
             Close
           </Button>
@@ -467,7 +467,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
       >
         <DialogTitle
           sx={{
-            color: 'var(--dark-green-1)',
+            color: 'var(--Dark-Green-1)',
             textAlign: 'center',
             fontWeight: 600,
           }}
@@ -527,7 +527,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
           <Button
             onClick={() => setShowAddEvent(false)}
             variant="outlined"
-            sx={{ color: 'var(--dark-green-1)', borderColor: 'var(--green-3)' }}
+            sx={{ color: 'var(--Dark-Green-1)', borderColor: 'var(--Green-3)' }}
           >
             Cancel
           </Button>
@@ -536,10 +536,10 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
             variant="contained"
             disabled={!newEvent.title.trim()}
             sx={{
-              backgroundColor: 'var(--green-3)',
-              color: 'var(--dark-green-1)',
+              backgroundColor: 'var(--Green-3)',
+              color: 'var(--Dark-Green-1)',
               '&:hover': {
-                backgroundColor: 'var(--green-4)',
+                backgroundColor: 'var(--Green-4)',
               },
             }}
           >

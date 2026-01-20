@@ -45,13 +45,14 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
     <Card
       sx={{
         borderRadius: "20px",
-        border: "2px solid var(--green-3)",
-        backgroundColor: "#fdf5e6",
+        border: "1px solid var(--card-border)",
+        backgroundColor: "var(--home-tasks-bg)",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
-      elevation={2}
+      elevation={0}
       onClick={() => router.push("/tasks")}
     >
       <CardContent
@@ -69,7 +70,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
               fontSize: 16,
               fontWeight: "bold",
               mb: 2,
-              color: "var(--dark-green-1)",
+              color: "var(--Dark-Green-1)",
             }}
           >
             Your Tasks
@@ -103,12 +104,12 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                     textAlign: "center",
                     p: 1,
                     borderRadius: 2,
-                    backgroundColor: isToday ? "var(--green-2)" : "#fff",
-                    color: "black",
+                    backgroundColor: isToday ? "var(--Green-2)" : "var(--menu-bg)",
+                    color: isToday ? "white" : "var(--foreground)",
                     fontSize: 14,
                     fontWeight: isToday ? 700 : 500,
                     boxShadow: "none",
-                    border: "1px solid rgba(0,0,0,0.06)",
+                    border: "1px solid var(--card-border)",
                     position: "relative",
                   }}
                 >
@@ -122,7 +123,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                         width: 20,
                         height: 20,
                         borderRadius: "50%",
-                        backgroundColor: "var(--green-2)",
+                        backgroundColor: "var(--Green-2)",
                         color: "white",
                         fontSize: 12,
                         fontWeight: 700,
@@ -159,15 +160,16 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                   sx={{
                     p: 1.5,
                     borderRadius: 3,
-                    backgroundColor: "#fff",
-                    border: "1px solid rgba(0,0,0,0.08)",
+                    backgroundColor: "var(--menu-bg)",
+                    border: "1px solid var(--card-border)",
                     display: "flex",
                     flexDirection: "column",
                     gap: 0.5,
                     transition: "all 0.2s ease",
                     "&:hover": {
-                      boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
+                      boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
                       transform: "translateY(-2px)",
+                      backgroundColor: "var(--menu-item-hover)",
                     },
                   }}
                 >
@@ -183,13 +185,13 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                       sx={{
                         fontSize: 14,
                         fontWeight: 600,
-                        color: "var(--dark-green-1)",
+                        color: "var(--Dark-Green-1)",
                       }}
                     >
                       {task.name}
                     </Typography>
                     <TaskIcon
-                      sx={{ fontSize: 14, color: "var(--green-2)" }}
+                      sx={{ fontSize: 14, color: "var(--Green-2)" }}
                     />
                   </Box>
                   <Box
@@ -210,7 +212,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                         variant="caption"
                         sx={{
                           fontWeight: 500,
-                          color: "var(--dark-green-2)",
+                          color: "var(--Dark-Green-2)",
                           fontSize: 11,
                         }}
                       >
@@ -218,7 +220,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                       </Typography>
                       <Typography
                         variant="caption"
-                        sx={{ color: "var(--dark-green-2)" }}
+                        sx={{ color: "var(--Dark-Green-2)" }}
                       >
                         Due {task.dueDate.toLocaleDateString()}
                       </Typography>
@@ -261,7 +263,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
               <Typography
                 variant="body2"
                 sx={{
-                  color: "var(--dark-green-2)",
+                  color: "var(--Dark-Green-2)",
                   textAlign: "center",
                   py: 4,
                   fontStyle: "italic"
@@ -296,14 +298,19 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                 sx={{
                   borderRadius: 2,
                   fontSize: "12px",
+                  backgroundColor: "var(--input-bg)",
+                  color: "var(--input-text)",
                   "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(0,0,0,0.08)",
+                    borderColor: "var(--input-border)",
                   },
                   "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(0,0,0,0.15)",
+                    borderColor: "var(--Green-2)",
                   },
                   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "var(--green-2)",
+                    borderColor: "var(--Green-2)",
+                  },
+                  "& .MuiSelect-icon": {
+                    color: "var(--input-text)",
                   },
                 }}
               >
@@ -324,14 +331,19 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                 sx={{
                   borderRadius: 2,
                   fontSize: "12px",
+                  backgroundColor: "var(--input-bg)",
+                  color: "var(--input-text)",
                   "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(0,0,0,0.08)",
+                    borderColor: "var(--input-border)",
                   },
                   "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(0,0,0,0.15)",
+                    borderColor: "var(--Green-2)",
                   },
                   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "var(--green-2)",
+                    borderColor: "var(--Green-2)",
+                  },
+                  "& .MuiSelect-icon": {
+                    color: "var(--input-text)",
                   },
                 }}
               >
@@ -370,16 +382,20 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 999,
-                  backgroundColor: "#fff",
+                  backgroundColor: "var(--input-bg)",
+                  color: "var(--input-text)",
                   "& fieldset": {
-                    borderColor: "rgba(0,0,0,0.08)",
+                    borderColor: "var(--input-border)",
                   },
                   "&:hover fieldset": {
-                    borderColor: "rgba(0,0,0,0.15)",
+                    borderColor: "var(--Green-2)",
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: "var(--green-2)",
+                    borderColor: "var(--Green-2)",
                   },
+                },
+                "& .MuiInputBase-input": {
+                  color: "var(--input-text)",
                 },
               }}
             />
@@ -393,14 +409,14 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
               sx={{
                 textTransform: "none",
                 borderRadius: 999,
-                backgroundColor: "var(--green-2)",
+                backgroundColor: "var(--Green-2)",
                 px: 2.5,
                 py: 1.5,
                 fontSize: 13,
                 fontWeight: 600,
                 color: "black",
                 "&:hover": {
-                  backgroundColor: "var(--green-3)"
+                  backgroundColor: "var(--Green-3)"
                 },
                 "&:disabled": {
                   backgroundColor: "rgba(0,0,0,0.12)",

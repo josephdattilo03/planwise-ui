@@ -79,15 +79,8 @@ export default function TasksPage() {
           <TaskFilterComponent />
 
           <div className="flex flex-col overflow-y-scroll w-full px-6 py-4">
-            {/* Create button */}
-            <FormButton
-              onClick={handleCreateTask}
-              text={"Add"}
-              variant="confirm"
-            />
-
             {/* Task list - now has access to FiltersContext */}
-            <div className="mt-4 space-y-2">
+            <div className="space-y-2">
               <TaskList taskList={tasks} onSelectTask={handleSelectTask} />
             </div>
           </div>

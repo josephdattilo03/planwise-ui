@@ -39,18 +39,19 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
     <Card
       sx={{
         borderRadius: "20px",
-        border: "2px solid var(--green-3)",
-        backgroundColor: "#ffeef6",
+        border: "1px solid var(--card-border)",
+        backgroundColor: "var(--home-notes-bg)",
         cursor: "pointer",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
-      elevation={2}
+      elevation={0}
       onClick={() => router.push("/notes")}
     >
       <CardContent sx={{ p: 3 }}>
         <Typography
           variant="overline"
           sx={{
-            color: "var(--dark-green-2)",
+            color: "var(--Dark-Green-2)",
             opacity: 0.8,
             fontSize: 10,
             fontWeight: 600,
@@ -66,7 +67,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
 
         <Typography
           variant="h6"
-          sx={{ fontWeight: "bold", mb: 1.5, color: "var(--dark-green-1)", fontSize: "1.1rem" }}
+          sx={{ fontWeight: "bold", mb: 1.5, color: "var(--Dark-Green-1)", fontSize: "1.1rem" }}
         >
           {mainNote.title}
         </Typography>
@@ -75,7 +76,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
           variant="body2"
           sx={{
             fontSize: 13,
-            color: "var(--dark-green-2)",
+            color: "var(--Dark-Green-2)",
             mb: 2,
             lineHeight: 1.4,
           }}
@@ -102,9 +103,18 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
               mb: 0.5,
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                "& fieldset": { borderColor: "rgba(0,0,0,0.08)" },
-                "&:hover fieldset": { borderColor: "rgba(0,0,0,0.15)" },
-                "&.Mui-focused fieldset": { borderColor: "var(--green-2)" },
+                backgroundColor: "var(--input-bg)",
+                color: "var(--input-text)",
+                "& fieldset": {
+                  borderColor: "var(--input-border)"
+                },
+                "&:hover fieldset": {
+                  borderColor: "var(--Green-2)"
+                },
+                "&.Mui-focused fieldset": { borderColor: "var(--Green-2)" },
+              },
+              "& .MuiInputBase-input": {
+                color: "var(--input-text)",
               },
             }}
           />
@@ -142,9 +152,10 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
               label={note.title}
               size="small"
               sx={{
-                backgroundColor: "#fff",
+                backgroundColor: "var(--menu-bg)",
+                color: "var(--foreground)",
                 borderRadius: "20px",
-                border: "1px solid rgba(0,0,0,0.08)",
+                border: "1px solid var(--card-border)",
                 fontSize: 11,
                 fontWeight: 500,
                 py: 0.5,
@@ -154,7 +165,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
             <Typography
               variant="caption"
               sx={{
-                color: "var(--dark-green-2)",
+                color: "var(--Dark-Green-2)",
                 fontStyle: "italic",
                 fontSize: 11
               }}

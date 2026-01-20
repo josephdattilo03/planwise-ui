@@ -9,17 +9,18 @@ export default function ScheduleAlertWidget() {
       sx={{
         mt: 2,
         borderRadius: "20px",
-        background: "linear-gradient(135deg, #ffe1c4, #ffd0bf)",
-        border: "2px solid rgba(122, 58, 0, 0.2)",
+        background: "linear-gradient(135deg, var(--home-alert-bg-1), var(--home-alert-bg-2))",
+        border: "1px solid var(--home-alert-border)",
         maxHeight: "200px",
         overflow: "hidden",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
-      elevation={3}
+      elevation={0}
     >
       <CardContent sx={{ p: 3, pb: 2 }}>
         <Typography
           variant="h6"
-          sx={{ fontWeight: 700, color: "#7a3a00", mb: 1, fontSize: "1rem" }}
+          sx={{ fontWeight: 700, color: "var(--home-alert-title)", mb: 1, fontSize: "1rem" }}
         >
           ⚠️ Schedule Alert
         </Typography>
@@ -28,7 +29,7 @@ export default function ScheduleAlertWidget() {
           variant="body2"
           sx={{
             mb: 2,
-            color: "#6b3a17",
+            color: "var(--home-alert-text)",
             lineHeight: 1.4,
             fontSize: "0.875rem",
           }}
@@ -42,11 +43,11 @@ export default function ScheduleAlertWidget() {
           sx={{
             textTransform: "none",
             borderRadius: 999,
-            backgroundColor: "#e65c2c",
+            backgroundColor: "var(--home-alert-button)",
             py: 1.5,
             fontSize: 13,
             fontWeight: 600,
-            "&:hover": { backgroundColor: "#d24f21" },
+            "&:hover": { backgroundColor: "var(--home-alert-button-hover)" },
           }}
           onClick={() => router.push("/calendar")}
         >

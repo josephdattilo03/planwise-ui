@@ -8,7 +8,7 @@ import BoardDisplayPage from "../../components/boards/BoardDisplayPage";
 import { createBoardNode } from "../../services/folders/folderService";
 import { createBoard } from "../../services/boards/boardService";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import FormButton from "@/src/common/button/FormButton";
+import { Button } from "@mui/material";
 import BoardCreateDialog from "../../components/boards/BoardCreateDialog";
 
 export default function FoldersPage() {
@@ -44,13 +44,13 @@ export default function FoldersPage() {
   };
 
   const addBoardButton = (
-    <button
+    <Button
       onClick={() => setCreateDialogOpen(true)}
-      className="flex items-center justify-center gap-1.5 py-2 px-3 bg-white rounded-lg border border-dashed border-green-3 text-dark-green-2 text-small-header hover:bg-green-4/30 hover:border-green-2 transition-colors cursor-pointer"
+      className="flex items-center justify-center gap-1.5 py-2 font-sans rounded-full text-small-header border border-beige text-dark-green-1 bg-off-white hover:bg-beige transition"
     >
       <AddRoundedIcon className="w-4 h-4" />
-      <span>New</span>
-    </button>
+      <span>Create New Board</span>
+    </Button>
   );
 
   return (
@@ -73,7 +73,7 @@ export default function FoldersPage() {
         {selectedBoardId ? (
           <BoardDisplayPage boardId={selectedBoardId} />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
             Select a board from the sidebar to view its tasks
           </div>
         )}

@@ -1,6 +1,9 @@
 @layer theme, base, mui, components, utilities;
 @import "tailwindcss";
 
+/* Tailwind v4: make `dark:` respond to the `.dark` class (we toggle it on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #222422ff;
@@ -63,6 +66,32 @@
   --task-tag-lilac-button: #efe6f1ff;
   --task-tag-lilac-stroke: #dfcae1ff;
 
+  /* UI component colors (light mode defaults) */
+  --sidebar-bg: var(--Off-White);
+  --sidebar-border: var(--Green-4);
+  --menu-bg: #ffffff;
+  --menu-item-hover: var(--Green-4);
+  --input-bg: #ffffff;
+  --input-border: var(--Green-2);
+  --input-text: var(--foreground);
+  --card-bg: #ffffff;
+  --card-border: var(--task-stroke);
+  --tree-line: #e5e7eb;
+  --tree-hover: #f3f4f6;
+
+  /* Home widgets */
+  --home-quick-bg: #f7f9f3;
+  --home-tasks-bg: #fdf5e6;
+  --home-calendar-bg: #fffdf7;
+  --home-notes-bg: #ffeef6;
+  --home-alert-bg-1: #ffe1c4;
+  --home-alert-bg-2: #ffd0bf;
+  --home-alert-border: rgba(122, 58, 0, 0.15);
+  --home-alert-title: #7a3a00;
+  --home-alert-text: #6b3a17;
+  --home-alert-button: #e65c2c;
+  --home-alert-button-hover: #d24f21;
+
   /* Text styles: Notes */
   --note-body-font-size: 16px;
   --note-body-font-weight: 400;
@@ -107,8 +136,6 @@
   --text-small-header-font-size: 14px;
   --text-small-header-font-weight: 600;
 
-  --Icon-Filled: Filled;
-  --Icon-Outlined: Outlined;
 }
 
 @theme inline {
@@ -171,7 +198,8 @@
 
   --color-task-due-button: var(--task-due-button);
   --color-task-due-stroke: var(--task-due-stroke);
-  --color-task-due-text: var(--task-due-text);
+  --color-task-date-almost-due-text: var(--task-date-almost-due-text);
+  --color-task-date-due-text: var(--task-date-due-text);
 
   --color-task-priority-button: var(--task-priority-button);
   --color-task-priority-stroke: var(--task-priority-stroke);
@@ -193,48 +221,33 @@
   --color-task-tag-lilac-button: var(--task-tag-lilac-button);
   --color-task-tag-lilac-stroke: var(--task-tag-lilac-stroke);
 
-  /* Font sizes */
-  --text-note-body: var(--note-body-font-size);
-  --text-note-date: var(--note-date-font-size);
-  --text-note-link: var(--note-link-font-size);
-  --text-note-title: var(--note-title-font-size);
-
-  --text-body: var(--text-body-font-size);
-  --text-button: var(--text-button-font-size);
-  --text-chip-info: var(--text-chip-info-font-size);
-  --text-page-title: var(--text-page-title-font-size);
-  --text-section-header: var(--text-section-header-font-size);
-  --text-section-sub-header: var(--text-section-sub-header-font-size);
-  --text-small-header: var(--text-small-header-font-size);
-
-  /* Font weights */
-  --font-weight-note-body: var(--note-body-font-weight);
-  --font-weight-note-date: var(--note-date-font-weight);
-  --font-weight-note-link: var(--note-link-font-weight);
-  --font-weight-note-title: var(--note-title-font-weight);
-
-  --font-weight-text-body: var(--text-body-font-weight);
-  --font-weight-text-button: var(--text-button-font-weight);
-  --font-weight-text-chip-info: var(--text-chip-info-font-weight);
-  --font-weight-text-page-title: var(--text-page-title-font-weight);
-  --font-weight-text-section-header: var(--text-section-header-font-weight);
-  --font-weight-text-section-sub-header: var(
-    --text-section-sub-header-font-weight
-  );
-  --font-weight-text-small-header: var(--text-small-header-font-weight);
-
-  /* Letter spacing */
-  --tracking-note-body: var(--note-body-letter-spacing);
-  --tracking-note-date: var(--note-date-letter-spacing);
-  --tracking-note-link: var(--note-link-letter-spacing);
-  --tracking-note-title: var(--note-title-letter-spacing);
-  --tracking-text-section-header: var(--text-section-header-letter-spacing);
-  --tracking-text-section-sub-header: var(
-    --text-section-sub-header-letter-spacing
-  );
+  /* UI tokens (swap automatically via `.dark` overrides) */
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-menu-bg: var(--menu-bg);
+  --color-menu-item-hover: var(--menu-item-hover);
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-input-text: var(--input-text);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-tree-line: var(--tree-line);
+  --color-tree-hover: var(--tree-hover);
+  --color-home-quick-bg: var(--home-quick-bg);
+  --color-home-tasks-bg: var(--home-tasks-bg);
+  --color-home-calendar-bg: var(--home-calendar-bg);
+  --color-home-notes-bg: var(--home-notes-bg);
+  --color-home-alert-bg-1: var(--home-alert-bg-1);
+  --color-home-alert-bg-2: var(--home-alert-bg-2);
+  --color-home-alert-border: var(--home-alert-border);
+  --color-home-alert-title: var(--home-alert-title);
+  --color-home-alert-text: var(--home-alert-text);
+  --color-home-alert-button: var(--home-alert-button);
+  --color-home-alert-button-hover: var(--home-alert-button-hover);
 }
 
 @layer utilities {
+
   /* Notes */
   .note-body {
     font-family: var(--font-plex-mono);
@@ -242,18 +255,21 @@
     font-weight: var(--note-body-font-weight);
     letter-spacing: var(--note-body-letter-spacing);
   }
+
   .note-date {
     font-family: var(--font-plex-mono);
     font-size: var(--note-date-font-size);
     font-weight: var(--note-date-font-weight);
     letter-spacing: var(--note-date-letter-spacing);
   }
+
   .note-link {
     font-family: var(--font-plex-mono);
     font-size: var(--note-link-font-size);
     font-weight: var(--note-link-font-weight);
     letter-spacing: var(--note-link-letter-spacing);
   }
+
   .note-title {
     font-family: var(--font-plex-mono);
     font-size: var(--note-title-font-size);
@@ -266,32 +282,39 @@
     font-size: var(--text-body-font-size);
     font-weight: var(--text-body-font-weight);
   }
+
   .text-button {
     font-size: var(--text-button-font-size);
     font-weight: var(--text-button-font-weight);
   }
+
   .text-chip-info {
     font-size: var(--text-chip-info-font-size);
     font-weight: var(--text-chip-info-font-weight);
   }
+
   .text-page-title {
     font-size: var(--text-page-title-font-size);
     font-weight: var(--text-page-title-font-weight);
   }
+
   .text-section-header {
     font-size: var(--text-section-header-font-size);
     font-weight: var(--text-section-header-font-weight);
     letter-spacing: var(--text-section-header-letter-spacing);
   }
+
   .text-section-sub-header {
     font-size: var(--text-section-sub-header-font-size);
     font-weight: var(--text-section-sub-header-font-weight);
     letter-spacing: var(--text-section-sub-header-letter-spacing);
   }
+
   .text-small-header {
     font-size: var(--text-small-header-font-size);
     font-weight: var(--text-small-header-font-weight);
   }
+
   .text-label {
     font-size: var(--text-label-font-size);
     font-weight: var(--text-label-font-weight);
@@ -303,25 +326,15 @@
 
   background:
     /* Shadow Cover TOP */
-    linear-gradient(var(--color-off-white) 30%, rgba(255, 255, 255, 0)) center
-      top,
+    linear-gradient(var(--color-sidebar-bg) 30%, rgba(255, 255, 255, 0)) center top,
     /* Shadow Cover BOTTOM */
-      linear-gradient(rgba(255, 255, 255, 0), var(--color-off-white) 70%) center
-      bottom,
+    linear-gradient(rgba(255, 255, 255, 0), var(--color-sidebar-bg) 70%) center bottom,
     /* Shadow TOP */
-      radial-gradient(
-        farthest-side at 50% 0,
-        rgb(0, 0, 0, 0.2),
-        rgba(0, 0, 0, 0)
-      )
-      center top,
+    radial-gradient(farthest-side at 50% 0, rgb(0, 0, 0, 0.2), rgba(0, 0, 0, 0)) center top,
     /* Shadow BOTTOM */
-      radial-gradient(
-        farthest-side at 50% 100%,
-        rgba(0, 0, 0, 0.2),
-        rgba(0, 0, 0, 0)
-      )
-      center bottom;
+    radial-gradient(farthest-side at 50% 100%,
+      rgba(0, 0, 0, 0.2),
+      rgba(0, 0, 0, 0)) center bottom;
 
   background-repeat: no-repeat;
   background-size:
@@ -332,13 +345,145 @@
   background-attachment: local, local, scroll, scroll;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* --background: #0a0a0a;
-    --foreground: #ededed; */
+.dark .scroll-shadows {
+  z-index: 999;
+  background:
+    /* Shadow Cover TOP */
+    linear-gradient(var(--color-sidebar-bg) 30%, rgba(26, 26, 26, 0)) center top,
+    /* Shadow Cover BOTTOM */
+    linear-gradient(rgba(26, 26, 26, 0), var(--color-sidebar-bg) 70%) center bottom,
+    /* Shadow TOP */
+    radial-gradient(farthest-side at 50% 0, rgb(0, 0, 0, 0.4), rgba(0, 0, 0, 0)) center top,
+    /* Shadow BOTTOM */
+    radial-gradient(farthest-side at 50% 100%,
+      rgba(0, 0, 0, 0.4),
+      rgba(0, 0, 0, 0)) center bottom;
+  background-repeat: no-repeat;
+  background-size:
+    100% 40px,
+    100% 40px,
+    100% 14px,
+    100% 14px;
+  background-attachment: local, local, scroll, scroll;
+}
 
-    /* TODO: add this logic when we implement dark mode */
-  }
+
+/* Dark mode color scheme - cohesive dark theme */
+.dark {
+  /* Base colors - dark charcoal background with light text */
+  --background: #1a1d1f;
+  --foreground: #e8eae8;
+
+  /* Greens - brighter and more vibrant for dark mode visibility */
+  --Green-1: #4a7a5a;
+  --Green-2: #5a8a6a;
+  --Green-3: #6a9a7a;
+  --Green-4: #6a8a75;
+
+  /* Dark Red and Red - adjusted for dark mode */
+  --Dark-Red: #4a1a1f;
+  --Red: #e85a5d;
+
+  /* Background colors - dark variants with subtle warmth */
+  --Beige: #5c4e3e;
+  --Off-White: #252825;
+
+  /* Dark Greens - used for text in dark mode */
+  --Dark-Green-1: #e8eae8;
+  --Dark-Green-2: #b8c5ba;
+
+  /* Accent colors - darker backgrounds with good contrast */
+  --Pink: #3d2528;
+  --Blue: #252d35;
+  --Cream: #3d3225;
+  --Sky-Blue: #6a8ac8;
+  --Lilac: #5a4a6a;
+  --Orange: #d4943a;
+
+  /* Pastel colors - darker, more saturated variants for dark mode */
+  --Pastel-Red: #4a2d2d;
+  --Pastel-Orange: #4a3a2d;
+  --Pastel-Yellow: #4a453a;
+  --Pastel-Green: #2d3a2d;
+  --Pastel-Cyan: #2d3a4a;
+  --Pastel-Blue: #2d3a5a;
+  --Pastel-Indigo: #3a2d5a;
+  --Pastel-Violet: #4a2d4a;
+  --Pastel-Coral: #4a3530;
+  --Pastel-Rose: #4a2d30;
+
+  /* Task colors - dark mode optimized */
+  --task-stroke: #3a3d3f;
+
+  /* Task status colors - dark backgrounds with bright text */
+  --task-status-to-do-button: #1e2a3a;
+  --task-status-to-do-stroke: #3a5a7a;
+  --task-status-to-do-text: #7aa5ff;
+
+  --task-status-in-prog-button: #3a3520;
+  --task-status-in-prog-stroke: #5a6a3a;
+  --task-status-in-prog-text: #ffd85a;
+
+  --task-status-done-button: #1e3a2a;
+  --task-status-done-stroke: #3a6a4a;
+  --task-status-done-text: #7aff9a;
+
+  --task-status-pending-button: #3a2520;
+  --task-status-pending-stroke: #5a3a2a;
+  --task-status-pending-text: #ff9a5a;
+
+  --task-due-button: #3a2d20;
+  --task-due-stroke: #5a4a2a;
+  --task-date-almost-due-text: #ff9a5a;
+  --task-date-due-text: #b0b0b0;
+
+  --task-priority-button: #3a2020;
+  --task-priority-stroke: #5a2a2a;
+  --task-priority-text: #ff6a6a;
+
+  --task-inactive-button: #2a2d2f;
+  --task-inactive-stroke: #3a3d3f;
+
+  /* Task tag colors - vibrant for dark mode */
+  --task-tag-purple-text: #c88aff;
+  --task-tag-purple-stroke: #5a3a7a;
+  --task-tag-purple-button: #2a1a3a;
+
+  --task-tag-blue-text: #6ac8ff;
+  --task-tag-blue-stroke: #2a5a7a;
+  --task-tag-blue-button: #1a2a3a;
+
+  --task-tag-lilac-text: #d88aff;
+  --task-tag-lilac-button: #2a1a3a;
+  --task-tag-lilac-stroke: #5a3a6a;
+
+  /* New dark mode specific variables for UI components */
+  --sidebar-bg: #1f2224;
+  --sidebar-border: #2d3032;
+  --menu-bg: #252825;
+  --menu-item-hover: #2d3530;
+  --input-bg: #252825;
+  --input-border: #3a3d3f;
+  --input-text: #e8eae8;
+  --card-bg: #252825;
+  --card-border: #2d3032;
+  --tree-line: #3a3d3f;
+  --tree-hover: #2d3032;
+
+  /* Home widgets */
+  --home-quick-bg: var(--card-bg);
+  --home-tasks-bg: var(--card-bg);
+  --home-calendar-bg: var(--card-bg);
+  --home-notes-bg: var(--card-bg);
+  
+  /* Alert widget - darker orange/red tones for dark mode */
+  --home-alert-bg-1: #3a2a1f;
+  --home-alert-bg-2: #4a3525;
+  --home-alert-border: rgba(255, 140, 80, 0.2);
+  --home-alert-title: #ff9966;
+  --home-alert-text: #e8b899;
+  --home-alert-button: #ff6633;
+  --home-alert-button-hover: #ff7744;
 }
 
 body {
