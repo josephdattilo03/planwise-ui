@@ -42,8 +42,11 @@ import {
   CalendarWidget,
   NotesWidget,
 } from "../components/home";
+import { useTheme } from "@/src/common/ThemeProvider";
 
 export default function Home() {
+  const { theme } = useTheme();
+
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -62,6 +65,7 @@ export default function Home() {
   const [selectedPriority, setSelectedPriority] = useState<number>(1);
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteBody, setNewNoteBody] = useState("");
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -206,7 +210,7 @@ export default function Home() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-off-white text-green-1">
         <Image
-          src="/logo.svg"
+          src={theme === "dark" ? "/Logo-Dark.svg" : "/logo.svg"}
           alt="Planwise logo"
           width={170}
           height={43}
