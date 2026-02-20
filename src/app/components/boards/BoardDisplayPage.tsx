@@ -8,9 +8,10 @@ import { BoardCardList } from "./BoardCardList";
 import { Task } from "../../types/task";
 import { Board } from "../../types/board";
 import { fetchTasks, createTask } from "../../services/tasks/taskService";
-import { fetchBoards } from "../../services/boards/boardService";
 import { fetchTags } from "../../services/tags/tagService";
 import { Tag } from "../../types/tag";
+import { useSession } from "next-auth/react";
+import { fetchBoards } from "../../services/boards/boardService";
 
 interface BoardDisplayPageProps {
   boardId: string;
@@ -23,18 +24,22 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
   const [boards, setBoards] = useState<Board[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const {data: session} = useSession();
+  const email = session?.user?.email;
+
+  
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
+        // Call server actions instead
         const [fetchedBoards, fetchedTags] = await Promise.all([
-          fetchBoards(),
-          fetchTags(),
+          fetchBoards(email as string),
+          fetchTags(email as string),
         ]);
         setBoards(fetchedBoards);
         setTags(fetchedTags);
-
         const fetchedTasks = await fetchTasks(fetchedBoards, fetchedTags);
         // Filter tasks by the selected board
         const filteredTasks = fetchedTasks.filter(
@@ -47,9 +52,8 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
         setLoading(false);
       }
     };
-
     loadData();
-  }, [boardId]);
+  }, [boardId, email]);
 
   const getTasksByProgress = (progress: Task["progress"]): Task[] => {
     return tasks.filter((task) => task.progress === progress);
