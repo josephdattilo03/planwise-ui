@@ -1,5 +1,6 @@
 import { Tag } from "../../types";
 import { API_BASE, ROUTES } from "../../utils/routes";
+import { API_BASE, ROUTES } from "../../utils/routes";
 
 // Accepts "any" raw data and ensures it becomes a typed Tag
 export function toTag(raw: any): Tag {
@@ -9,9 +10,18 @@ export function toTag(raw: any): Tag {
     backgroundColor: raw.background_color ?? "#e5e5e5",
     borderColor: raw.border_color ?? "#bdbdbd",
     textColor: raw.text_color ?? "#333333",
+    backgroundColor: raw.background_color ?? "#e5e5e5",
+    borderColor: raw.border_color ?? "#bdbdbd",
+    textColor: raw.text_color ?? "#333333",
   };
 }
 
+export async function fetchTags(email: string): Promise<Tag[]> {
+  if (!email) {
+    return []
+  }
+  const res = await fetch(
+    `${API_BASE}${ROUTES.userTags(email)}`,
 export async function fetchTags(email: string): Promise<Tag[]> {
   if (!email) {
     return []

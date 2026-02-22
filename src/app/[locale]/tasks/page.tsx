@@ -11,6 +11,7 @@ import TaskFilterComponent from "../../components/tasks/TaskFilterComponent";
 import { FiltersProvider } from "../../providers/filters/FiltersContext";
 import FormButton from "@/src/common/button/FormButton";
 import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -50,6 +51,7 @@ export default function TasksPage() {
       }
     }
     load();
+  }, [email]);
   }, [email]);
 
 

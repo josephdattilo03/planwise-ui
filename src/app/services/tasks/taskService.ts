@@ -2,6 +2,7 @@ import { Task } from "../../types/task";
 import { Board } from "../../types/board";
 import { Tag } from "../../types/tag";
 import { API_BASE, ROUTES } from "../../utils/routes";
+import { API_BASE, ROUTES } from "../../utils/routes";
 
 function toTask(raw: any, boards: Board[], tags: Tag[]): Task {
   return {
@@ -14,9 +15,14 @@ function toTask(raw: any, boards: Board[], tags: Tag[]): Task {
     dueDate: new Date(raw.due_date),
     board: boards.find((b) => b.id === raw.board_id) || {
       id: raw.board_id,
+    priorityLevel: raw.priority_level ?? 0,
+    dueDate: new Date(raw.due_date),
+    board: boards.find((b) => b.id === raw.board_id) || {
+      id: raw.board_id,
       name: "Unknown Board",
       color: "#ccc",
     },
+    tags: tags.filter((tag) => raw.tag_ids?.includes(tag.id)) || [],
     tags: tags.filter((tag) => raw.tag_ids?.includes(tag.id)) || [],
   };
 }
@@ -168,6 +174,9 @@ export async function fetchTasks(email: string, boards: Board[], tags: Tag[]): P
 //     localStorage.setItem("tasks", JSON.stringify(dummyTasks));
 //   }
 
+//   const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+//   return tasks.map((raw: any) => toTask(raw, boards, tags));
+// }
 //   const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
 //   return tasks.map((raw: any) => toTask(raw, boards, tags));
 // }
