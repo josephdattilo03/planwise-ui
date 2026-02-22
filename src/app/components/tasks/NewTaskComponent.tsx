@@ -22,11 +22,13 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useTask } from "../../providers/tasks/useTask";
 import FormButton from "@/src/common/button/FormButton";
 import BoardChip from "../boards/BoardChip";
-import { Tag, TagOption } from "../../types";
+import { Tag, TagOption, Task } from "../../types";
 import TagChip from "../tags/TagChip";
 
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import TagEditDialog from "../tags/TagEditDialog";
+import { createTask } from "../../services/tasks/taskService";
+import { useSession } from "next-auth/react";
 
 const filter = createFilterOptions<TagOption>();
 interface NewTaskComponentProps {
@@ -79,6 +81,8 @@ export default function NewTaskComponent({
 
   const selectedTagOptions: TagOption[] = tags.filter((t) => newTagIds.has(t.id));
   const selectedTags = tags.filter((t) => newTagIds.has(t.id));
+  const {data: session} = useSession()
+  const email = session?.user?.email as string
 
   /** Validate */
   const validate = () => {
@@ -102,24 +106,22 @@ export default function NewTaskComponent({
     try {
       if (!isEditMode) {
         // BUILD PAYLOAD FOR CREATE
-        const payload = {
+        const payload: Partial<Task> = {
           id: id,
           name: title.trim(),
           description: description.trim(),
-          dueDate: dueDate,
+          dueDate: dueDate ?? undefined,
           priorityLevel: priorityLevel,
-          progress: status,
-          boardId: newBoardId,
-          tagIds: Array.from(newTagIds),
+          progress: status as "to-do" | "in-progress" | "done" | "pending",
+          board: boards.find((b) => b.id == newBoardId),
+          tags: tags.filter((t) => t.id in newTagIds),
         };
 
         console.log("✔ CREATE TASK PAYLOAD:", payload);
 
         // TODO: call your create task service
         // Save to localStorage for demo
-        const existingTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-        existingTasks.push(payload);
-        localStorage.setItem("tasks", JSON.stringify(existingTasks));
+        createTask(email, payload)
 
         clearTaskState();
         onSaveSuccess?.();
@@ -129,9 +131,9 @@ export default function NewTaskComponent({
           id: id,
           name: title.trim(),
           description: description.trim(),
-          dueDate: dueDate,
+          dueDate: dueDate ?? undefined,
           priorityLevel: priorityLevel,
-          progress: status,
+          progress: status as "to-do" | "in-progress" | "done" | "pending",
           boardId: newBoardId,
           tagIds: Array.from(newTagIds),
         };
@@ -402,7 +404,7 @@ export default function NewTaskComponent({
                 if (params.inputValue !== "") {
                   filtered.push({
                     // synthetic option for “Add "<input>”
-                    id: -1,
+                    id: "__name__",
                     name: params.inputValue,
                     backgroundColor: "#E0E0E0",
                     textColor: "#333333",
@@ -432,7 +434,7 @@ export default function NewTaskComponent({
                   <li key={key} {...optionProps}>
                     <div className="group flex w-full items-center justify-between gap-2 font-sans">
                       <TagChip tag={option} />
-                      {!option.inputValue && option.id !== -1 && (
+                      {!option.inputValue && option.id !== "__name__" && (
                         <IconButton
                           size="small"
                           sx={{ "& .MuiSvgIcon-root": { fontSize: 16 } }}
@@ -451,7 +453,7 @@ export default function NewTaskComponent({
               }}
               onChange={(event, newValue) => {
                 // Handle “create new tag” first
-                let createdTagId: number | null = null;
+                let createdTagId: string | null = null;
 
                 newValue.forEach((option) => {
                   if (typeof option === "string") {

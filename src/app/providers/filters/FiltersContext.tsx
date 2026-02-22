@@ -12,6 +12,7 @@ import {
   createTag as createTagService,
   updateTag as updateTagService,
 } from "../../services/tags/tagService";
+import { useSession } from "next-auth/react";
 
 interface DateRange {
   startDate: Date | null;
@@ -32,12 +33,12 @@ type FiltersContextType = {
   toggleDateRange: (dateRange: DateRange) => void;
 
   selectedBoardIds: Set<string>;
-  selectedTagIds: Set<number>;
+  selectedTagIds: Set<string>;
   selectedDate: Date | null;
   smartRecs: boolean;
 
   toggleBoard: (id: string) => void;
-  toggleTag: (id: number) => void;
+  toggleTag: (id: string) => void;
   setSelectedDate: (date: Date | null) => void;
   setSmartRecs: (v: boolean) => void;
 
@@ -60,7 +61,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const [selectedBoardIds, setSelectedBoardIds] = useState<Set<string>>(
     new Set()
   );
-  const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
   const [selectedPriorities, setSelectedPriorities] = useState<Set<number>>(
     new Set()
   );
@@ -71,6 +72,8 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     endDate: null,
     rangeSelected: null,
   });
+  const {data: session} = useSession()
+  const email = session?.user?.email as string
 
   // Fetch the boards & tags once
   useEffect(() => {
@@ -78,8 +81,8 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
       try {
         setLoading(true);
         const [boardData, tagData] = await Promise.all([
-          fetchBoards(),
-          fetchTags(),
+          fetchBoards(email),
+          fetchTags(email),
         ]);
 
         setBoards(boardData);
@@ -99,7 +102,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     }
 
     load();
-  }, [searchParams]);
+  }, [searchParams, email]);
 
   // Toggle board
   const toggleBoard = (id: string) => {
@@ -120,7 +123,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Toggle tag
-  const toggleTag = (id: number) => {
+  const toggleTag = (id: string) => {
     setSelectedTagIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);

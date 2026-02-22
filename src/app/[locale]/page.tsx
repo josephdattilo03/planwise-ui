@@ -47,8 +47,8 @@ import { useTheme } from "@/src/common/ThemeProvider";
 export default function Home() {
   const { theme } = useTheme();
 
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   const userName = session?.user?.name
     ? session?.user?.name.split(" ")[0]
@@ -65,18 +65,19 @@ export default function Home() {
   const [selectedPriority, setSelectedPriority] = useState<number>(1);
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteBody, setNewNoteBody] = useState("");
+  const email = session?.user?.email as string;
 
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const [boardsData, tagsData] = await Promise.all([
-          fetchBoards(),
-          fetchTags(),
+          fetchBoards(email as string),
+          fetchTags(email as string),
         ]);
 
         const [tasksData, eventsData] = await Promise.all([
-          fetchTasks(boardsData, tagsData),
+          fetchTasks(email as string, boardsData, tagsData),
           fetchEvents(boardsData),
         ]);
 
@@ -106,7 +107,7 @@ export default function Home() {
     if (status === "authenticated") {
       loadData();
     }
-  }, [status]);
+  }, [status, email, selectedBoardId]);
 
   // Get recent tasks (next 5 upcoming tasks)
   const recentTasks = tasks
@@ -151,8 +152,8 @@ export default function Home() {
 
       // Refresh tasks list with proper board/tag data
       const [refreshedBoards, refreshedTags] = await Promise.all([
-        fetchBoards(),
-        fetchTags(),
+        fetchBoards(email),
+        fetchTags(email),
       ]);
       const refreshedTasks = await fetchTasks(refreshedBoards, refreshedTags);
       setTasks(refreshedTasks);

@@ -10,6 +10,7 @@ import TaskList from "../../components/tasks/TaskList";
 import TaskFilterComponent from "../../components/tasks/TaskFilterComponent";
 import { FiltersProvider } from "../../providers/filters/FiltersContext";
 import FormButton from "@/src/common/button/FormButton";
+import { useSession } from "next-auth/react";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -18,6 +19,8 @@ export default function TasksPage() {
   const [view, setView] = useState<"list" | "grid">("list");
   const [boards, setBoards] = useState<Board[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const {data: session} = useSession();
+  const email = session?.user?.email as string;
 
   useEffect(() => {
     console.log(
@@ -33,24 +36,21 @@ export default function TasksPage() {
       console.log("Loading tasks...");
       try {
         const [boardData, tagData] = await Promise.all([
-          fetchBoards(),
-          fetchTags(),
+          fetchBoards(email),
+          fetchTags(email),
         ]);
         setBoards(boardData);
         setTags(tagData);
-        const taskData = await fetchTasks(boardData, tagData);
-        console.log(
-          "Fetched tasks:",
-          taskData.length,
-          taskData.map((t) => t.id)
-        );
+        console.log(boardData)
+        const taskData = await fetchTasks(email, boardData, tagData);
+        console.log(taskData)
         setTasks(taskData);
       } catch (err) {
         console.error(err);
       }
     }
     load();
-  }, []);
+  }, [email]);
 
 
 
@@ -65,7 +65,7 @@ export default function TasksPage() {
   };
 
   const handleSaveSuccess = async () => {
-    const taskData = await fetchTasks(boards, tags);
+    const taskData = await fetchTasks(email, boards, tags);
     setTasks(taskData);
     setMode("create");
   };

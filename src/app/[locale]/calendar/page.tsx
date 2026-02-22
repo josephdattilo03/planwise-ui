@@ -12,6 +12,7 @@ import { fetchEvents } from "../../services/events/eventService";
 import { fetchBoards } from "../../services/boards/boardService";
 import { fetchTags } from "../../services/tags/tagService";
 import { fetchTasks } from "../../services/tasks/taskService";
+import { useSession } from "next-auth/react";
 
 const CalendarView = dynamic(
   () => import("../../components/calendar/CalendarView"),
@@ -62,25 +63,27 @@ export default function CalendarPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const {data: session} = useSession()
+  const email = session?.user?.email as string;
 
   useEffect(() => {
     async function loadData() {
       try {
         const [boardData] = await Promise.all([
-          fetchBoards(),
+          fetchBoards(email),
         ]);
 
         setBoards(boardData);
 
         const [tagData] = await Promise.all([
-          fetchTags(),
+          fetchTags(email),
         ]);
 
         setTags(tagData);
 
         const [eventData, taskData] = await Promise.all([
           fetchEvents(boardData),
-          fetchTasks(boardData, tagData),
+          fetchTasks(email, boardData, tagData),
         ]);
 
         setEvents(eventData);
@@ -91,7 +94,7 @@ export default function CalendarPage() {
     }
 
     loadData();
-  }, []);
+  }, [email]);
 
   const taskEvents = convertTasksToEvents(tasks, boards);
   const calendarEventData = convertEventsForCalendar(events);

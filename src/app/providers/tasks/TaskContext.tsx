@@ -16,6 +16,7 @@ import {
   updateTag as updateTagService,
 } from "../../services/tags/tagService";
 import { fetchPriority, fetchProgress } from "../../services/dataService";
+import { useSession } from "next-auth/react";
 
 const progressOptions = fetchProgress();
 const priorityOptions = fetchPriority();
@@ -29,7 +30,7 @@ type TaskContextType = {
   isEditMode: boolean;
 
   /** FORM fields (always used in both modes) */
-  id: number;
+  id: string;
   title: string;
   description: string;
   dueDate: Date | null;
@@ -37,7 +38,7 @@ type TaskContextType = {
   status: string;
 
   newBoardId: string;
-  newTagIds: Set<number>;
+  newTagIds: Set<string>;
 
   /** All boards and tags available */
   boards: Board[];
@@ -54,7 +55,7 @@ type TaskContextType = {
   setStatus: (v: string) => void;
 
   changeBoard: (id: string) => void;
-  toggleTag: (id: number) => void;
+  toggleTag: (id: string) => void;
 
   createTag: (data: Partial<Tag>) => Tag;
   editTag: (tag: Tag) => void;
@@ -85,7 +86,7 @@ export function TaskProvider({
   const isEditMode = !!currTask;
 
   /** FORM STATE — always used, even in edit mode */
-  const [id, setId] = useState<number>(task?.id ?? -1);
+  const [id, setId] = useState<string>(task?.id ?? "__name__");
   const [title, setTitle] = useState<string>(task?.name ?? "");
   const [description, setDescription] = useState<string>(
     task?.description ?? ""
@@ -98,8 +99,10 @@ export function TaskProvider({
 
   /** Board / Tag form fields */
   const [newBoardId, setNewBoardId] = useState<string>(task?.board?.id ?? "");
+  const {data: session} = useSession()
+  const email = session?.user?.email as string
 
-  const [newTagIds, setNewTagIds] = useState<Set<number>>(
+  const [newTagIds, setNewTagIds] = useState<Set<string>>(
     new Set(task?.tags?.map((t) => t.id) ?? [])
   );
 
@@ -109,8 +112,8 @@ export function TaskProvider({
       try {
         setLoading(true);
         const [boardData, tagData] = await Promise.all([
-          fetchBoards(),
-          fetchTags(),
+          fetchBoards(email),
+          fetchTags(email),
         ]);
 
         setBoards(boardData);
@@ -124,7 +127,7 @@ export function TaskProvider({
     }
 
     load();
-  }, []);
+  }, [email]);
 
   /** When parent passes a NEW task to edit, reset form fields */
   useEffect(() => {
@@ -146,7 +149,7 @@ export function TaskProvider({
   };
 
   /** Tag toggle */
-  const toggleTag = (id: number) => {
+  const toggleTag = (id: string) => {
     setNewTagIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
