@@ -79,7 +79,7 @@ export default function ArchiveSidebar({
               duration: theme.transitions.duration.shortest,
             }),
         }}
-        className="border border-green-4 dark:border-sidebar-border bg-sidebar-bg border-l-0 rounded-r-lg shadow-md"
+        className="border border-green-4 dark:border-sidebar-border bg-sidebar-bg border-l-0 rounded-r-[var(--radius-md)]"
       >
         <IconButton
           onClick={toggleSidebar}

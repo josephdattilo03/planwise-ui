@@ -7,10 +7,9 @@ export default function QuickAccessWidget() {
   return (
     <Card
       sx={{
-        borderRadius: "20px",
+        borderRadius: "var(--radius-lg)",
         border: "1px solid var(--card-border)",
         backgroundColor: "var(--home-quick-bg)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
       elevation={0}
     >
@@ -60,12 +59,11 @@ export default function QuickAccessWidget() {
               sx={{
                 cursor: "pointer",
                 p: 2,
-                borderRadius: 2,
+                borderRadius: "var(--radius-md)",
                 backgroundColor: "var(--menu-bg)",
                 border: "1px solid var(--card-border)",
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
                   transform: "translateY(-1px)",
                   backgroundColor: "var(--menu-item-hover)",
                 },

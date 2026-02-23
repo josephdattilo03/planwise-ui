@@ -38,11 +38,10 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
   return (
     <Card
       sx={{
-        borderRadius: "20px",
+        borderRadius: "var(--radius-lg)",
         border: "1px solid var(--card-border)",
         backgroundColor: "var(--home-notes-bg)",
         cursor: "pointer",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
       elevation={0}
       onClick={() => router.push("/notes")}
@@ -102,7 +101,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
             sx={{
               mb: 0.5,
               "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
+                borderRadius: "var(--radius-md)",
                 backgroundColor: "var(--input-bg)",
                 color: "var(--input-text)",
                 "& fieldset": {
@@ -154,7 +153,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
               sx={{
                 backgroundColor: "var(--menu-bg)",
                 color: "var(--foreground)",
-                borderRadius: "20px",
+                borderRadius: "var(--radius-lg)",
                 border: "1px solid var(--card-border)",
                 fontSize: 11,
                 fontWeight: 500,

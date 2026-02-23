@@ -24,7 +24,7 @@ export default function TreeItem({
   return (
     <div className="select-none h-full">
       <div
-        className="flex items-center gap-1 py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-tree-hover"
+        className="flex items-center gap-1 py-1 px-2 rounded-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-tree-hover"
         onClick={() => {
           if (isFolder) {
             toggleFolder(node.id);

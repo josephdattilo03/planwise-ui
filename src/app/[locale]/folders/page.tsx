@@ -46,7 +46,7 @@ export default function FoldersPage() {
   const addBoardButton = (
     <Button
       onClick={() => setCreateDialogOpen(true)}
-      className="flex items-center justify-center gap-1.5 py-2 font-sans rounded-full text-small-header border border-beige text-dark-green-1 bg-off-white hover:bg-beige transition"
+      className="flex items-center justify-center gap-1.5 py-2 font-sans rounded-md text-small-header border border-beige text-dark-green-1 bg-off-white hover:bg-beige transition"
     >
       <AddRoundedIcon className="w-4 h-4" />
       <span>Create New Board</span>

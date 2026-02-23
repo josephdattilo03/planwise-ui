@@ -149,7 +149,7 @@ export default function NavBarComponent() {
                 mx: "10px",
                 fontWeight: 500,
                 color: selected ? "var(--Dark-Green-1)" : "var(--Dark-Green-2)",
-                borderRadius: "6px",
+                borderRadius: "var(--radius-sm)",
                 backgroundColor: selected ? "var(--Green-4)" : "transparent",
                 "&:hover": {
                   backgroundColor: selected ? "var(--Green-4)" : theme === "dark" ? "#6A9A7A4D" : "#A7C9574D",
@@ -170,7 +170,7 @@ export default function NavBarComponent() {
 
         <div
           onClick={handleClick}
-          className="flex flex-row gap-2 p-2 border border-dark-green-2 bg-white dark:bg-card-bg rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-menu-item-hover transition-colors"
+          className="flex flex-row gap-2 p-2 border border-dark-green-2 bg-white dark:bg-card-bg rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-menu-item-hover transition-colors"
           aria-controls={open ? "user-menu" : undefined}
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
@@ -214,7 +214,7 @@ export default function NavBarComponent() {
               minWidth: 200,
               mt: 0.5,
               zIndex: 9999,
-              borderRadius: "12px",
+              borderRadius: "var(--radius-md)",
               backgroundColor: "var(--menu-bg)",
               border: "1px solid var(--sidebar-border)",
               "& .MuiMenuItem-root": {

@@ -8,7 +8,7 @@ export default function CalendarFilterSection() {
   const { selectedDate, setSelectedDate } = useFilters();
 
   return (
-    <div className="w-full bg-white dark:bg-card-bg border border-green-4 dark:border-card-border rounded-xl">
+    <div className="w-full bg-white dark:bg-card-bg border border-green-4 dark:border-card-border rounded-lg">
       <DateCalendar
         showDaysOutsideCurrentMonth
         fixedWeekNumber={6}

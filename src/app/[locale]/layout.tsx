@@ -14,6 +14,8 @@ import NavBarComponent from "@/src/common/NavBar/NavBarComponent";
 import ThemeRegistry from "@/src/common/ThemeRegistry";
 import NextAuthSessionProvider from "@/src/app/providers/SessionProvider";
 import { ThemeProvider } from "@/src/common/ThemeProvider";
+import { BoardsTagsProvider } from "@/src/app/providers/boardsTags/BoardsTagsContext";
+import { WorkspaceProvider } from "@/src/app/providers/workspace/WorkspaceContext";
 
 type Props = {
   children: React.ReactNode;
@@ -46,10 +48,14 @@ export default async function LocaleLayout({ children, params }: Props) {
       >
         <ThemeProvider>
           <ThemeRegistry>
-            <NextAuthSessionProvider>
-              <NextIntlClientProvider locale={locale} messages={messages}>
-                <NavBarComponent />
-                <main className="flex-1 overflow-auto font-sans">{children}</main>
+<NextAuthSessionProvider>
+                <NextIntlClientProvider locale={locale} messages={messages}>
+                <BoardsTagsProvider>
+                  <WorkspaceProvider>
+                    <NavBarComponent />
+                    <main className="flex-1 overflow-auto font-sans">{children}</main>
+                  </WorkspaceProvider>
+                </BoardsTagsProvider>
               </NextIntlClientProvider>
             </NextAuthSessionProvider>
           </ThemeRegistry>

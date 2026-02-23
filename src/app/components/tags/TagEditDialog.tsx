@@ -74,7 +74,7 @@ export default function TagEditDialog({ open, tag, onClose, onSave }: Props) {
               type="color"
               value={backgroundColor}
               onChange={(e) => setBackgroundColor(e.target.value)}
-              className="w-10 h-8 rounded cursor-pointer border border-green-3"
+              className="w-10 h-8 rounded-sm cursor-pointer border border-green-3"
             />
             <span className="text-xs text-dark-green-2 uppercase">
               {backgroundColor}

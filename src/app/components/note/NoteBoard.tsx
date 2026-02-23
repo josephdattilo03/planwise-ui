@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { Button } from '@mui/material';
 import EditableNote from './EditableNote';
 import ArchiveSidebar from './ArchiveSidebar';
+import LoadingSpinner from '@/src/common/LoadingSpinner';
 
 type NoteType = {
   id: string;
@@ -20,6 +22,8 @@ type NoteType = {
 
 const DEFAULT_W = 380;
 const DEFAULT_H = 300;
+const ARCHIVE_SIDEBAR_WIDTH = 280;
+const ADD_NOTE_BUTTON_GAP = 16;
 
 function normalizeNote(n: any): NoteType {
   const x = Number(n.x);
@@ -40,14 +44,23 @@ export default function NoteBoard() {
   const [notes, setNotes] = useState<NoteType[]>([]);
   const [archivedNotes, setArchivedNotes] = useState<NoteType[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedNotes = localStorage.getItem('notes');
-    const savedArchived = localStorage.getItem('archived_notes');
+    const loadNotes = async () => {
+      try {
+        // TODO: Replace with API call when integrated, e.g. const data = await fetchNotes();
+        const savedNotes = localStorage.getItem('notes');
+        const savedArchived = localStorage.getItem('archived_notes');
 
-    if (savedNotes) setNotes(JSON.parse(savedNotes).map(normalizeNote));
-    if (savedArchived)
-      setArchivedNotes(JSON.parse(savedArchived).map(normalizeNote));
+        if (savedNotes) setNotes(JSON.parse(savedNotes).map(normalizeNote));
+        if (savedArchived)
+          setArchivedNotes(JSON.parse(savedArchived).map(normalizeNote));
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadNotes();
   }, []);
 
   useEffect(() => {
@@ -124,7 +137,7 @@ export default function NoteBoard() {
           y: note.y + e.movementY,
         };
 
-        const sidebarWidth = sidebarOpen ? 280 : 0;
+        const sidebarWidth = sidebarOpen ? ARCHIVE_SIDEBAR_WIDTH : 0;
         const topLimit = 80;
 
         const maxX = window.innerWidth - note.width;
@@ -138,8 +151,16 @@ export default function NoteBoard() {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex w-full h-full">
+        <LoadingSpinner label="Loading notes..." fullPage className="flex-1" />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full w-full flex flex-row">
+    <div className="h-full w-full flex flex-row content-fade-in">
       <ArchiveSidebar
         archivedNotes={archivedNotes}
         restoreNote={restoreNote}
@@ -147,17 +168,19 @@ export default function NoteBoard() {
         toggleSidebar={() => setSidebarOpen((s) => !s)}
       />
 
-      <div
-        className={`transition-all duration-300 relative w-full h-screen ${
-          sidebarOpen ? 280 : 0
-        }`}
-      >
-        <button
+      <div className="transition-all duration-300 relative w-full h-screen">
+        <Button
           onClick={addNote}
-          className={`fixed top-24 bg-green-2 hover:bg-green-3 text-white px-4 py-2 rounded-lg shadow-md right-10 z-999`}
+          className="fixed top-5 z-999 flex items-center justify-center gap-1.5 py-2 px-3 font-sans rounded-md text-small-header bg-green-1 text-white hover:bg-green-2 transition-[left] duration-300 ease-out"
+          style={{
+            left: sidebarOpen
+              ? ARCHIVE_SIDEBAR_WIDTH + ADD_NOTE_BUTTON_GAP
+              : ADD_NOTE_BUTTON_GAP,
+          }}
         >
-          + Add Note
-        </button>
+          <AddRoundedIcon className="w-4 h-4" />
+          <span>Add Note</span>
+        </Button>
 
         {notes.map((note) => (
           <div
