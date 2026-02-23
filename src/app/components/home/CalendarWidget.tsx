@@ -17,11 +17,10 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
   return (
     <Card
       sx={{
-        borderRadius: "20px",
+        borderRadius: "var(--radius-lg)",
         border: "1px solid var(--card-border)",
         backgroundColor: "var(--home-calendar-bg)",
         cursor: "pointer",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
       elevation={0}
       onClick={() => router.push("/calendar")}
@@ -58,11 +57,10 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
 
         <Box
           sx={{
-            borderRadius: "8px",
+            borderRadius: "var(--radius-md)",
             border: "1px solid rgba(0,0,0,0.08)",
             p: 0.5,
             backgroundColor: "var(--menu-bg)",
-            boxShadow: "inset 0 0 4px rgba(0,0,0,0.05)",
           }}
         >
           {/* Weekdays */}
@@ -164,7 +162,7 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
                     sx={{
                       height: 36,
                       width: "100%",
-                      borderRadius: 1,
+                      borderRadius: "var(--radius-sm)",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -209,7 +207,7 @@ export default function CalendarWidget({ events, tasks, boards }: CalendarWidget
                             sx={{
                               width: "100%",
                               backgroundColor: event.color,
-                              borderRadius: "2px",
+                              borderRadius: "var(--radius-sm)",
                               px: 0.3,
                               py: 0.1,
                               border: "1px solid rgba(0,0,0,0.1)",

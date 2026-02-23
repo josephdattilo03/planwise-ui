@@ -133,9 +133,8 @@ export default function EditableNote({
 
   return (
     <Card
-      className={`${color} shadow-lg rounded-2xl p-4 relative${
-        editing ? "bg-opacity-80 ring-3 ring-gray-300 z-0" : ""
-      }`}
+      className={`${color} rounded-lg p-4 relative${editing ? "bg-opacity-80 ring-3 ring-gray-300 z-0" : ""
+        }`}
       style={{ width: `${noteWidth}px`, height: `${noteHeight}px` }}
       onDoubleClick={() => setEditing(true)}
     >
@@ -202,7 +201,7 @@ export default function EditableNote({
           ref={bodyRef}
           contentEditable={editing}
           suppressContentEditableWarning
-          className={`w-full h-full overflow-auto outline-none p-2 rounded ${color} text-black dark:text-dark-green-1`}
+          className={`w-full h-full overflow-auto outline-none p-2 rounded-sm ${color} text-black dark:text-dark-green-1`}
           onInput={updateBody}
         />
       </CardContent>
@@ -214,7 +213,7 @@ export default function EditableNote({
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1 bg-white dark:bg-dark-green-2 border border-green-2 rounded-full underline text-blue-600 dark:text-sky-blue hover:text-blue-800 dark:hover:text-sky-blue"
+            className="px-3 py-1 bg-white dark:bg-dark-green-2 border border-green-2 rounded-md underline text-blue-600 dark:text-sky-blue hover:text-blue-800 dark:hover:text-sky-blue"
           >
             {link}
           </a>

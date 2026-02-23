@@ -35,7 +35,7 @@ export default function TagsFilterSection() {
           selectedTags.map((tag) => (
             <div
               key={tag.id}
-              className="transition rounded-full"
+              className="transition rounded-md"
               onClick={() => toggleTag(tag.id)}
             >
               <TagChip

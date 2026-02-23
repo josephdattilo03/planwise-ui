@@ -44,13 +44,12 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
   return (
     <Card
       sx={{
-        borderRadius: "20px",
+        borderRadius: "var(--radius-lg)",
         border: "1px solid var(--card-border)",
         backgroundColor: "var(--home-tasks-bg)",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
       elevation={0}
       onClick={() => router.push("/tasks")}
@@ -103,12 +102,11 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                   sx={{
                     textAlign: "center",
                     p: 1,
-                    borderRadius: 2,
+                    borderRadius: "var(--radius-md)",
                     backgroundColor: isToday ? "var(--Green-2)" : "var(--menu-bg)",
                     color: isToday ? "white" : "var(--foreground)",
                     fontSize: 14,
                     fontWeight: isToday ? 700 : 500,
-                    boxShadow: "none",
                     border: "1px solid var(--card-border)",
                     position: "relative",
                   }}
@@ -159,7 +157,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                   key={task.id}
                   sx={{
                     p: 1.5,
-                    borderRadius: 3,
+                    borderRadius: "var(--radius-md)",
                     backgroundColor: "var(--menu-bg)",
                     border: "1px solid var(--card-border)",
                     display: "flex",
@@ -167,7 +165,6 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                     gap: 0.5,
                     transition: "all 0.2s ease",
                     "&:hover": {
-                      boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
                       transform: "translateY(-2px)",
                       backgroundColor: "var(--menu-item-hover)",
                     },
@@ -243,7 +240,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                                 : "#2e7d32",
                           px: 2,
                           py: 0.5,
-                          borderRadius: 10,
+                          borderRadius: "var(--radius-md)",
                           backgroundColor:
                             priorityString === "High"
                               ? "rgba(211, 47, 47, 0.1)"
@@ -296,7 +293,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                 label="Board"
                 onChange={(e: any) => setSelectedBoardId(e.target.value)}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: "var(--radius-md)",
                   fontSize: "12px",
                   backgroundColor: "var(--input-bg)",
                   color: "var(--input-text)",
@@ -329,7 +326,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                 label="Priority"
                 onChange={(e: any) => setSelectedPriority(Number(e.target.value))}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: "var(--radius-md)",
                   fontSize: "12px",
                   backgroundColor: "var(--input-bg)",
                   color: "var(--input-text)",

@@ -4,6 +4,7 @@ import React from "react";
 import { Button, Switch } from "@mui/material";
 import TipsAndUpdatesRoundedIcon from "@mui/icons-material/TipsAndUpdatesRounded";
 import FormButton from "@/src/common/button/FormButton";
+import LoadingSpinner from "@/src/common/LoadingSpinner";
 
 type Props = {
   /** children sections (Boards, Tags, Calendar, anything) */
@@ -79,8 +80,12 @@ export default function FilterSidebar({
       )}
 
       {/* ───── BOTTOM SCROLL SECTION FOR FILTERS ───── */}
-      <div className="scroll-shadows w-full overflow-y-auto flex flex-col gap-4 px-4 pb-4 pt-2 bg-sidebar-bg">
-        {children}
+      <div className="scroll-shadows w-full overflow-y-auto px-4 pb-4 pt-2 bg-sidebar-bg">
+        {loading ? (
+          <LoadingSpinner label="Loading filters..." className="py-8" />
+        ) : (
+          <div className="content-fade-in flex flex-col gap-4">{children}</div>
+        )}
       </div>
     </aside>
   );

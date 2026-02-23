@@ -27,12 +27,11 @@ import { signOut, useSession, signIn } from "next-auth/react";
 
 import { fetchTasks, createTask } from "../services/tasks/taskService";
 import { fetchEvents } from "../services/events/eventService";
-import { fetchBoards } from "../services/boards/boardService";
-import { fetchTags } from "../services/tags/tagService";
 import { Task } from "../types/task";
 import { Event } from "../types/event";
 import { Board } from "../types/board";
 import { Tag } from "../types/tag";
+import { useBoardsTags } from "../providers/boardsTags/BoardsTagsContext";
 
 import {
   GreetingWidget,
@@ -43,9 +42,11 @@ import {
   NotesWidget,
 } from "../components/home";
 import { useTheme } from "@/src/common/ThemeProvider";
+import LoadingSpinner from "@/src/common/LoadingSpinner";
 
 export default function Home() {
   const { theme } = useTheme();
+  const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
 
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -57,56 +58,46 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [newTaskName, setNewTaskName] = useState("");
   const [selectedBoardId, setSelectedBoardId] = useState<string>("");
   const [selectedPriority, setSelectedPriority] = useState<number>(1);
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteBody, setNewNoteBody] = useState("");
 
-
+  /** Load tasks, events, and notes once boards/tags are ready (from preload) */
   useEffect(() => {
-    const loadData = async () => {
+    if (status !== "authenticated" || boardsTagsLoading) return;
+    let cancelled = false;
+    async function loadData() {
       try {
-        const [boardsData, tagsData] = await Promise.all([
-          fetchBoards(),
-          fetchTags(),
-        ]);
-
+        setDashboardLoading(true);
         const [tasksData, eventsData] = await Promise.all([
-          fetchTasks(boardsData, tagsData),
-          fetchEvents(boardsData),
+          fetchTasks(boards, tags),
+          fetchEvents(boards),
         ]);
-
-        setBoards(boardsData);
-        setTags(tagsData);
-        setTasks(tasksData);
-        setEvents(eventsData);
-
-        // Initialize selected board to first board
-        if (boardsData.length > 0 && !selectedBoardId) {
-          setSelectedBoardId(boardsData[0].id);
-        }
-
-        // Load notes from localStorage
-        const savedNotes = localStorage.getItem('notes');
-        if (savedNotes) {
-          const parsedNotes = JSON.parse(savedNotes);
-          setNotes(parsedNotes);
+        if (!cancelled) {
+          setTasks(tasksData);
+          setEvents(eventsData);
+          if (boards.length > 0 && !selectedBoardId) {
+            setSelectedBoardId(boards[0].id);
+          }
+          const savedNotes = localStorage.getItem("notes");
+          if (savedNotes) setNotes(JSON.parse(savedNotes));
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error("Error loading data:", error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setDashboardLoading(false);
       }
-    };
-
-    if (status === "authenticated") {
-      loadData();
     }
-  }, [status]);
+    loadData();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, boardsTagsLoading, boards, tags]);
+
+  const loading = boardsTagsLoading || dashboardLoading;
 
   // Get recent tasks (next 5 upcoming tasks)
   const recentTasks = tasks
@@ -149,12 +140,8 @@ export default function Home() {
         priorityLevel: selectedPriority,
       });
 
-      // Refresh tasks list with proper board/tag data
-      const [refreshedBoards, refreshedTags] = await Promise.all([
-        fetchBoards(),
-        fetchTags(),
-      ]);
-      const refreshedTasks = await fetchTasks(refreshedBoards, refreshedTags);
+      // Refresh tasks list (boards/tags from preload)
+      const refreshedTasks = await fetchTasks(boards, tags);
       setTasks(refreshedTasks);
       setNewTaskName("");
     } catch (error) {
@@ -197,11 +184,10 @@ export default function Home() {
   };
 
 
-
-  if (status === "loading") {
+  if (status === "authenticated" && loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-off-white text-green-1">
-        <p>Loading...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen dark:bg-background">
+        <LoadingSpinner label="Loading dashboard..." fullPage />
       </div>
     );
   }
@@ -235,9 +221,10 @@ export default function Home() {
 
   return (
     <Box
+      className="content-fade-in"
       sx={{
         p: { xs: 2, sm: 3, md: 4 },
-        backgroundColor: "var(--Off-White)",
+        backgroundColor: "#FFFFFF",
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",

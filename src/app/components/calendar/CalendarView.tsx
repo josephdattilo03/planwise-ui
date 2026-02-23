@@ -1,6 +1,8 @@
 "use client";
 
 import { Calendar, dateFnsLocalizer, View, EventProps } from "react-big-calendar";
+import FormButton from "@/src/common/button/FormButton";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { useState } from "react";
@@ -117,7 +119,7 @@ function EventWrapper({ event }: EventProps<Event>) {
 
   return (
     <div
-      className={`rounded-md px-2 py-1 text-xs font-medium shadow-sm border border-green-4 ${colorClass}`}
+      className={`rounded-sm px-2 py-1 text-xs font-medium border border-green-4 ${colorClass}`}
     >
       {event.title}
     </div>
@@ -159,12 +161,12 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
   const filteredEvents = selectedBoardIds.size === 0
     ? allEvents // Show all events if no boards are selected
     : allEvents.filter(event => {
-        if (!event.resource?.board) return false;
+      if (!event.resource?.board) return false;
 
-        // Find the board with matching name and check if it's selected
-        const matchedBoard = boards.find(board => board.name.toLowerCase() === event.resource!.board);
-        return matchedBoard ? selectedBoardIds.has(parseInt(matchedBoard.id)) : false;
-      });
+      // Find the board with matching name and check if it's selected
+      const matchedBoard = boards.find(board => board.name.toLowerCase() === event.resource!.board);
+      return matchedBoard ? selectedBoardIds.has(parseInt(matchedBoard.id)) : false;
+    });
 
   const getCurrentLabel = () => {
     if (view === "month") {
@@ -231,32 +233,33 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
 
   return (
     <Paper
-      elevation={3}
+      elevation={0}
       sx={{
         width: '100%',
         maxHeight: 'calc(100vh - 100px)',
-        backgroundColor: 'var(--Off-White)',
-        border: '1px solid var(--Green-3)',
-        borderRadius: '16px',
-        p: 4,
-        overflowY: 'auto',
+        // overflowY: 'auto',
       }}
     >
       {/* Top toolbar */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ pt: "24px", pb: "8px", px: "24px" }}
+      >
         <Typography
           variant="h6"
           sx={{
             color: 'var(--Dark-Green-1)',
             textTransform: 'uppercase',
-            fontSize: '1.25rem',
+            fontSize: 'var(--text-page-title-font-size)',
             fontWeight: 600,
           }}
         >
           {getCurrentLabel()}
         </Typography>
 
-      <Box display="flex" alignItems="center" gap={2}>
+        <Box display="flex" alignItems="center" gap={2}>
           <Box display="flex" alignItems="center">
             <Button
               onClick={() => {
@@ -311,40 +314,34 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
           <Box display="flex" gap={1}>
             <Button
               onClick={() => setView("day")}
-              variant={view === "day" ? "contained" : "outlined"}
-              size="small"
-              sx={{
-                backgroundColor: view === "day" ? 'var(--Green-2)' : 'var(--Off-White)',
-                color: view === "day" ? 'var(--Off-White)' : 'var(--Dark-Green-1)',
-                borderColor: 'var(--Green-3)',
-                fontSize: '1rem',
-              }}
+              disableElevation
+              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige ${view === "day"
+                ? "bg-pastel-orange text-black hover:bg-orange"
+                : "border border-beige text-dark-green-1 bg-off-white hover:bg-beige"
+                }`}
+              sx={{ textTransform: "none" }}
             >
               Day
             </Button>
             <Button
               onClick={() => setView("week")}
-              variant={view === "week" ? "contained" : "outlined"}
-              size="small"
-              sx={{
-                backgroundColor: view === "week" ? 'var(--Green-2)' : 'var(--Off-White)',
-                color: view === "week" ? 'var(--Off-White)' : 'var(--Dark-Green-1)',
-                borderColor: 'var(--Green-3)',
-                fontSize: '1rem',
-              }}
+              disableElevation
+              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige  ${view === "week"
+                ? "bg-pastel-orange text-black hover:bg-orange"
+                : "border border-beige text-dark-green-1 bg-off-white hover:bg-beige"
+                }`}
+              sx={{ textTransform: "none" }}
             >
               Week
             </Button>
             <Button
               onClick={() => setView("month")}
-              variant={view === "month" ? "contained" : "outlined"}
-              size="small"
-              sx={{
-                backgroundColor: view === "month" ? 'var(--Green-2)' : 'var(--Off-White)',
-                color: view === "month" ? 'var(--Off-White)' : 'var(--Dark-Green-1)',
-                borderColor: 'var(--Green-3)',
-                fontSize: '1rem',
-              }}
+              disableElevation
+              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige  ${view === "month"
+                ? "bg-pastel-orange text-black hover:bg-orange"
+                : "text-dark-green-1 bg-off-white hover:bg-beige"
+                }`}
+              sx={{ textTransform: "none" }}
             >
               Month
             </Button>
@@ -360,29 +357,14 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
               });
               setShowAddEvent(true);
             }}
-            variant="contained"
-            size="small"
-            sx={{
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '1rem',
-              textTransform: 'none',
-              '&:hover': {
-                backgroundColor: '#45a049',
-                transform: 'scale(1.02)',
-                boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)',
-              },
-              '&:active': {
-                transform: 'scale(0.98)',
-              },
-              transition: 'all 0.2s ease',
-              ml: 2,
-            }}
+            className="flex items-center justify-center gap-1.5 py-2 font-sans rounded-md text-small-header bg-green-1 text-white hover:bg-green-2 transition"
           >
-            + Add Event
+            <AddRoundedIcon className="w-4 h-4" />
+            <span>Add Event</span>
           </Button>
         </Box>
+
+
       </Box>
 
       {/* Calendar */}
@@ -401,8 +383,12 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
         eventPropGetter={eventStyleGetter}
         className="rbc-planwise"
         style={{
+          overflow: "scroll",
+          padding: "8px 24px 0px 24px",
+
           height: view === 'week' ? 'calc(100vh - 200px)' : view === 'month' ? 'calc(100vh - 200px)' : view === 'day' ? 'calc(100vh - 200px)' : 'auto',
         }}
+
       />
 
       {/* Event Modal */}
@@ -475,7 +461,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
           Add Event
         </DialogTitle>
         <DialogContent>
-          <Box component="form" sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
               label="Event Title"
@@ -523,28 +509,18 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
             </FormControl>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', gap: 2 }}>
-          <Button
+        <DialogActions sx={{ justifyContent: 'center', gap: 2, paddingX: "24px" }}>
+          <FormButton
             onClick={() => setShowAddEvent(false)}
-            variant="outlined"
-            sx={{ color: 'var(--Dark-Green-1)', borderColor: 'var(--Green-3)' }}
-          >
-            Cancel
-          </Button>
-          <Button
+            variant="clear"
+            text="Cancel"
+          />
+          <FormButton
             onClick={handleSaveEvent}
-            variant="contained"
-            disabled={!newEvent.title.trim()}
-            sx={{
-              backgroundColor: 'var(--Green-3)',
-              color: 'var(--Dark-Green-1)',
-              '&:hover': {
-                backgroundColor: 'var(--Green-4)',
-              },
-            }}
-          >
-            Save Event
-          </Button>
+            variant="confirm"
+            text="Save Event"
+          />
+
         </DialogActions>
       </Dialog>
     </Paper>

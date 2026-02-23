@@ -530,7 +530,7 @@ export default function NewTaskComponent({
               selectedTags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="transition rounded-full"
+                  className="transition rounded-md"
                   onClick={() => toggleTag(tag.id)}
                 >
                   <TagChip
@@ -572,7 +572,7 @@ export default function NewTaskComponent({
         <div className="flex gap-4">
           <Button
             type="submit"
-            className={`w-full rounded-full py-2 text-small-header transition ${submitting
+            className={`w-full rounded-md py-2 text-small-header transition ${submitting
               ? "bg-gray-400 text-gray-200"
               : "bg-green-1 text-white hover:bg-green-2"
               }`}

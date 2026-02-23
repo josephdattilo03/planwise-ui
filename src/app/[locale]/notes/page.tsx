@@ -1,3 +1,5 @@
+"use client";
+
 import NoteBoard from "../../components/note/NoteBoard";
 
 export default function NotesPage() {
