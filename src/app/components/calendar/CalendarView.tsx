@@ -22,6 +22,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 
 const locales = { "en-US": enUS };
@@ -106,16 +108,16 @@ const initialEvents: Event[] = [
 
 function EventWrapper({ event }: EventProps<Event>) {
   const colorMap: Record<string, string> = {
-    green: "bg-Green-3 text-Dark-Green-1",
-    blue: "bg-Sky-Blue text-Dark-Green-1",
-    orange: "bg-Orange text-Dark-Red",
-    purple: "bg-Lilac text-Dark-Green-1",
-    lilac: "bg-Lilac text-Dark-Green-1",
+    green: "bg-green-3 text-dark-green-1",
+    blue: "bg-sky-blue text-dark-green-1",
+    orange: "bg-orange text-dark-green-1",
+    purple: "bg-lilac text-dark-green-1",
+    lilac: "bg-lilac text-dark-green-1",
   };
 
   const colorClass = event.resource?.color
     ? colorMap[event.resource.color]
-    : "bg-Green-3 text-Dark-Green-1";
+    : "bg-green-3 text-dark-green-1";
 
   return (
     <div
@@ -237,6 +239,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
       sx={{
         width: '100%',
         maxHeight: 'calc(100vh - 100px)',
+        backgroundColor: 'var(--background)'
         // overflowY: 'auto',
       }}
     >
@@ -250,7 +253,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
         <Typography
           variant="h6"
           sx={{
-            color: 'var(--Dark-Green-1)',
+            color: 'var(--dark-green-1)',
             textTransform: 'uppercase',
             fontSize: 'var(--text-page-title-font-size)',
             fontWeight: 600,
@@ -279,7 +282,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
                 minWidth: 'auto',
                 px: 1,
                 py: 0.5,
-                color: 'var(--Dark-Green-1)',
+                color: 'var(--dark-green-1)',
                 fontSize: '1rem',
               }}
             >
@@ -303,7 +306,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
                 minWidth: 'auto',
                 px: 1,
                 py: 0.5,
-                color: 'var(--Dark-Green-1)',
+                color: 'var(--dark-green-1)',
                 fontSize: '1rem',
               }}
             >
@@ -315,9 +318,9 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
             <Button
               onClick={() => setView("day")}
               disableElevation
-              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige ${view === "day"
-                ? "bg-pastel-orange text-black hover:bg-orange"
-                : "border border-beige text-dark-green-1 bg-off-white hover:bg-beige"
+              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground ${view === "day"
+                ? "bg-beige"
+                : "bg-surface-color"
                 }`}
               sx={{ textTransform: "none" }}
             >
@@ -326,9 +329,9 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
             <Button
               onClick={() => setView("week")}
               disableElevation
-              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige  ${view === "week"
-                ? "bg-pastel-orange text-black hover:bg-orange"
-                : "border border-beige text-dark-green-1 bg-off-white hover:bg-beige"
+              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground ${view === "week"
+                ? "bg-beige"
+                : "bg-surface-color"
                 }`}
               sx={{ textTransform: "none" }}
             >
@@ -337,15 +340,17 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
             <Button
               onClick={() => setView("month")}
               disableElevation
-              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige  ${view === "month"
-                ? "bg-pastel-orange text-black hover:bg-orange"
-                : "text-dark-green-1 bg-off-white hover:bg-beige"
+              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground ${view === "month"
+                ? "bg-beige"
+                : "bg-surface-color"
                 }`}
               sx={{ textTransform: "none" }}
             >
               Month
             </Button>
           </Box>
+
+
 
           <Button
             onClick={() => {
@@ -400,7 +405,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
       >
         <DialogTitle
           sx={{
-            color: 'var(--Dark-Green-1)',
+            color: 'var(--dark-green-1)',
             textAlign: 'center',
             fontWeight: 600,
           }}
@@ -437,7 +442,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
           <Button
             onClick={() => setSelectedEvent(null)}
             variant="outlined"
-            sx={{ color: 'var(--Dark-Green-1)', borderColor: 'var(--Green-3)' }}
+            sx={{ color: 'var(--dark-green-1)', borderColor: 'var(--green-3)' }}
           >
             Close
           </Button>
@@ -453,7 +458,7 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
       >
         <DialogTitle
           sx={{
-            color: 'var(--Dark-Green-1)',
+            color: 'var(--dark-green-1)',
             textAlign: 'center',
             fontWeight: 600,
           }}

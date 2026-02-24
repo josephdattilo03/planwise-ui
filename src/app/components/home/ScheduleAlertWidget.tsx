@@ -7,7 +7,6 @@ export default function ScheduleAlertWidget() {
   return (
     <Card
       sx={{
-        mt: 2,
         borderRadius: "var(--radius-lg)",
         background: "linear-gradient(135deg, var(--home-alert-bg-1), var(--home-alert-bg-2))",
         border: "1px solid var(--home-alert-border)",

@@ -11,6 +11,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/src/i18n";
 
 import NavBarComponent from "@/src/common/NavBar/NavBarComponent";
+import AIChatBotGate from "@/src/common/AIChatBotGate";
 import ThemeRegistry from "@/src/common/ThemeRegistry";
 import NextAuthSessionProvider from "@/src/app/providers/SessionProvider";
 import { ThemeProvider } from "@/src/common/ThemeProvider";
@@ -48,12 +49,13 @@ export default async function LocaleLayout({ children, params }: Props) {
       >
         <ThemeProvider>
           <ThemeRegistry>
-<NextAuthSessionProvider>
-                <NextIntlClientProvider locale={locale} messages={messages}>
+            <NextAuthSessionProvider>
+              <NextIntlClientProvider locale={locale} messages={messages}>
                 <BoardsTagsProvider>
                   <WorkspaceProvider>
                     <NavBarComponent />
                     <main className="flex-1 overflow-auto font-sans">{children}</main>
+                    <AIChatBotGate />
                   </WorkspaceProvider>
                 </BoardsTagsProvider>
               </NextIntlClientProvider>

@@ -8,7 +8,7 @@ export default function CalendarFilterSection() {
   const { selectedDate, setSelectedDate } = useFilters();
 
   return (
-    <div className="w-full bg-white dark:bg-card-bg border border-green-4 dark:border-card-border rounded-lg">
+    <div className="w-full bg-card-bg border border-card-border rounded-lg">
       <DateCalendar
         showDaysOutsideCurrentMonth
         fixedWeekNumber={6}
@@ -23,16 +23,16 @@ export default function CalendarFilterSection() {
             paddingLeft: 2.5,
             backgroundColor: "transparent",
             "& .MuiIconButton-root": {
-              color: "var(--Dark-Green-1)",
+              color: "var(--dark-green-1)",
             },
           },
           "& .MuiPickersDay-dayOutsideMonth": {
-            color: "var(--Green-3)",
+            color: "var(--green-3)",
           },
           "& .MuiPickersCalendarHeader-labelContainer": {
             textTransform: "uppercase",
             fontSize: "14px",
-            color: "var(--Dark-Green-1)",
+            color: "var(--dark-green-1)",
             backgroundColor: "transparent",
           },
           "& .MuiPickersSlideTransition-root": {
@@ -49,7 +49,7 @@ export default function CalendarFilterSection() {
             fontSize: "12px",
             height: "30px",
             width: "30px",
-            color: "var(--Dark-Green-2)",
+            color: "var(--dark-green-2)",
             backgroundColor: "transparent",
           },
           "& .MuiPickersDay-root": {
@@ -57,17 +57,17 @@ export default function CalendarFilterSection() {
             fontSize: "12px",
             height: "30px",
             width: "30px",
-            color: "var(--Dark-Green-1)",
+            color: "var(--dark-green-1)",
             backgroundColor: "transparent",
             "&:hover": {
-              backgroundColor: "var(--Green-4)",
+              backgroundColor: "var(--green-4)",
             },
           },
           "& .Mui-selected": {
-            backgroundColor: "var(--Green-1) !important",
+            backgroundColor: "var(--green-1) !important",
             color: "white",
             "&:hover": {
-              backgroundColor: "var(--Green-2) !important",
+              backgroundColor: "var(--green-2) !important",
             },
           },
           "& .MuiPickersArrowSwitcher-root": {

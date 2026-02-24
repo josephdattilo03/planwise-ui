@@ -22,7 +22,7 @@ export default function LoadingSpinner({
 }: LoadingSpinnerProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400 ${fullPage ? "min-h-screen w-full" : "h-full min-h-48"} ${className}`}
+      className={`flex flex-col items-center justify-center gap-3 text-dark-green-2 ${fullPage ? "min-h-screen w-full" : "h-full min-h-48"} ${className}`}
       role="status"
       aria-live="polite"
       aria-label={label}

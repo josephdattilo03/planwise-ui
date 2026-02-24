@@ -42,9 +42,9 @@ function resolveThemeColors(appTheme: "light" | "dark"): ThemeColors {
     background: getCssVar("--background", fallback.background),
     paper: getCssVar("--menu-bg", fallback.paper),
     foreground: getCssVar("--foreground", fallback.foreground),
-    textSecondary: getCssVar("--Dark-Green-2", fallback.textSecondary),
-    green1: getCssVar("--Green-1", fallback.green1),
-    green2: getCssVar("--Green-2", fallback.green2),
+    textSecondary: getCssVar("--dark-green-2", fallback.textSecondary),
+    green1: getCssVar("--green-1", fallback.green1),
+    green2: getCssVar("--green-2", fallback.green2),
   };
 }
 
@@ -88,7 +88,7 @@ function buildMuiTheme(appTheme: "light" | "dark", colors: ThemeColors) {
         styleOverrides: {
           root: {
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-              borderColor: "var(--Green-1) !important",
+              borderColor: "var(--green-1) !important",
             },
           },
         },
@@ -97,7 +97,7 @@ function buildMuiTheme(appTheme: "light" | "dark", colors: ThemeColors) {
         styleOverrides: {
           root: {
             "&:after": {
-              borderBottomColor: "var(--Green-1)",
+              borderBottomColor: "var(--green-1)",
             },
           },
         },
@@ -115,17 +115,17 @@ function buildMuiTheme(appTheme: "light" | "dark", colors: ThemeColors) {
       MuiPickersCalendarHeader: {
         styleOverrides: {
           switchViewButton: {
-            color: "var(--Dark-Green-1)",
+            color: "var(--dark-green-1)",
           },
           iconButton: {
-            color: "var(--Dark-Green-1)",
+            color: "var(--dark-green-1)",
           },
         },
       },
       MuiPickersArrowSwitcher: {
         styleOverrides: {
           button: {
-            color: "var(--Dark-Green-1)",
+            color: "var(--dark-green-1)",
           },
         },
       },
