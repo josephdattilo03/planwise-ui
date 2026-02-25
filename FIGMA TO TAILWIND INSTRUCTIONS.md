@@ -31,7 +31,7 @@
 > Example:
 >
 > ```jsx
-> <div className="bg-green-1 text-white p-6">Primary coloured section</div>
+> <div className="bg-green-1 text-foreground p-6">Primary coloured section</div>
 > ```
 >
 > **3. React + Tailwind context**
@@ -65,6 +65,7 @@
 > **Step-by-step procedure:**
 >
 > **a) Add your text key to the messages file**
+>
 > - Navigate to `messages/en.json`
 > - Add a new key-value pair with a descriptive key:
 >
@@ -82,29 +83,32 @@
 > ```
 >
 > **b) Use the translation in your component**
+>
 > - Import the translation hook (exact import depends on your i18n setup):
 >
 > ```tsx
-> import { useTranslations } from 'next-intl';
+> import { useTranslations } from "next-intl";
 >
 > export default function HomePage() {
->   const t = useTranslations('homePage');
->   
+>   const t = useTranslations("homePage");
+>
 >   return (
 >     <div>
->       <h1 className="text-page-title">{t('title')}</h1>
->       <p className="text-body">{t('subtitle')}</p>
+>       <h1 className="text-page-title">{t("title")}</h1>
+>       <p className="text-body">{t("subtitle")}</p>
 >     </div>
 >   );
 > }
 > ```
 >
 > **c) Naming conventions**
+>
 > - Use camelCase for keys
 > - Group related strings under namespaces (e.g., `homePage`, `buttons`, `errors`)
 > - Be descriptive: prefer `taskList.emptyState` over `text1`
 >
 > **d) For new locales**
+>
 > - Create a new file in `messages/` (e.g., `es.json` for Spanish)
 > - Copy the structure from `en.json` and translate values
 >

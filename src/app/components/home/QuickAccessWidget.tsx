@@ -17,7 +17,7 @@ export default function QuickAccessWidget() {
         <Typography
           variant="body2"
           sx={{
-            color: "var(--Dark-Green-2)",
+            color: "var(--dark-green-2)",
             lineHeight: 1.4,
             mb: 2,
             fontSize: 20,
@@ -35,7 +35,7 @@ export default function QuickAccessWidget() {
           sx={{
             mb: 1.5,
             fontWeight: 600,
-            color: "var(--Dark-Green-1)",
+            color: "var(--dark-green-1)",
             fontSize: "1rem",
           }}
         >
@@ -74,7 +74,7 @@ export default function QuickAccessWidget() {
                 sx={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: "var(--Dark-Green-1)",
+                  color: "var(--dark-green-1)",
                   mb: 0.5,
                 }}
               >
@@ -82,7 +82,7 @@ export default function QuickAccessWidget() {
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ fontSize: 14, color: "var(--Dark-Green-2)" }}
+                sx={{ fontSize: 14, color: "var(--dark-green-2)" }}
               >
                 {item.description}
               </Typography>

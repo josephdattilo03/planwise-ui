@@ -103,7 +103,7 @@ export default function NavBarComponent() {
   };
 
   return (
-    <Box className="flex flex-row justify-between font-sans text-4 w-full h-fit bg-off-white py-3 px-8 border-b-2 border-green-2">
+    <Box className="flex flex-row justify-between font-sans text-4 w-full h-fit bg-sidebar-bg py-3 px-8 border-b-2 border-green-1">
       <Image
         src={theme === "dark" ? "/Logo-Dark.svg" : "/logo.svg"}
         alt="Planwise logo"
@@ -115,7 +115,7 @@ export default function NavBarComponent() {
         value={pathname}
         className="my-3 min-h-0 h-auto items-center"
         textColor="inherit"
-        indicatorColor="primary"
+        // indicatorColor="primary"
         variant="scrollable"
         scrollButtons="auto"
         aria-label="scroll here"
@@ -142,18 +142,18 @@ export default function NavBarComponent() {
               iconPosition="start"
               className="transition delay-50 duration-200 ease-in-out"
               sx={{
+                opacity: 1,
                 fontSize: "16px",
                 minHeight: 0,
                 py: "4px",
                 px: "10px",
                 mx: "10px",
                 fontWeight: 500,
-                color: selected ? "var(--Dark-Green-1)" : "var(--Dark-Green-2)",
+                color: selected ? theme === "dark" ? "var(--dark-green-1)" : "var(--green-1)" : "var(--dark-green-2)",
                 borderRadius: "var(--radius-sm)",
-                backgroundColor: selected ? "var(--Green-4)" : "transparent",
+                backgroundColor: selected ? theme === "dark" ? "var(--green-1)" : "var(--green-4)" : "transparent",
                 "&:hover": {
-                  backgroundColor: selected ? "var(--Green-4)" : theme === "dark" ? "#6A9A7A4D" : "#A7C9574D",
-                  color: "var(--Dark-Green-1)",
+                  backgroundColor: selected ? theme === "dark" ? "var(--green-1)" : "var(--green-4)" : "var(--beige)",
                 },
               }}
             />
@@ -170,16 +170,16 @@ export default function NavBarComponent() {
 
         <div
           onClick={handleClick}
-          className="flex flex-row gap-2 p-2 border border-dark-green-2 bg-white dark:bg-card-bg rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-menu-item-hover transition-colors"
+          className="flex flex-row gap-2 p-2 border border-border bg-card-bg rounded-lg cursor-pointer hover:bg-menu-item-hover transition-colors"
           aria-controls={open ? "user-menu" : undefined}
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
         >
           <div className="text-right">
-            <p className="font-medium text-dark-green-2 dark:text-dark-green-1">
+            <p className="font-medium text-dark-green-1">
               {session?.user?.name}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{session?.user?.email}</p>
+            <p className="text-sm text-dark-green-2">{session?.user?.email}</p>
           </div>
 
           {session?.user?.image && (
@@ -216,15 +216,12 @@ export default function NavBarComponent() {
               zIndex: 9999,
               borderRadius: "var(--radius-md)",
               backgroundColor: "var(--menu-bg)",
-              border: "1px solid var(--sidebar-border)",
+              border: "1px solid var(--border)",
               "& .MuiMenuItem-root": {
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
                 "&:hover": {
                   backgroundColor: "var(--menu-item-hover)",
                 },
-              },
-              "& .MuiDivider-root": {
-                borderColor: "var(--sidebar-border)",
               },
             },
           },

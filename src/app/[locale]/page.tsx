@@ -24,7 +24,6 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signOut, useSession, signIn } from "next-auth/react";
-
 import { fetchTasks, createTask } from "../services/tasks/taskService";
 import { fetchEvents } from "../services/events/eventService";
 import { Task } from "../types/task";
@@ -184,9 +183,17 @@ export default function Home() {
   };
 
 
+  if (status === "loading") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <LoadingSpinner label="Loading..." fullPage />
+      </div>
+    );
+  }
+
   if (status === "authenticated" && loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen dark:bg-background">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <LoadingSpinner label="Loading dashboard..." fullPage />
       </div>
     );
@@ -194,7 +201,7 @@ export default function Home() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-off-white text-green-1">
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-background text-green-1">
         <Image
           src={theme === "dark" ? "/Logo-Dark.svg" : "/logo.svg"}
           alt="Planwise logo"
@@ -221,11 +228,10 @@ export default function Home() {
 
   return (
     <Box
-      className="content-fade-in"
+      className="content-fade-in w-full h-full overflow-hidden"
       sx={{
         p: { xs: 2, sm: 3, md: 4 },
-        backgroundColor: "#FFFFFF",
-        minHeight: "100vh",
+        backgroundColor: "var(--background)",
         display: "flex",
         flexDirection: "column",
         // Hide scrollbars on desktop/laptop
@@ -259,6 +265,7 @@ export default function Home() {
           }}
         >
           <GreetingWidget userName={userName} />
+          <ScheduleAlertWidget />
           <QuickAccessWidget />
         </Box>
 
@@ -276,7 +283,6 @@ export default function Home() {
             boards={boards}
             onAddTask={handleAddTask}
           />
-          <ScheduleAlertWidget />
         </Box>
 
         {/* Right column - Calendar and Notes */}

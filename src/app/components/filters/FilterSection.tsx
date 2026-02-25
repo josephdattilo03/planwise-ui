@@ -12,7 +12,7 @@ export default function FilterSection({ title, onAddClick, children }: Props) {
   return (
     <section className="bg-sidebar-bg">
       <div className="flex justify-between items-center">
-        <h3 className="text-small-header uppercase text-dark-green-1 dark:text-dark-green-1">
+        <h3 className="text-small-header uppercase text-dark-green-1">
           {title}
         </h3>
 

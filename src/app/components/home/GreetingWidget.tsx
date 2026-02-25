@@ -12,7 +12,7 @@ export default function GreetingWidget({ userName }: GreetingWidgetProps) {
         display: "flex",
         alignItems: "center",
         gap: 2,
-        color: "var(--Dark-Green-1)",
+        color: "var(--dark-green-1)",
         fontWeight: "bold",
         mt: 2,
         mb: 1,
@@ -22,7 +22,7 @@ export default function GreetingWidget({ userName }: GreetingWidgetProps) {
       <Typography
         variant="h2"
         sx={{
-          color: "var(--Dark-Green-1)",
+          color: "var(--dark-green-1)",
           fontWeight: "bold",
           mb: 0,
           textAlign: "left",

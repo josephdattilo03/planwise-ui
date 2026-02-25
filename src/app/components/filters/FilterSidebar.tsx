@@ -43,7 +43,7 @@ export default function FilterSidebar({
   const hasTopContent = topContent || showClearAll || showSmartRecommendations;
 
   return (
-    <aside className="w-full h-full max-w-2xs border-r border-green-4 dark:border-sidebar-border bg-sidebar-bg flex flex-col pt-4">
+    <aside className="w-full h-full max-w-2xs border-r border-sidebar-border bg-sidebar-bg flex flex-col pt-4">
       {/* ───── Top STATIC section ───── */}
       {showStaticTop && hasTopContent && (
         <div className="w-full flex flex-col gap-4 px-4 pb-2">

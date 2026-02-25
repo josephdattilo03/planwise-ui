@@ -50,7 +50,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
         <Typography
           variant="overline"
           sx={{
-            color: "var(--Dark-Green-2)",
+            color: "var(--dark-green-2)",
             opacity: 0.8,
             fontSize: 10,
             fontWeight: 600,
@@ -66,7 +66,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
 
         <Typography
           variant="h6"
-          sx={{ fontWeight: "bold", mb: 1.5, color: "var(--Dark-Green-1)", fontSize: "1.1rem" }}
+          sx={{ fontWeight: "bold", mb: 1.5, color: "var(--dark-green-1)", fontSize: "1.1rem" }}
         >
           {mainNote.title}
         </Typography>
@@ -75,7 +75,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
           variant="body2"
           sx={{
             fontSize: 13,
-            color: "var(--Dark-Green-2)",
+            color: "var(--dark-green-2)",
             mb: 2,
             lineHeight: 1.4,
           }}
@@ -108,9 +108,9 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
                   borderColor: "var(--input-border)"
                 },
                 "&:hover fieldset": {
-                  borderColor: "var(--Green-2)"
+                  borderColor: "var(--green-2)"
                 },
-                "&.Mui-focused fieldset": { borderColor: "var(--Green-2)" },
+                "&.Mui-focused fieldset": { borderColor: "var(--green-2)" },
               },
               "& .MuiInputBase-input": {
                 color: "var(--input-text)",
@@ -164,7 +164,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
             <Typography
               variant="caption"
               sx={{
-                color: "var(--Dark-Green-2)",
+                color: "var(--dark-green-2)",
                 fontStyle: "italic",
                 fontSize: 11
               }}

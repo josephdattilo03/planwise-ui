@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import { Button } from '@mui/material';
+import InventoryRoundedIcon from "@mui/icons-material/InventoryRounded";
+import { IconButton, Tooltip } from '@mui/material';
 import EditableNote from './EditableNote';
-import ArchiveSidebar from './ArchiveSidebar';
+import ArchiveModal from './ArchiveModal';
 import LoadingSpinner from '@/src/common/LoadingSpinner';
 
 type NoteType = {
@@ -20,10 +21,11 @@ type NoteType = {
   links?: string[];
 };
 
-const DEFAULT_W = 380;
-const DEFAULT_H = 300;
-const ARCHIVE_SIDEBAR_WIDTH = 280;
-const ADD_NOTE_BUTTON_GAP = 16;
+const DEFAULT_W = 380 / 4;
+const DEFAULT_H = 30 / 4;
+const FAB_SIZE = 48;
+const FAB_GAP = 24;
+const NOTE_MIN_TOP = 20;
 
 function normalizeNote(n: any): NoteType {
   const x = Number(n.x);
@@ -43,8 +45,9 @@ function normalizeNote(n: any): NoteType {
 export default function NoteBoard() {
   const [notes, setNotes] = useState<NoteType[]>([]);
   const [archivedNotes, setArchivedNotes] = useState<NoteType[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadNotes = async () => {
@@ -73,20 +76,27 @@ export default function NoteBoard() {
 
   const NOTE_COLORS = ['bg-pink', 'bg-blue', 'bg-cream', 'bg-lilac'];
 
+  const getBoardSize = () => {
+    const el = boardRef.current;
+    return {
+      width: el?.clientWidth ?? window.innerWidth,
+      height: el?.clientHeight ?? window.innerHeight,
+    };
+  };
+
   const addNote = () => {
     const noteWidth = 380;
-    const BUTTON_RIGHT = 37;
-    const BUTTON_TOP = 150;
-
-    const x =
-      window.innerWidth - BUTTON_RIGHT - noteWidth - 20 + Math.random() * 50;
-    const y = BUTTON_TOP + Math.random() * 20;
+    const { width } = getBoardSize();
+    const maxX = width - noteWidth - 40;
+    const minX = 24;
+    const x = Math.min(maxX, minX + Math.random() * Math.max(0, maxX - minX));
+    const y = NOTE_MIN_TOP + Math.random() * 40;
     setNotes([
       ...notes,
       {
         id: crypto.randomUUID(),
-        x: x,
-        y: y,
+        x,
+        y,
         width: 380,
         height: 300,
         title: 'New Note',
@@ -113,7 +123,6 @@ export default function NoteBoard() {
   const archiveNote = (id: string) => {
     const noteToArchive = notes.find((n) => n.id === id);
     if (!noteToArchive) return;
-
     setArchivedNotes((prev) => [...prev, noteToArchive]);
     setNotes((prev) => prev.filter((n) => n.id !== id));
   };
@@ -121,7 +130,6 @@ export default function NoteBoard() {
   const restoreNote = (id: string) => {
     const note = archivedNotes.find((n) => n.id === id);
     if (!note) return;
-
     setNotes((prev) => [...prev, note]);
     setArchivedNotes((prev) => prev.filter((n) => n.id !== id));
   };
@@ -137,14 +145,12 @@ export default function NoteBoard() {
           y: note.y + e.movementY,
         };
 
-        const sidebarWidth = sidebarOpen ? ARCHIVE_SIDEBAR_WIDTH : 0;
-        const topLimit = 80;
+        const { width, height } = getBoardSize();
+        const maxX = Math.max(0, width - note.width);
+        const maxY = Math.max(0, height - note.height);
 
-        const maxX = window.innerWidth - note.width;
-        const maxY = window.innerHeight - note.height;
-
-        updated.x = Math.min(Math.max(updated.x, sidebarWidth), maxX);
-        updated.y = Math.min(Math.max(updated.y, topLimit), maxY);
+        updated.x = Math.min(Math.max(updated.x, 0), maxX);
+        updated.y = Math.min(Math.max(updated.y, NOTE_MIN_TOP), maxY);
 
         return updated;
       })
@@ -160,60 +166,109 @@ export default function NoteBoard() {
   }
 
   return (
-    <div className="h-full w-full flex flex-row content-fade-in">
-      <ArchiveSidebar
+    <div ref={boardRef} className="h-full w-full relative">
+      <ArchiveModal
         archivedNotes={archivedNotes}
         restoreNote={restoreNote}
-        isOpen={sidebarOpen}
-        toggleSidebar={() => setSidebarOpen((s) => !s)}
+        isOpen={archiveOpen}
+        onClose={() => setArchiveOpen(false)}
       />
 
-      <div className="transition-all duration-300 relative w-full h-screen">
-        <Button
+      {/* Add note FAB */}
+      <Tooltip title="Add note" placement="right">
+        <IconButton
           onClick={addNote}
-          className="fixed top-5 z-999 flex items-center justify-center gap-1.5 py-2 px-3 font-sans rounded-md text-small-header bg-green-1 text-white hover:bg-green-2 transition-[left] duration-300 ease-out"
-          style={{
-            left: sidebarOpen
-              ? ARCHIVE_SIDEBAR_WIDTH + ADD_NOTE_BUTTON_GAP
-              : ADD_NOTE_BUTTON_GAP,
+          aria-label="Add note"
+          sx={{
+            position: 'absolute',
+            bottom: FAB_GAP,
+            left: FAB_GAP,
+            zIndex: 10,
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            borderRadius: '50%',
+            backgroundColor: 'var(--green-1)',
+            color: '#fff',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+            '&:hover': {
+              backgroundColor: 'var(--green-2)',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+            },
           }}
         >
-          <AddRoundedIcon className="w-4 h-4" />
-          <span>Add Note</span>
-        </Button>
+          <AddRoundedIcon sx={{ fontSize: 26 }} />
+        </IconButton>
+      </Tooltip>
 
-        {notes.map((note) => (
-          <div
-            key={note.id}
-            className="absolute cursor-grab"
-            style={{ left: note.x, top: note.y }}
-            onMouseDown={(e) => {
-              const moveHandler = (ev: MouseEvent) => handleDrag(ev, note.id);
-              document.addEventListener('mousemove', moveHandler);
-              document.addEventListener(
-                'mouseup',
-                () => {
-                  document.removeEventListener('mousemove', moveHandler);
-                },
-                { once: true }
-              );
-            }}
-          >
-            <EditableNote
-              initialTitle={note.title}
-              initialBody={note.body}
-              initialColor={note.color}
-              initialLinks={note.links}
-              width={note.width}
-              height={note.height}
-              lastEdited={note.timestamp}
-              onArchive={() => archiveNote(note.id)}
-              onDelete={() => deleteNote(note.id)}
-              onUpdate={(data) => updateNote(note.id, data)}
+      {/* Archived notes FAB */}
+      <Tooltip title="Archived notes" placement="right">
+        <IconButton
+          onClick={() => setArchiveOpen(true)}
+          aria-label="View archived notes"
+          sx={{
+            position: 'absolute',
+            bottom: FAB_GAP + FAB_SIZE + 12,
+            left: FAB_GAP,
+            zIndex: 10,
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            borderRadius: '50%',
+            backgroundColor: 'var(--card-bg, #fff)',
+            color: 'var(--dark-green-1)',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
+            border: '1px solid var(--sidebar-border)',
+            '&:hover': {
+              backgroundColor: 'var(--sidebar-bg)',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.16)',
+            },
+          }}
+        >
+          <InventoryRoundedIcon sx={{ fontSize: 22 }} />
+          {archivedNotes.length > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: 6,
+                right: 6,
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: 'var(--green-1)',
+              }}
             />
-          </div>
-        ))}
-      </div>
+          )}
+        </IconButton>
+      </Tooltip>
+
+      {notes.map((note) => (
+        <div
+          key={note.id}
+          className="absolute cursor-grab"
+          style={{ left: note.x, top: note.y }}
+          onMouseDown={() => {
+            const moveHandler = (ev: MouseEvent) => handleDrag(ev, note.id);
+            document.addEventListener('mousemove', moveHandler);
+            document.addEventListener(
+              'mouseup',
+              () => document.removeEventListener('mousemove', moveHandler),
+              { once: true }
+            );
+          }}
+        >
+          <EditableNote
+            initialTitle={note.title}
+            initialBody={note.body}
+            initialColor={note.color}
+            initialLinks={note.links}
+            width={note.width}
+            height={note.height}
+            lastEdited={note.timestamp}
+            onArchive={() => archiveNote(note.id)}
+            onDelete={() => deleteNote(note.id)}
+            onUpdate={(data) => updateNote(note.id, data)}
+          />
+        </div>
+      ))}
     </div>
   );
 }
