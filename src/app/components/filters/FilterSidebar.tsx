@@ -4,6 +4,7 @@ import React from "react";
 import { Button, Switch } from "@mui/material";
 import TipsAndUpdatesRoundedIcon from "@mui/icons-material/TipsAndUpdatesRounded";
 import FormButton from "@/src/common/button/FormButton";
+import LoadingSpinner from "@/src/common/LoadingSpinner";
 
 type Props = {
   /** children sections (Boards, Tags, Calendar, anything) */
@@ -42,7 +43,7 @@ export default function FilterSidebar({
   const hasTopContent = topContent || showClearAll || showSmartRecommendations;
 
   return (
-    <aside className="w-full h-full max-w-2xs border-r border-green-4 dark:border-sidebar-border bg-sidebar-bg flex flex-col pt-4">
+    <aside className="w-full h-full max-w-2xs border-r border-sidebar-border bg-sidebar-bg flex flex-col pt-4">
       {/* ───── Top STATIC section ───── */}
       {showStaticTop && hasTopContent && (
         <div className="w-full flex flex-col gap-4 px-4 pb-2">
@@ -79,8 +80,12 @@ export default function FilterSidebar({
       )}
 
       {/* ───── BOTTOM SCROLL SECTION FOR FILTERS ───── */}
-      <div className="scroll-shadows w-full overflow-y-auto flex flex-col gap-4 px-4 pb-4 pt-2 bg-sidebar-bg">
-        {children}
+      <div className="scroll-shadows w-full overflow-y-auto px-4 pb-4 pt-2 bg-sidebar-bg">
+        {loading ? (
+          <LoadingSpinner label="Loading filters..." className="py-8" />
+        ) : (
+          <div className="content-fade-in flex flex-col gap-4">{children}</div>
+        )}
       </div>
     </aside>
   );

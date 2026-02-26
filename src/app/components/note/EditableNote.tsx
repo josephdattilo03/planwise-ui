@@ -133,9 +133,8 @@ export default function EditableNote({
 
   return (
     <Card
-      className={`${color} shadow-lg rounded-2xl p-4 relative${
-        editing ? "bg-opacity-80 ring-3 ring-gray-300 z-0" : ""
-      }`}
+      className={`${color} rounded-lg p-4 relative ${editing ? "bg-opacity-80 ring-3 ring-gray-300 z-0" : ""
+        }`}
       style={{ width: `${noteWidth}px`, height: `${noteHeight}px` }}
       onDoubleClick={() => setEditing(true)}
     >
@@ -164,14 +163,14 @@ export default function EditableNote({
           </IconButton>
           <IconButton
             onClick={onDelete}
-            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            className="text-red hover:opacity-80"
           >
             <DeleteIcon />
           </IconButton>
         </div>
       </div>
 
-      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+      <p className="text-xs text-dark-green-2 mb-2">
         LAST EDITED {timestamp}
       </p>
 
@@ -197,12 +196,12 @@ export default function EditableNote({
         </div>
       )}
 
-      <CardContent className="p-0 h-[calc(100%-145px)]">
+      <CardContent className={`p-0 ${editing ? "h-[calc(100%-145px)]" : "h-[calc(100%-90px)]"}`}>
         <div
           ref={bodyRef}
           contentEditable={editing}
           suppressContentEditableWarning
-          className={`w-full h-full overflow-auto outline-none p-2 rounded ${color} text-black dark:text-dark-green-1`}
+          className={`w-full h-full overflow-auto outline-none p-2 rounded-sm ${color} text-foreground`}
           onInput={updateBody}
         />
       </CardContent>
@@ -214,7 +213,7 @@ export default function EditableNote({
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1 bg-white dark:bg-dark-green-2 border border-green-2 rounded-full underline text-blue-600 dark:text-sky-blue hover:text-blue-800 dark:hover:text-sky-blue"
+            className="px-3 py-1 bg-card-bg border border-green-2 rounded-md underline text-sky-blue hover:opacity-80"
           >
             {link}
           </a>
@@ -226,7 +225,7 @@ export default function EditableNote({
           {NOTE_COLORS.map((c) => (
             <button
               key={c}
-              className={`w-6 h-6 min-w-6 min-h-6 rounded-full border border-gray-300 dark:border-gray-600 cursor-pointer ${c}`}
+              className={`w-6 h-6 min-w-6 min-h-6 rounded-full border border-border cursor-pointer ${c}`}
               onClick={() => {
                 setColor(c);
                 onUpdate?.({ color: c });
@@ -249,7 +248,7 @@ export default function EditableNote({
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="text-gray-600 dark:text-gray-400"
+          className="text-dark-green-2"
         >
           <path d="M18 20 L20 18" />
           <path d="M14 20 L20 14" />

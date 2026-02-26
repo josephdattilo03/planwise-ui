@@ -22,6 +22,7 @@
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@google/generative-ai": "^0.24.1",
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
     "@mui/material-nextjs": "^7.3.6",
@@ -35,6 +36,7 @@
     "next-intl": "^4.5.3",
     "react": "19.2.0",
     "react-big-calendar": "^1.5.2",
+    "react-chatbotify": "^2.5.0",
     "react-dom": "19.2.0",
     "react-draggable": "^4.5.0",
     "tsc": "^2.0.4"

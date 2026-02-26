@@ -1,11 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { FolderNode, BoardNode, WorkspaceNode } from "../../types/workspace";
+
+import { useState, useEffect, useRef } from "react";
+import { FolderNode, WorkspaceNode } from "../../types/workspace";
 import TreeItem from "./TreeItem";
-import {
-  fetchRootFolder,
-  fetchChildrenByParentId,
-} from "../../services/folders/folderService";
+import LoadingSpinner from "@/src/common/LoadingSpinner";
+import { useWorkspace } from "../../providers/workspace/WorkspaceContext";
 
 interface Props {
   onSelectBoard: (node: string) => void;
@@ -16,99 +15,59 @@ export default function FolderTreeDisplay({
   onSelectBoard,
   refreshKey,
 }: Props) {
-  const [workspace, setWorkspace] = useState<FolderNode | null>(null);
+  const { workspace, loading, loadChildren: loadChildrenFromContext, refetch } = useWorkspace();
   const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
-    return new Set(["root"]);
-  });
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set(["root"]));
   const [selectedNode, setSelectedNode] = useState<WorkspaceNode | null>(null);
+  const refreshKeyRef = useRef(refreshKey);
 
-  // Load children for a specific folder
+  // Refetch workspace when Folders page triggers refresh (e.g. after creating a board)
+  useEffect(() => {
+    if (refreshKey !== undefined && refreshKey !== refreshKeyRef.current) {
+      refreshKeyRef.current = refreshKey;
+      refetch();
+    }
+  }, [refreshKey, refetch]);
+
   const loadChildren = async (folderId: string) => {
-    // Don't load if already loading
     if (loadingFolders.has(folderId)) return;
-
     setLoadingFolders((prev) => new Set(prev).add(folderId));
-
     try {
-      const children = await fetchChildrenByParentId(folderId);
-
-      // Update the workspace tree with the loaded children
-      setWorkspace((prevWorkspace) => {
-        if (!prevWorkspace) return null;
-        return updateFolderChildren(prevWorkspace, folderId, children);
-      });
+      await loadChildrenFromContext(folderId);
     } finally {
       setLoadingFolders((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(folderId);
-        return newSet;
+        const next = new Set(prev);
+        next.delete(folderId);
+        return next;
       });
     }
   };
 
-  useEffect(() => {
-    const loadRoot = async () => {
-      const root = await fetchRootFolder();
-      if (root) {
-        setWorkspace(root);
-        await loadChildren(root.id);
-      }
-    };
-    loadRoot();
-  }, [refreshKey]);
-
-  // Recursively update a folder's children in the tree
-  const updateFolderChildren = (
-    node: FolderNode,
-    targetId: string,
-    children: WorkspaceNode[]
-  ): FolderNode => {
-    if (node.id === targetId) {
-      return { ...node, children };
-    }
-
-    return {
-      ...node,
-      children: node.children.map((child) => {
-        if (child.type === "folder") {
-          return updateFolderChildren(child as FolderNode, targetId, children);
-        }
-        return child;
-      }),
-    };
-  };
-
-  // Toggle folder expansion and load children if needed
   const toggleFolder = async (folderId: string) => {
     const wasExpanded = expandedFolders.has(folderId);
-
     setExpandedFolders((prev) => {
-      const newSet = new Set(prev);
-      if (wasExpanded) {
-        newSet.delete(folderId);
-      } else {
-        newSet.add(folderId);
-      }
-      return newSet;
+      const next = new Set(prev);
+      if (wasExpanded) next.delete(folderId);
+      else next.add(folderId);
+      return next;
     });
-
-    // Load children when expanding (if not already loaded)
-    if (!wasExpanded) {
-      await loadChildren(folderId);
-    }
+    if (!wasExpanded) await loadChildren(folderId);
   };
 
-  if (!workspace) {
+  if (loading && !workspace) {
     return (
       <div className="flex h-screen items-center justify-center bg-sidebar-bg">
-        <div className="text-gray-500 dark:text-gray-400">Loading workspace...</div>
+        <LoadingSpinner label="Loading workspace..." fullPage={false} />
       </div>
     );
   }
 
+  if (!workspace) {
+    return null;
+  }
+
   return (
-    <div className="h-screen bg-sidebar-bg">
+    <div className="h-screen bg-sidebar-bg content-fade-in">
       <TreeItem
         node={workspace}
         expandedFolders={expandedFolders}

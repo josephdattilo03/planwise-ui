@@ -27,7 +27,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
 
   return (
     <div
-      className="flex flex-col gap-2 border border-(--task-stroke) rounded-2xl p-3 cursor-pointer"
+      className="flex flex-col gap-2 border border-border rounded-lg p-3 cursor-pointer"
       onClick={onClick}
     >
       <div>
@@ -37,7 +37,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
         <div className="flex flex-row gap-3 items-center text-nowrap">
           <span
             className={
-              "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium inset-ring " +
+              "inline-flex items-center rounded-sm px-2 py-1 text-xs font-medium inset-ring " +
               getProgressClass(task.progress)
             }
           >

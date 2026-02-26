@@ -4,14 +4,13 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Board, Tag } from "../../types";
 import {
-  fetchBoards,
   createBoard as createBoardService,
 } from "../../services/boards/boardService";
 import {
-  fetchTags,
   createTag as createTagService,
   updateTag as updateTagService,
 } from "../../services/tags/tagService";
+import { useBoardsTags } from "../boardsTags/BoardsTagsContext";
 import { useSession } from "next-auth/react";
 
 interface DateRange {
@@ -53,10 +52,7 @@ const FiltersContext = createContext<FiltersContextType | undefined>(undefined);
 
 export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { boards, tags, loading, error, setBoards, setTags } = useBoardsTags();
 
   const [selectedBoardIds, setSelectedBoardIds] = useState<Set<string>>(
     new Set()
@@ -75,34 +71,17 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const {data: session} = useSession()
   const email = session?.user?.email as string
 
-  // Fetch the boards & tags once
+  // Apply board from URL when boards are available (from preload)
   useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const [boardData, tagData] = await Promise.all([
-          fetchBoards(email),
-          fetchTags(email),
-        ]);
-
-        setBoards(boardData);
-        setTags(tagData);
-
-        // Check for board parameter in URL and set filter
-        const boardParam = searchParams.get('board');
-        if (boardParam && boardData.some((board: Board) => board.id === boardParam)) {
-          setSelectedBoardIds(new Set([boardParam]));
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load filter data");
-      } finally {
-        setLoading(false);
-      }
+    const boardParam = searchParams.get("board");
+    if (
+      boardParam &&
+      boards.length > 0 &&
+      boards.some((board: Board) => board.id === boardParam)
+    ) {
+      setSelectedBoardIds(new Set([boardParam]));
     }
-
-    load();
-  }, [searchParams, email]);
+  }, [searchParams, boards]);
 
   // Toggle board
   const toggleBoard = (id: string) => {
@@ -136,14 +115,14 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     setSelectedDueDateRange(dateRange);
   };
 
-  // Create tag
+  // Create tag (updates preload cache so sidebar stays in sync)
   const createTag = async (data: Partial<Tag>) => {
     const newTag = createTagService(data);
     setTags((prev) => [...prev, newTag]);
     return Promise.resolve(newTag);
   };
 
-  // Edit tag
+  // Edit tag (updates preload cache)
   const editTag = async (tag: Tag) => {
     updateTagService(tag);
     setTags((prev) => prev.map((t) => (t.id === tag.id ? tag : t)));
@@ -164,6 +143,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Create board (updates preload cache so sidebar stays in sync)
   const createBoard = (name: string, color: string): Board => {
     const newBoard = createBoardService(name, color);
     setBoards((prev) => [...prev, newBoard]);

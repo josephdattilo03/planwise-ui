@@ -8,8 +8,8 @@ const intlMiddleware = createIntlMiddleware(routing);
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // CRITICAL: Allow access to auth API routes FIRST
-  if (pathname.startsWith("/api/auth")) {
+  // Allow all API routes (auth, ai, etc.) to bypass locale handling
+  if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
@@ -54,5 +54,5 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|api/trpc|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!api/|_next|_vercel|.*\\..*).*)"],
 };

@@ -45,9 +45,8 @@ export default function BoardManagerPopover({
           sx: {
             ml: 2,
             width: 280,
-            borderRadius: "12px",
+            borderRadius: "var(--radius-md)",
             p: 1.5,
-            boxShadow: 3,
           },
         },
       }}

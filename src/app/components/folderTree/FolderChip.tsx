@@ -14,7 +14,7 @@ export default function FolderChip({ node, toggleFolder, isExpanded }: FolderChi
     return (
         <div className='flex flex-row items-center gap-1'>
             <button
-                className="p-0.5 rounded cursor-pointer text-dark-green-1 hover:bg-gray-200 dark:hover:bg-tree-hover"
+                className="p-0.5 rounded-sm cursor-pointer text-dark-green-1 hover:bg-tree-hover"
                 onClick={(e) => {
                     e.stopPropagation();
                     toggleFolder(node.id);

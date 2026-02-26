@@ -33,7 +33,7 @@ export default function BoardsFilterSection() {
           selectedBoards.map((board) => (
             <div
               key={board.id}
-              className="flex flex-row justify-start text-left w-full rounded-xl pl-2 hover:bg-beige transition-colors"
+              className="flex flex-row justify-start text-left w-full rounded-lg pl-2 hover:bg-beige transition-colors"
             >
               <BoardChip
                 board={board}

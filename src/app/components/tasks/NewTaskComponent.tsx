@@ -168,13 +168,13 @@ export default function NewTaskComponent({
   };
 
   return (
-    <aside className="w-full h-full max-w-xs border-l border-green-4 bg-sidebar-bg flex flex-col pt-4">
+    <aside className="w-full h-full max-w-xs border-l border-sidebar-border bg-sidebar-bg flex flex-col pt-4">
       {/* Header */}
       <Typography
         variant="h6"
         className="text-section-sub-header px-4 pb-2 bg-sidebar-bg"
         sx={{
-          color: "var(--Dark-Green-1)",
+          color: "var(--dark-green-1)",
           textTransform: "uppercase",
         }}
       >
@@ -201,11 +201,11 @@ export default function NewTaskComponent({
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
               "& .MuiInputBase-input": {
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
             }}
           />
@@ -219,11 +219,11 @@ export default function NewTaskComponent({
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
               "& .MuiInputBase-input": {
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
             }}
           >
@@ -250,11 +250,11 @@ export default function NewTaskComponent({
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
               "& .MuiInputBase-input": {
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
             }}
           >
@@ -293,10 +293,10 @@ export default function NewTaskComponent({
                       borderColor: "var(--input-border)",
                     },
                     "&:hover fieldset": {
-                      borderColor: "var(--Green-2)",
+                      borderColor: "var(--green-2)",
                     },
                     "&.Mui-focused fieldset": {
-                      borderColor: "var(--Green-2)",
+                      borderColor: "var(--green-2)",
                     },
                     "& .MuiInputAdornment-root .MuiIconButton-root": {
                       color: "var(--input-text)",
@@ -324,11 +324,11 @@ export default function NewTaskComponent({
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
                 fontSize: "12px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
               "& .MuiInputBase-input": {
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
             }}
           >
@@ -380,11 +380,11 @@ export default function NewTaskComponent({
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
                 fontSize: "12px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
               "& .MuiInputBase-input": {
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
             }}
           >
@@ -532,7 +532,7 @@ export default function NewTaskComponent({
               selectedTags.map((tag) => (
                 <div
                   key={tag.id}
-                  className="transition rounded-full"
+                  className="transition rounded-md"
                   onClick={() => toggleTag(tag.id)}
                 >
                   <TagChip
@@ -560,11 +560,11 @@ export default function NewTaskComponent({
               "& .MuiFormLabel-root": {
                 textTransform: "uppercase",
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
               "& .MuiInputBase-input": {
                 fontSize: "14px",
-                color: "var(--Dark-Green-1)",
+                color: "var(--dark-green-1)",
               },
             }}
           />
@@ -574,7 +574,7 @@ export default function NewTaskComponent({
         <div className="flex gap-4">
           <Button
             type="submit"
-            className={`w-full rounded-full py-2 text-small-header transition ${submitting
+            className={`w-full rounded-md py-2 text-small-header transition ${submitting
               ? "bg-gray-400 text-gray-200"
               : "bg-green-1 text-white hover:bg-green-2"
               }`}

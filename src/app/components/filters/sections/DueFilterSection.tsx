@@ -32,7 +32,7 @@ export default function DueFilterSection() {
                             />
                         ))}
                     </div>
-                    <p className="text-chip-info text-dark-green-1 dark:text-dark-green-1">{t("from-filter-title")}</p>
+                    <p className="text-chip-info text-dark-green-1">{t("from-filter-title")}</p>
                     <DatePicker
                         value={selectedDueDateRange.startDate}
                         onChange={(newStartDate) => {
@@ -52,10 +52,10 @@ export default function DueFilterSection() {
                                             borderColor: "var(--input-border)",
                                         },
                                         "&:hover fieldset": {
-                                            borderColor: "var(--Green-2)",
+                                            borderColor: "var(--green-2)",
                                         },
                                         "&.Mui-focused fieldset": {
-                                            borderColor: "var(--Green-1) !important",
+                                            borderColor: "var(--green-1) !important",
                                         },
                                         "& .MuiInputAdornment-root .MuiIconButton-root": {
                                             color: "var(--input-text)",
@@ -73,7 +73,7 @@ export default function DueFilterSection() {
                             },
                         }}
                     />
-                    <p className="text-chip-info text-dark-green-1 dark:text-dark-green-1">{t("to-filter-title")}</p>
+                    <p className="text-chip-info text-dark-green-1">{t("to-filter-title")}</p>
                     <DatePicker
                         value={selectedDueDateRange.endDate}
                         onChange={(newEndDate) => {
@@ -92,10 +92,10 @@ export default function DueFilterSection() {
                                             borderColor: "var(--input-border)",
                                         },
                                         "&:hover fieldset": {
-                                            borderColor: "var(--Green-2)",
+                                            borderColor: "var(--green-2)",
                                         },
                                         "&.Mui-focused fieldset": {
-                                            borderColor: "var(--Green-1) !important",
+                                            borderColor: "var(--green-1) !important",
                                         },
                                         "& .MuiInputAdornment-root .MuiIconButton-root": {
                                             color: "var(--input-text)",

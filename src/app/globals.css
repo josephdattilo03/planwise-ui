@@ -5,85 +5,102 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  /* Core: page & text (foreground = primary text) */
   --background: #ffffff;
-  --foreground: #222422ff;
-  --Green-1: #386641ff;
-  --Green-2: #6a994eff;
-  --Green-3: #a7c957ff;
-  --Green-4: #d3e3a4ff;
-  --Dark-Red: #2c040eff;
-  --Red: #bc4749ff;
-  --Beige: #f2e8cfff;
-  --Off-White: #fffcf2ff;
-  --Dark-Green-1: #222422ff;
-  --Dark-Green-2: #435447ff;
-  --Pink: #f2cfd3ff;
-  --Blue: #cfe0f2ff;
-  --Cream: #ffdcb6ff;
-  --Sky-Blue: #76a5eaff;
-  --Lilac: #e4ccfdff;
-  --Orange: #ffa500ff;
-  --Pastel-Red: #ffb3b3;
-  --Pastel-Orange: #ffcba4;
-  --Pastel-Yellow: #ffe5a0;
-  --Pastel-Green: #c1e1c1;
-  --Pastel-Cyan: #a8d8ea;
-  --Pastel-Blue: #a0c4ff;
-  --Pastel-Indigo: #bdb2ff;
-  --Pastel-Violet: #e4b8d5;
-  --Pastel-Coral: #f5cac3;
-  --Pastel-Rose: #d4a5a5;
+  --foreground: #222422;
+  --dark-green-1: #222422;
+  --dark-green-2: #435447;
 
-  --task-stroke: #e5e7eb;
-  --task-status-to-do-button: #dbeafeff;
-  --task-status-to-do-stroke: #bfd7feff;
-  --task-status-to-do-text: #1e40afff;
-  --task-status-in-prog-button: #fef9c3ff;
-  --task-status-in-prog-stroke: #ffe7a3ff;
-  --task-status-in-prog-text: #854d0eff;
-  --task-status-done-button: #dcfce7ff;
-  --task-status-done-stroke: #b8ebcaff;
-  --task-status-done-text: #166534ff;
+  /* Palette: greens */
+  --green-1: #386641;
+  --green-2: #6a994e;
+  --green-3: #a7c957;
+  --green-4: #d3e3a4;
+
+  /* Palette: accents */
+  --red: #bc4749;
+  --beige: #f2e8cf;
+  --off-white: #fffcf2;
+  --pink: #f2cfd3;
+  --blue: #cfe0f2;
+  --cream: #ffdcb6;
+  --sky-blue: #76a5ea;
+  --lilac: #e4ccfd;
+  --orange: #ffa500;
+
+  /* Pastels (notes/boards; coral/rose unused, removed) */
+  --pastel-red: #ffb3b3;
+  --pastel-orange: #ffcba4;
+  --pastel-yellow: #ffe5a0;
+  --pastel-green: #c1e1c1;
+  --pastel-cyan: #a8d8ea;
+  --pastel-blue: #a0c4ff;
+  --pastel-indigo: #bdb2ff;
+  --pastel-violet: #e4b8d5;
+
+  /* Radius (single scale) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Shared border (cards, tasks, tree, inputs default) */
+  --border: #e5e7eb;
+
+  /* Task status/tag tokens */
+  --task-status-to-do-button: #dbeafe;
+  --task-status-to-do-stroke: #bfd7fe;
+  --task-status-to-do-text: #1e40af;
+  --task-status-in-prog-button: #fef9c3;
+  --task-status-in-prog-stroke: #ffe7a3;
+  --task-status-in-prog-text: #854d0e;
+  --task-status-done-button: #dcfce7;
+  --task-status-done-stroke: #b8ebca;
+  --task-status-done-text: #166534;
   --task-status-pending-button: #fce2dc;
   --task-status-pending-stroke: #ebc7b8;
   --task-status-pending-text: #652a16;
-  --task-due-button: #ffedd5ff;
-  --task-due-stroke: #fed7aaff;
-  --task-date-almost-due-text: #9a3412ff;
+  --task-due-button: #ffedd5;
+  --task-due-stroke: #fed7aa;
+  --task-date-almost-due-text: #9a3412;
   --task-date-due-text: #6b7280;
-  --task-priority-button: #fee2e2ff;
-  --task-priority-stroke: #fecacaff;
-  --task-priority-text: #dc2626ff;
-  --task-inactive-button: #cacdc2ff;
-  --task-inactive-stroke: #ecebe1ff;
-  --task-tag-purple-text: #6b21a8ff;
-  --task-tag-purple-stroke: #e9d5ffff;
-  --task-tag-purple-button: #f3e8ffff;
-  --task-tag-blue-text: #20a6bbff;
-  --task-tag-blue-stroke: #9bf2ffff;
-  --task-tag-blue-button: #d7f8fdff;
-  --task-tag-lilac-text: #95589dff;
-  --task-tag-lilac-button: #efe6f1ff;
-  --task-tag-lilac-stroke: #dfcae1ff;
+  --task-priority-button: #fee2e2;
+  --task-priority-stroke: #fecaca;
+  --task-priority-text: #dc2626;
+  --task-inactive-button: #cacdc2;
+  --task-inactive-stroke: #ecebe1;
+  --task-tag-purple-text: #6b21a8;
+  --task-tag-purple-stroke: #e9d5ff;
+  --task-tag-purple-button: #f3e8ff;
+  --task-tag-blue-text: #20a6bb;
+  --task-tag-blue-stroke: #9bf2ff;
+  --task-tag-blue-button: #d7f8fd;
+  --task-tag-lilac-text: #95589d;
+  --task-tag-lilac-button: #efe6f1;
+  --task-tag-lilac-stroke: #dfcae1;
 
-  /* UI component colors (light mode defaults) */
-  --sidebar-bg: var(--Off-White);
-  --sidebar-border: var(--Green-4);
-  --menu-bg: #ffffff;
-  --menu-item-hover: var(--Green-4);
-  --input-bg: #ffffff;
-  --input-border: var(--Green-2);
+  /* Surfaces: one token for menu, card, input backgrounds */
+  --surface-bg: #ffffff;
+  --sidebar-bg: var(--off-white);
+  --sidebar-border: var(--green-4);
+  --menu-bg: var(--surface-bg);
+  --menu-item-hover: var(--tree-hover);
+  --input-bg: var(--surface-bg);
+  --input-border: var(--green-2);
   --input-text: var(--foreground);
-  --card-bg: #ffffff;
-  --card-border: var(--task-stroke);
-  --tree-line: #e5e7eb;
+  --card-bg: var(--surface-bg);
+  --card-border: var(--border);
+  --tree-line: var(--border);
   --tree-hover: #f3f4f6;
 
   /* Home widgets */
   --home-quick-bg: #f7f9f3;
   --home-tasks-bg: #fdf5e6;
-  --home-calendar-bg: #fffdf7;
-  --home-notes-bg: #ffeef6;
+  --home-calendar-bg: #fdf5e6;
+  --home-notes-bg: #f7f9f3;
+  /* --home-quick-bg: var(--surface-bg);
+  --home-tasks-bg: var(--surface-bg);
+  --home-calendar-bg: var(--surface-bg);
+  --home-notes-bg: var(--surface-bg); */
   --home-alert-bg-1: #ffe1c4;
   --home-alert-bg-2: #ffd0bf;
   --home-alert-border: rgba(122, 58, 0, 0.15);
@@ -92,136 +109,120 @@
   --home-alert-button: #e65c2c;
   --home-alert-button-hover: #d24f21;
 
-  /* Text styles: Notes */
-  --note-body-font-size: 16px;
-  --note-body-font-weight: 400;
+  /* Type scale (one set for notes + page text) */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 30px;
+  --font-size-2xl: 32px;
+  --font-size-3xl: 36px;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Semantic type (reference scale) */
+  --note-body-font-size: var(--font-size-base);
+  --note-body-font-weight: var(--font-weight-normal);
   --note-body-letter-spacing: -0.5px;
-
-  --note-date-font-size: 16px;
-  --note-date-font-weight: 700;
+  --note-date-font-size: var(--font-size-base);
+  --note-date-font-weight: var(--font-weight-bold);
   --note-date-letter-spacing: 0.5px;
-
-  --note-link-font-size: 16px;
-  --note-link-font-weight: 300;
+  --note-link-font-size: var(--font-size-base);
+  --note-link-font-weight: var(--font-weight-light);
   --note-link-letter-spacing: 0.5px;
-
-  --note-title-font-size: 36px;
-  --note-title-font-weight: 700;
+  --note-title-font-size: var(--font-size-3xl);
+  --note-title-font-weight: var(--font-weight-bold);
   --note-title-letter-spacing: -0.75px;
 
-  /* Text styles: Page Text */
-  --text-label-font-size: 12px;
-  --text-label-font-weight: 400;
-
-  --text-body-font-size: 16px;
-  --text-body-font-weight: 500;
-
-  --text-button-font-size: 16px;
-  --text-button-font-weight: 600;
-
-  --text-chip-info-font-size: 12px;
-  --text-chip-info-font-weight: 400;
-
-  --text-page-title-font-size: 32px;
-  --text-page-title-font-weight: 700;
-
-  --text-section-header-font-size: 30px;
-  --text-section-header-font-weight: 600;
+  --text-label-font-size: var(--font-size-xs);
+  --text-label-font-weight: var(--font-weight-normal);
+  --text-body-font-size: var(--font-size-base);
+  --text-body-font-weight: var(--font-weight-medium);
+  --text-button-font-size: var(--font-size-base);
+  --text-button-font-weight: var(--font-weight-semibold);
+  --text-chip-info-font-size: var(--font-size-xs);
+  --text-chip-info-font-weight: var(--font-weight-normal);
+  --text-page-title-font-size: var(--font-size-2xl);
+  --text-page-title-font-weight: var(--font-weight-bold);
+  --text-section-header-font-size: var(--font-size-xl);
+  --text-section-header-font-weight: var(--font-weight-semibold);
   --text-section-header-letter-spacing: -0.6px;
-
-  --text-section-sub-header-font-size: 20px;
-  --text-section-sub-header-font-weight: 600;
+  --text-section-sub-header-font-size: var(--font-size-lg);
+  --text-section-sub-header-font-weight: var(--font-weight-semibold);
   --text-section-sub-header-letter-spacing: -0.4px;
-
-  --text-small-header-font-size: 14px;
-  --text-small-header-font-weight: 600;
-
+  --text-small-header-font-size: var(--font-size-sm);
+  --text-small-header-font-weight: var(--font-weight-semibold);
 }
 
 @theme inline {
   --font-sans: var(--font-plex-sans);
   --font-mono: var(--font-plex-mono);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 
-  /* Palette Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-dark-green-1: var(--dark-green-1);
+  --color-dark-green-2: var(--dark-green-2);
 
-  --color-green-1: var(--Green-1);
-  --color-green-2: var(--Green-2);
-  --color-green-3: var(--Green-3);
-  --color-green-4: var(--Green-4);
+  --color-green-1: var(--green-1);
+  --color-green-2: var(--green-2);
+  --color-green-3: var(--green-3);
+  --color-green-4: var(--green-4);
+  --color-red: var(--red);
+  --color-beige: var(--beige);
+  --color-off-white: var(--off-white);
+  --color-pink: var(--pink);
+  --color-blue: var(--blue);
+  --color-cream: var(--cream);
+  --color-sky-blue: var(--sky-blue);
+  --color-lilac: var(--lilac);
+  --color-orange: var(--orange);
 
-  --color-dark-red: var(--Dark-Red);
-  --color-red: var(--Red);
+  --color-pastel-red: var(--pastel-red);
+  --color-pastel-orange: var(--pastel-orange);
+  --color-pastel-yellow: var(--pastel-yellow);
+  --color-pastel-green: var(--pastel-green);
+  --color-pastel-cyan: var(--pastel-cyan);
+  --color-pastel-blue: var(--pastel-blue);
+  --color-pastel-indigo: var(--pastel-indigo);
+  --color-pastel-violet: var(--pastel-violet);
 
-  --color-beige: var(--Beige);
-  --color-off-white: var(--Off-White);
-
-  --color-dark-green-1: var(--Dark-Green-1);
-  --color-dark-green-2: var(--Dark-Green-2);
-
-  --color-pink: var(--Pink);
-  --color-blue: var(--Blue);
-  --color-cream: var(--Cream);
-  --color-sky-blue: var(--Sky-Blue);
-  --color-lilac: var(--Lilac);
-  --color-orange: var(--Orange);
-
-  /* Board Pastel Colors */
-  --color-pastel-red: var(--Pastel-Red);
-  --color-pastel-orange: var(--Pastel-Orange);
-  --color-pastel-yellow: var(--Pastel-Yellow);
-  --color-pastel-green: var(--Pastel-Green);
-  --color-pastel-cyan: var(--Pastel-Cyan);
-  --color-pastel-blue: var(--Pastel-Blue);
-  --color-pastel-indigo: var(--Pastel-Indigo);
-  --color-pastel-violet: var(--Pastel-Violet);
-  --color-pastel-coral: var(--Pastel-Coral);
-  --color-pastel-rose: var(--Pastel-Rose);
-
-  /* Task-Status Colors */
   --color-task-status-to-do-button: var(--task-status-to-do-button);
   --color-task-status-to-do-stroke: var(--task-status-to-do-stroke);
   --color-task-status-to-do-text: var(--task-status-to-do-text);
-
   --color-task-status-in-prog-button: var(--task-status-in-prog-button);
   --color-task-status-in-prog-stroke: var(--task-status-in-prog-stroke);
   --color-task-status-in-prog-text: var(--task-status-in-prog-text);
-
   --color-task-status-done-button: var(--task-status-done-button);
   --color-task-status-done-stroke: var(--task-status-done-stroke);
   --color-task-status-done-text: var(--task-status-done-text);
-
   --color-task-status-pending-button: var(--task-status-pending-button);
   --color-task-status-pending-stroke: var(--task-status-pending-stroke);
   --color-task-status-pending-text: var(--task-status-pending-text);
-
   --color-task-due-button: var(--task-due-button);
   --color-task-due-stroke: var(--task-due-stroke);
   --color-task-date-almost-due-text: var(--task-date-almost-due-text);
   --color-task-date-due-text: var(--task-date-due-text);
-
   --color-task-priority-button: var(--task-priority-button);
   --color-task-priority-stroke: var(--task-priority-stroke);
   --color-task-priority-text: var(--task-priority-text);
-
   --color-task-inactive-button: var(--task-inactive-button);
   --color-task-inactive-stroke: var(--task-inactive-stroke);
-
-  /* Task-Tag Colors */
   --color-task-tag-purple-text: var(--task-tag-purple-text);
   --color-task-tag-purple-stroke: var(--task-tag-purple-stroke);
   --color-task-tag-purple-button: var(--task-tag-purple-button);
-
   --color-task-tag-blue-text: var(--task-tag-blue-text);
   --color-task-tag-blue-stroke: var(--task-tag-blue-stroke);
   --color-task-tag-blue-button: var(--task-tag-blue-button);
-
   --color-task-tag-lilac-text: var(--task-tag-lilac-text);
   --color-task-tag-lilac-button: var(--task-tag-lilac-button);
   --color-task-tag-lilac-stroke: var(--task-tag-lilac-stroke);
 
-  /* UI tokens (swap automatically via `.dark` overrides) */
   --color-sidebar-bg: var(--sidebar-bg);
   --color-sidebar-border: var(--sidebar-border);
   --color-menu-bg: var(--menu-bg);
@@ -231,6 +232,7 @@
   --color-input-text: var(--input-text);
   --color-card-bg: var(--card-bg);
   --color-card-border: var(--card-border);
+  --color-border: var(--border);
   --color-tree-line: var(--tree-line);
   --color-tree-hover: var(--tree-hover);
   --color-home-quick-bg: var(--home-quick-bg);
@@ -247,8 +249,6 @@
 }
 
 @layer utilities {
-
-  /* Notes */
   .note-body {
     font-family: var(--font-plex-mono);
     font-size: var(--note-body-font-size);
@@ -277,7 +277,6 @@
     letter-spacing: var(--note-title-letter-spacing);
   }
 
-  /* Page Texts */
   .text-body {
     font-size: var(--text-body-font-size);
     font-weight: var(--text-body-font-weight);
@@ -319,23 +318,33 @@
     font-size: var(--text-label-font-size);
     font-weight: var(--text-label-font-weight);
   }
+
+  @keyframes content-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .content-fade-in {
+    animation: content-fade-in 0.3s ease-out forwards;
+  }
 }
 
 .scroll-shadows {
   z-index: 999;
-
   background:
-    /* Shadow Cover TOP */
     linear-gradient(var(--color-sidebar-bg) 30%, rgba(255, 255, 255, 0)) center top,
-    /* Shadow Cover BOTTOM */
     linear-gradient(rgba(255, 255, 255, 0), var(--color-sidebar-bg) 70%) center bottom,
-    /* Shadow TOP */
     radial-gradient(farthest-side at 50% 0, rgb(0, 0, 0, 0.2), rgba(0, 0, 0, 0)) center top,
-    /* Shadow BOTTOM */
     radial-gradient(farthest-side at 50% 100%,
       rgba(0, 0, 0, 0.2),
       rgba(0, 0, 0, 0)) center bottom;
-
   background-repeat: no-repeat;
   background-size:
     100% 40px,
@@ -348,13 +357,9 @@
 .dark .scroll-shadows {
   z-index: 999;
   background:
-    /* Shadow Cover TOP */
     linear-gradient(var(--color-sidebar-bg) 30%, rgba(26, 26, 26, 0)) center top,
-    /* Shadow Cover BOTTOM */
     linear-gradient(rgba(26, 26, 26, 0), var(--color-sidebar-bg) 70%) center bottom,
-    /* Shadow TOP */
     radial-gradient(farthest-side at 50% 0, rgb(0, 0, 0, 0.4), rgba(0, 0, 0, 0)) center top,
-    /* Shadow BOTTOM */
     radial-gradient(farthest-side at 50% 100%,
       rgba(0, 0, 0, 0.4),
       rgba(0, 0, 0, 0)) center bottom;
@@ -367,116 +372,80 @@
   background-attachment: local, local, scroll, scroll;
 }
 
-
-/* Dark mode color scheme - cohesive dark theme */
 .dark {
-  /* Base colors - dark charcoal background with light text */
+  /* Core: same vars as :root, different values */
   --background: #1a1d1f;
   --foreground: #e8eae8;
+  --dark-green-1: #e8eae8;
+  --dark-green-2: #b8c5ba;
 
-  /* Greens - brighter and more vibrant for dark mode visibility */
-  --Green-1: #4a7a5a;
-  --Green-2: #5a8a6a;
-  --Green-3: #6a9a7a;
-  --Green-4: #6a8a75;
+  --green-1: #30593f;
+  --green-2: #5a8a6a;
+  --green-3: #7bb38e;
+  --green-4: #a8c8b3;
+  --red: #e85a5d;
+  --beige: #40382e;
+  --off-white: #1f2224;
+  --pink: #3d2528;
+  --blue: #252d35;
+  --cream: #3d3225;
+  --sky-blue: #6a8ac8;
+  --lilac: #5a4a6a;
+  --orange: #d4943a;
 
-  /* Dark Red and Red - adjusted for dark mode */
-  --Dark-Red: #4a1a1f;
-  --Red: #e85a5d;
+  --pastel-red: #4a2d2d;
+  --pastel-orange: #4a3a2d;
+  --pastel-yellow: #4a453a;
+  --pastel-green: #2d3a2d;
+  --pastel-cyan: #2d3a4a;
+  --pastel-blue: #2d3a5a;
+  --pastel-indigo: #3a2d5a;
+  --pastel-violet: #4a2d4a;
 
-  /* Background colors - dark variants with subtle warmth */
-  --Beige: #5c4e3e;
-  --Off-White: #252825;
+  --border: #3a3d3f;
 
-  /* Dark Greens - used for text in dark mode */
-  --Dark-Green-1: #e8eae8;
-  --Dark-Green-2: #b8c5ba;
-
-  /* Accent colors - darker backgrounds with good contrast */
-  --Pink: #3d2528;
-  --Blue: #252d35;
-  --Cream: #3d3225;
-  --Sky-Blue: #6a8ac8;
-  --Lilac: #5a4a6a;
-  --Orange: #d4943a;
-
-  /* Pastel colors - darker, more saturated variants for dark mode */
-  --Pastel-Red: #4a2d2d;
-  --Pastel-Orange: #4a3a2d;
-  --Pastel-Yellow: #4a453a;
-  --Pastel-Green: #2d3a2d;
-  --Pastel-Cyan: #2d3a4a;
-  --Pastel-Blue: #2d3a5a;
-  --Pastel-Indigo: #3a2d5a;
-  --Pastel-Violet: #4a2d4a;
-  --Pastel-Coral: #4a3530;
-  --Pastel-Rose: #4a2d30;
-
-  /* Task colors - dark mode optimized */
-  --task-stroke: #3a3d3f;
-
-  /* Task status colors - dark backgrounds with bright text */
   --task-status-to-do-button: #1e2a3a;
   --task-status-to-do-stroke: #3a5a7a;
   --task-status-to-do-text: #7aa5ff;
-
   --task-status-in-prog-button: #3a3520;
   --task-status-in-prog-stroke: #5a6a3a;
   --task-status-in-prog-text: #ffd85a;
-
   --task-status-done-button: #1e3a2a;
   --task-status-done-stroke: #3a6a4a;
   --task-status-done-text: #7aff9a;
-
   --task-status-pending-button: #3a2520;
   --task-status-pending-stroke: #5a3a2a;
   --task-status-pending-text: #ff9a5a;
-
   --task-due-button: #3a2d20;
   --task-due-stroke: #5a4a2a;
   --task-date-almost-due-text: #ff9a5a;
   --task-date-due-text: #b0b0b0;
-
   --task-priority-button: #3a2020;
   --task-priority-stroke: #5a2a2a;
   --task-priority-text: #ff6a6a;
-
   --task-inactive-button: #2a2d2f;
   --task-inactive-stroke: #3a3d3f;
-
-  /* Task tag colors - vibrant for dark mode */
   --task-tag-purple-text: #c88aff;
   --task-tag-purple-stroke: #5a3a7a;
   --task-tag-purple-button: #2a1a3a;
-
   --task-tag-blue-text: #6ac8ff;
   --task-tag-blue-stroke: #2a5a7a;
   --task-tag-blue-button: #1a2a3a;
-
   --task-tag-lilac-text: #d88aff;
   --task-tag-lilac-button: #2a1a3a;
   --task-tag-lilac-stroke: #5a3a6a;
 
-  /* New dark mode specific variables for UI components */
-  --sidebar-bg: #1f2224;
+  /* Surfaces: only override the base tokens */
+  --surface-bg: #252825;
   --sidebar-border: #2d3032;
-  --menu-bg: #252825;
-  --menu-item-hover: #2d3530;
-  --input-bg: #252825;
-  --input-border: #3a3d3f;
-  --input-text: #e8eae8;
-  --card-bg: #252825;
-  --card-border: #2d3032;
-  --tree-line: #3a3d3f;
+  --input-border: var(--border);
   --tree-hover: #2d3032;
 
-  /* Home widgets */
-  --home-quick-bg: var(--card-bg);
-  --home-tasks-bg: var(--card-bg);
-  --home-calendar-bg: var(--card-bg);
-  --home-notes-bg: var(--card-bg);
-  
-  /* Alert widget - darker orange/red tones for dark mode */
+  /* Home: widgets use surface in dark */
+  --home-quick-bg: var(--surface-bg);
+  --home-tasks-bg: var(--surface-bg);
+  --home-calendar-bg: var(--surface-bg);
+  --home-notes-bg: var(--surface-bg);
   --home-alert-bg-1: #3a2a1f;
   --home-alert-bg-2: #4a3525;
   --home-alert-border: rgba(255, 140, 80, 0.2);

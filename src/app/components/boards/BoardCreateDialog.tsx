@@ -111,11 +111,10 @@ export default function BoardCreateDialog({ open, onClose, onSave }: Props) {
                 key={presetColor}
                 type="button"
                 onClick={() => setColor(presetColor)}
-                className={`w-8 h-8 rounded-full cursor-pointer border-2 transition-transform hover:scale-110 ${
-                  color === presetColor
-                    ? "border-dark-green-1 ring-2 ring-green-3"
-                    : "border-transparent"
-                }`}
+                className={`w-8 h-8 rounded-full cursor-pointer border-2 transition-transform hover:scale-110 ${color === presetColor
+                  ? "border-dark-green-1 ring-2 ring-green-3"
+                  : "border-transparent"
+                  }`}
                 style={{ backgroundColor: presetColor }}
                 aria-label={`Select color ${presetColor}`}
               />
@@ -129,14 +128,14 @@ export default function BoardCreateDialog({ open, onClose, onSave }: Props) {
               type="color"
               value={color}
               onChange={(e) => setColor(e.target.value)}
-              className="w-10 h-8 rounded cursor-pointer border border-green-3"
+              className="w-10 h-8 rounded-sm cursor-pointer border border-green-3"
             />
             <span className="text-xs text-dark-green-2 uppercase">{color}</span>
           </div>
         </Box>
 
         {/* Preview */}
-        <Box className="flex items-center gap-2 p-3 rounded-lg bg-beige/30">
+        <Box className="flex items-center gap-2 p-3 rounded-md bg-beige/30">
           <div
             className="w-4 h-4 rounded-full"
             style={{ backgroundColor: color }}

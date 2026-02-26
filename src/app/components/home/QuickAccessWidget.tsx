@@ -7,10 +7,9 @@ export default function QuickAccessWidget() {
   return (
     <Card
       sx={{
-        borderRadius: "20px",
+        borderRadius: "var(--radius-lg)",
         border: "1px solid var(--card-border)",
         backgroundColor: "var(--home-quick-bg)",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
       elevation={0}
     >
@@ -18,7 +17,7 @@ export default function QuickAccessWidget() {
         <Typography
           variant="body2"
           sx={{
-            color: "var(--Dark-Green-2)",
+            color: "var(--dark-green-2)",
             lineHeight: 1.4,
             mb: 2,
             fontSize: 20,
@@ -36,7 +35,7 @@ export default function QuickAccessWidget() {
           sx={{
             mb: 1.5,
             fontWeight: 600,
-            color: "var(--Dark-Green-1)",
+            color: "var(--dark-green-1)",
             fontSize: "1rem",
           }}
         >
@@ -60,12 +59,11 @@ export default function QuickAccessWidget() {
               sx={{
                 cursor: "pointer",
                 p: 2,
-                borderRadius: 2,
+                borderRadius: "var(--radius-md)",
                 backgroundColor: "var(--menu-bg)",
                 border: "1px solid var(--card-border)",
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
                   transform: "translateY(-1px)",
                   backgroundColor: "var(--menu-item-hover)",
                 },
@@ -76,7 +74,7 @@ export default function QuickAccessWidget() {
                 sx={{
                   fontSize: 14,
                   fontWeight: 600,
-                  color: "var(--Dark-Green-1)",
+                  color: "var(--dark-green-1)",
                   mb: 0.5,
                 }}
               >
@@ -84,7 +82,7 @@ export default function QuickAccessWidget() {
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ fontSize: 14, color: "var(--Dark-Green-2)" }}
+                sx={{ fontSize: 14, color: "var(--dark-green-2)" }}
               >
                 {item.description}
               </Typography>

@@ -23,9 +23,7 @@ export const BoardCard = ({ task }: BoardCardProps) => {
       className="mx-2 mb-4"
       sx={{
         borderLeft: `4px solid ${task.board.color}`,
-        "&:hover": {
-          boxShadow: 2,
-        },
+        borderRadius: "var(--radius-md)",
       }}
     >
       <CardContent className="flex flex-col gap-2 p-4">

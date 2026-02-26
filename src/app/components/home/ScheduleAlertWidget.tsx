@@ -7,13 +7,11 @@ export default function ScheduleAlertWidget() {
   return (
     <Card
       sx={{
-        mt: 2,
-        borderRadius: "20px",
+        borderRadius: "var(--radius-lg)",
         background: "linear-gradient(135deg, var(--home-alert-bg-1), var(--home-alert-bg-2))",
         border: "1px solid var(--home-alert-border)",
         maxHeight: "200px",
         overflow: "hidden",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
       elevation={0}
     >

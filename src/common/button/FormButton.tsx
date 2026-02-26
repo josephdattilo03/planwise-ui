@@ -19,10 +19,10 @@ export default function FormButton({
   disabled = false,
 }: FormButtonProps) {
   const baseClasses =
-    "py-2 font-sans rounded-full text-small-header transition";
+    "py-2 font-sans rounded-md text-small-header transition";
 
   const variants = {
-    clear: "border border-beige text-dark-green-1 bg-off-white hover:bg-beige",
+    clear: "border border-beige text-dark-green-1 bg-surface-bg hover:bg-beige",
     confirm: "bg-green-1 text-white hover:bg-green-2",
   };
 

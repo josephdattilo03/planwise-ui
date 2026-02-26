@@ -31,7 +31,7 @@ export const ColHeader = ({ taskID, count }: ColHeaderProps) => {
       <Typography
         variant="h6"
         className={
-          "inline-flex items-center rounded-md px-2 py-1 font-semibold inset-ring " +
+          "inline-flex items-center rounded-sm px-2 py-1 font-semibold inset-ring " +
           getProgressClass(taskID)
         }
       >
