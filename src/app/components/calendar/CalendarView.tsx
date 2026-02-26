@@ -1,6 +1,9 @@
 "use client";
 
-import { Calendar, dateFnsLocalizer, View, EventProps } from "react-big-calendar";
+import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
+import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+
 import FormButton from "@/src/common/button/FormButton";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { format, parse, startOfWeek, getDay } from "date-fns";
@@ -22,11 +25,21 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Tooltip,
-  IconButton,
 } from "@mui/material";
+import {
+  createEvent,
+  updateEvent,
+  deleteEvent,
+} from "../../services/events/eventService";
+import { updateTask } from "../../services/tasks/taskService";
+import { Event as AppEvent } from "../../types/event";
+import { Task } from "../../types/task";
 
 const locales = { "en-US": enUS };
+
+// Cast to any to reconcile the local CalendarEvent type with rbc's generic object type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const DnDCalendar = withDragAndDrop(Calendar) as any;
 
 const localizer = dateFnsLocalizer({
   format,
@@ -36,214 +49,206 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-type Event = {
+/** RBC display shape — separate from the domain Event/Task types */
+export type CalendarEvent = {
   title: string;
   start: Date;
   end: Date;
   resource?: {
-    board?: "personal" | "work" | "senior-design" | "school" | "other" | string;
-    color?: "green" | "blue" | "orange" | "purple" | "lilac" | string; // Allow hex colors too
+    board?: string;
+    color?: string;
     type?: "task" | "event";
-    task?: any; // For task events
+    /** Original domain objects kept for service calls */
+    event?: AppEvent;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    task?: any;
   };
 };
 
 interface CalendarViewProps {
-  taskEvents?: Event[];
+  /** Fully-editable calendar events from eventService */
+  calendarEvents?: CalendarEvent[];
+  /** Read-only task events — shown but not draggable */
+  taskEvents?: CalendarEvent[];
+  /** Called after create/delete so the parent can re-fetch the full list */
+  onEventsChanged?: () => void;
+  /**
+   * Called after a drop/resize with the already-persisted updated event.
+   * The parent should do an in-place state update (no re-fetch) so the
+   * calendar reflects the change immediately without any visible snap-back.
+   */
+  onEventUpdated?: (updated: AppEvent) => void;
+  /** Same pattern for task drops — updates dueDate in-place, no re-fetch. */
+  onTaskUpdated?: (updated: Task) => void;
 }
 
-const boardColors: Record<string, "green" | "blue" | "orange" | "purple" | "lilac" | string> = {
-  "personal": "#9BF2FF", // Use actual Personal board color (sky blue)
-  "work": "blue",
-  "pennos": "#FFA500", // PennOS orange
-  "senior-design": "#A7C957", // Senior Design yellow/green
-  "school": "purple",
-  "other": "lilac",
-};
-
-const initialEvents: Event[] = [
-  {
-    title: "Daily Standup",
-    start: new Date(new Date().setHours(8, 0, 0, 0)),
-    end: new Date(new Date().setHours(8, 30, 0, 0)),
-    resource: { board: "personal", color: boardColors["personal"] },
-  },
-  {
-    title: "Team Meeting",
-    start: new Date(new Date().setHours(10, 0, 0, 0)),
-    end: new Date(new Date().setHours(11, 0, 0, 0)),
-    resource: { board: "pennos", color: boardColors["pennos"] },
-  },
-  {
-    title: "Lunch Break",
-    start: new Date(new Date().setHours(12, 0, 0, 0)),
-    end: new Date(new Date().setHours(13, 0, 0, 0)),
-    resource: { board: "personal", color: boardColors["personal"] },
-  },
-  {
-    title: "Project Review",
-    start: new Date(new Date().setDate(new Date().getDate() + 1)),
-    end: new Date(new Date().setDate(new Date().getDate() + 1)),
-    resource: { board: "senior-design", color: boardColors["senior-design"] },
-  },
-  {
-    title: "Client Call",
-    start: new Date(new Date().setDate(new Date().getDate() + 2)),
-    end: new Date(new Date().setDate(new Date().getDate() + 2)),
-    resource: { board: "personal", color: boardColors["personal"] },
-  },
-  {
-    title: "Weekly Review",
-    start: new Date(new Date().setDate(new Date().getDate() + 3)),
-    end: new Date(new Date().setDate(new Date().getDate() + 3)),
-    resource: { board: "pennos", color: boardColors["pennos"] },
-  },
-  {
-    title: "Weekend Planning",
-    start: new Date(new Date().setDate(new Date().getDate() + 4)),
-    end: new Date(new Date().setDate(new Date().getDate() + 4)),
-    resource: { board: "other", color: "lilac" },
-  },
-];
-
-function EventWrapper({ event }: EventProps<Event>) {
-  const colorMap: Record<string, string> = {
-    green: "bg-green-3 text-dark-green-1",
-    blue: "bg-sky-blue text-dark-green-1",
-    orange: "bg-orange text-dark-green-1",
-    purple: "bg-lilac text-dark-green-1",
-    lilac: "bg-lilac text-dark-green-1",
-  };
-
-  const colorClass = event.resource?.color
-    ? colorMap[event.resource.color]
-    : "bg-green-3 text-dark-green-1";
-
-  return (
-    <div
-      className={`rounded-sm px-2 py-1 text-xs font-medium border border-green-4 ${colorClass}`}
-    >
-      {event.title}
-    </div>
-  );
-}
-
-export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps) {
+export default function PlanwiseCalendar({
+  calendarEvents = [],
+  taskEvents = [],
+  onEventsChanged,
+  onEventUpdated,
+  onTaskUpdated,
+}: CalendarViewProps) {
   const [view, setView] = useState<View>("month");
   const [date, setDate] = useState<Date>(new Date());
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showAddEvent, setShowAddEvent] = useState(false);
 
-  // Get boards and selected board IDs from filter context
   const { boards, selectedBoardIds } = useFilters();
 
-  // Initialize times to be on 15-minute intervals
+  // ── Add-event form state ───────────────────────────────────────────────────
+
   const getInitialTime = () => {
     const now = new Date();
-    const minutes = now.getMinutes();
-    const roundedMinutes = Math.round(minutes / 15) * 15;
-    now.setMinutes(roundedMinutes);
-    now.setSeconds(0);
-    now.setMilliseconds(0);
+    const roundedMinutes = Math.round(now.getMinutes() / 15) * 15;
+    now.setMinutes(roundedMinutes, 0, 0);
     return now;
   };
 
   const [newEvent, setNewEvent] = useState({
-    title: '',
+    title: "",
     start: getInitialTime(),
-    end: new Date(getInitialTime().getTime() + (60 * 60 * 1000)), // 1 hour later
-    board: 'personal' as const,
+    end: new Date(getInitialTime().getTime() + 60 * 60 * 1000),
+    board: "",
   });
 
-  // Merge all events (both manually added events and tasks)
-  const allEvents = [...events, ...taskEvents];
+  // ── Derived event list ────────────────────────────────────────────────────
 
-  // Filter events based on selected boards
-  const filteredEvents = selectedBoardIds.size === 0
-    ? allEvents // Show all events if no boards are selected
-    : allEvents.filter(event => {
-      if (!event.resource?.board) return false;
+  const allEvents: CalendarEvent[] = [...calendarEvents, ...taskEvents];
 
-      // Find the board with matching name and check if it's selected
-      const matchedBoard = boards.find(board => board.name.toLowerCase() === event.resource!.board);
-      return matchedBoard ? selectedBoardIds.has(parseInt(matchedBoard.id)) : false;
-    });
+  const filteredEvents =
+    selectedBoardIds.size === 0
+      ? allEvents
+      : allEvents.filter((event) => {
+        if (!event.resource?.board) return false;
+        const matchedBoard = boards.find(
+          (b) => b.name.toLowerCase() === event.resource!.board
+        );
+        return matchedBoard ? selectedBoardIds.has(matchedBoard.id) : false;
+      });
+
+  console.log(filteredEvents)
+  // ── Navigation label ──────────────────────────────────────────────────────
 
   const getCurrentLabel = () => {
-    if (view === "month") {
-      return format(date, "MMMM yyyy");
-    } else if (view === "week") {
+    if (view === "month") return format(date, "MMMM yyyy");
+    if (view === "week") {
       const start = startOfWeek(date, { weekStartsOn: 0 });
       const end = new Date(start);
       end.setDate(start.getDate() + 6);
       return `${format(start, "MMM d", { locale: enUS })} – ${format(end, "MMM d, yyyy", { locale: enUS })}`;
-    } else {
-      return format(date, "MMMM d, yyyy", { locale: enUS });
     }
+    return format(date, "MMMM d, yyyy", { locale: enUS });
   };
 
-  const handleSaveEvent = () => {
-    if (newEvent.title.trim()) {
-      const board = boards.find(b => b.name.toLowerCase() === newEvent.board);
-      const color = board?.color || boardColors[newEvent.board];
-      const event: Event = {
-        title: newEvent.title,
-        start: newEvent.start,
-        end: newEvent.end,
-        resource: { board: newEvent.board, color },
-      };
-      setEvents(prev => [...prev, event]);
-      setShowAddEvent(false);
-    }
+  // ── Mutations (all go through eventService) ───────────────────────────────
+
+  const handleSaveEvent = async () => {
+    if (!newEvent.title.trim()) return;
+    const boardObj = boards.find(
+      (b) => b.name.toLowerCase() === newEvent.board
+    ) ?? boards[0];
+    await createEvent(
+      {
+        description: newEvent.title,
+        startTime: newEvent.start,
+        endTime: newEvent.end,
+        board: boardObj,
+        isAllDay: false,
+        eventColor: boardObj?.color ?? "#386641",
+        calendarId: "default",
+        location: "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      boards
+    );
+    setShowAddEvent(false);
+    onEventsChanged?.();
   };
 
-  const handleDeleteEvent = (eventToDelete: Event) => {
-    setEvents(prev => prev.filter(event =>
-      !(event.title === eventToDelete.title &&
-        event.start.getTime() === eventToDelete.start.getTime() &&
-        event.end.getTime() === eventToDelete.end.getTime())
-    ));
+  const handleDeleteEvent = async (eventToDelete: CalendarEvent) => {
+    const source = eventToDelete.resource?.event;
+    if (source) {
+      await deleteEvent(source.id);
+      onEventsChanged?.();
+    }
     setSelectedEvent(null);
   };
 
-  const eventStyleGetter = (event: Event) => {
-    const colorMap: Record<string, { backgroundColor: string; borderColor: string; color: string }> = {
-      green: { backgroundColor: '#4CAF50', borderColor: '#45a049', color: 'white' },
-      blue: { backgroundColor: '#2196F3', borderColor: '#1976D2', color: 'white' },
-      orange: { backgroundColor: '#FF9800', borderColor: '#F57C00', color: 'white' },
-      purple: { backgroundColor: '#9C27B0', borderColor: '#7B1FA2', color: 'white' },
-      lilac: { backgroundColor: '#E1BEE7', borderColor: '#CE93D8', color: '#333' },
+  const handleEventDrop = async ({
+    event,
+    start,
+    end,
+  }: {
+    event: object;
+    start: Date | string;
+    end: Date | string;
+  }) => {
+    const calEvent = event as CalendarEvent;
+    const startDate = typeof start === "string" ? new Date(start) : start;
+    const endDate = typeof end === "string" ? new Date(end) : end;
+
+    if (calEvent.resource?.event) {
+      const updated = { ...calEvent.resource.event, startTime: startDate, endTime: endDate };
+      await updateEvent(updated, boards);
+      onEventUpdated?.(updated);
+    } else if (calEvent.resource?.task) {
+      const updated: Task = { ...calEvent.resource.task, dueDate: startDate };
+      updateTask(updated);
+      onTaskUpdated?.(updated);
+    }
+  };
+
+  const handleEventResize = async ({
+    event,
+    start,
+    end,
+  }: {
+    event: object;
+    start: Date | string;
+    end: Date | string;
+  }) => {
+    const calEvent = event as CalendarEvent;
+    const source = calEvent.resource?.event;
+    if (!source) return;
+    const startDate = typeof start === "string" ? new Date(start) : start;
+    const endDate = typeof end === "string" ? new Date(end) : end;
+    const updated = { ...source, startTime: startDate, endTime: endDate };
+    await updateEvent(updated, boards);
+    onEventUpdated?.(updated);
+  };
+
+  // ── Event style ───────────────────────────────────────────────────────────
+
+  const eventStyleGetter = (event: CalendarEvent) => {
+    const colorMap: Record<
+      string,
+      { backgroundColor: string; borderColor: string; color: string }
+    > = {
+      green: { backgroundColor: "#4CAF50", borderColor: "#45a049", color: "white" },
+      blue: { backgroundColor: "#2196F3", borderColor: "#1976D2", color: "white" },
+      orange: { backgroundColor: "#FF9800", borderColor: "#F57C00", color: "white" },
+      purple: { backgroundColor: "#9C27B0", borderColor: "#7B1FA2", color: "white" },
+      lilac: { backgroundColor: "#E1BEE7", borderColor: "#CE93D8", color: "#333" },
     };
 
-    const color = event.resource?.color || 'green';
+    const color = event.resource?.color ?? "green";
 
-    if (color.startsWith('#')) {
-      return {
-        style: {
-          backgroundColor: color,
-          borderColor: color,
-          color: 'black',
-        },
-      };
+    if (color.startsWith("#")) {
+      return { style: { backgroundColor: color, borderColor: color, color: "black" } };
     }
 
-    return {
-      style: colorMap[color] || colorMap.green,
-    };
+    return { style: colorMap[color] ?? colorMap.green };
   };
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <Paper
       elevation={0}
-      sx={{
-        width: '100%',
-        maxHeight: 'calc(100vh - 100px)',
-        backgroundColor: 'var(--background)'
-        // overflowY: 'auto',
-      }}
+      sx={{ width: "100%", maxHeight: "calc(100vh - 100px)", backgroundColor: "var(--background)" }}
     >
-      {/* Top toolbar */}
+      {/* Toolbar */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -253,9 +258,9 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
         <Typography
           variant="h6"
           sx={{
-            color: 'var(--dark-green-1)',
-            textTransform: 'uppercase',
-            fontSize: 'var(--text-page-title-font-size)',
+            color: "var(--dark-green-1)",
+            textTransform: "uppercase",
+            fontSize: "var(--text-page-title-font-size)",
             fontWeight: 600,
           }}
         >
@@ -263,102 +268,51 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
         </Typography>
 
         <Box display="flex" alignItems="center" gap={2}>
+          {/* Prev / next */}
           <Box display="flex" alignItems="center">
-            <Button
-              onClick={() => {
-                const newDate = new Date(date);
-                if (view === "month") {
-                  newDate.setMonth(newDate.getMonth() - 1);
-                } else if (view === "week") {
-                  newDate.setDate(newDate.getDate() - 7);
-                } else {
-                  newDate.setDate(newDate.getDate() - 1);
-                }
-                setDate(newDate);
-              }}
-              variant="text"
-              size="small"
-              sx={{
-                minWidth: 'auto',
-                px: 1,
-                py: 0.5,
-                color: 'var(--dark-green-1)',
-                fontSize: '1rem',
-              }}
-            >
-              ‹
-            </Button>
-            <Button
-              onClick={() => {
-                const newDate = new Date(date);
-                if (view === "month") {
-                  newDate.setMonth(newDate.getMonth() + 1);
-                } else if (view === "week") {
-                  newDate.setDate(newDate.getDate() + 7);
-                } else {
-                  newDate.setDate(newDate.getDate() + 1);
-                }
-                setDate(newDate);
-              }}
-              variant="text"
-              size="small"
-              sx={{
-                minWidth: 'auto',
-                px: 1,
-                py: 0.5,
-                color: 'var(--dark-green-1)',
-                fontSize: '1rem',
-              }}
-            >
-              ›
-            </Button>
+            {(["prev", "next"] as const).map((dir) => (
+              <Button
+                key={dir}
+                onClick={() => {
+                  const d = new Date(date);
+                  const delta = dir === "prev" ? -1 : 1;
+                  if (view === "month") d.setMonth(d.getMonth() + delta);
+                  else d.setDate(d.getDate() + (view === "week" ? 7 : 1) * delta);
+                  setDate(d);
+                }}
+                variant="text"
+                size="small"
+                sx={{ minWidth: "auto", px: 1, py: 0.5, color: "var(--dark-green-1)", fontSize: "1rem" }}
+              >
+                {dir === "prev" ? "‹" : "›"}
+              </Button>
+            ))}
           </Box>
 
+          {/* View switcher */}
           <Box display="flex" gap={1}>
-            <Button
-              onClick={() => setView("day")}
-              disableElevation
-              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground ${view === "day"
-                ? "bg-beige"
-                : "bg-surface-color"
-                }`}
-              sx={{ textTransform: "none" }}
-            >
-              Day
-            </Button>
-            <Button
-              onClick={() => setView("week")}
-              disableElevation
-              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground ${view === "week"
-                ? "bg-beige"
-                : "bg-surface-color"
-                }`}
-              sx={{ textTransform: "none" }}
-            >
-              Week
-            </Button>
-            <Button
-              onClick={() => setView("month")}
-              disableElevation
-              className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground ${view === "month"
-                ? "bg-beige"
-                : "bg-surface-color"
-                }`}
-              sx={{ textTransform: "none" }}
-            >
-              Month
-            </Button>
+            {(["day", "week", "month"] as View[]).map((v) => (
+              <Button
+                key={v}
+                onClick={() => setView(v)}
+                disableElevation
+                className={`py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground ${view === v ? "bg-beige" : "bg-surface-color"
+                  }`}
+                sx={{ textTransform: "none" }}
+              >
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </Button>
+            ))}
           </Box>
 
-
-
+          {/* Add event */}
           <Button
             onClick={() => {
               setNewEvent({
-                title: '',
-                start: new Date(),
-                end: new Date(),
-                board: 'personal',
+                title: "",
+                start: getInitialTime(),
+                end: new Date(getInitialTime().getTime() + 60 * 60 * 1000),
+                board: boards[0]?.name.toLowerCase() ?? "",
               });
               setShowAddEvent(true);
             }}
@@ -368,14 +322,16 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
             <span>Add Event</span>
           </Button>
         </Box>
-
-
       </Box>
 
       {/* Calendar */}
-      <Calendar
+      <DnDCalendar
         localizer={localizer}
         events={filteredEvents}
+        // draggableAccessor={(event: CalendarEvent) => event.resource?.type !== "task"}
+        resizableAccessor={(event: CalendarEvent) => event.resource?.type !== "task"}
+        onEventDrop={handleEventDrop}
+        onEventResize={handleEventResize}
         startAccessor="start"
         endAccessor="end"
         view={view}
@@ -390,88 +346,73 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
         style={{
           overflow: "scroll",
           padding: "8px 24px 0px 24px",
-
-          height: view === 'week' ? 'calc(100vh - 200px)' : view === 'month' ? 'calc(100vh - 200px)' : view === 'day' ? 'calc(100vh - 200px)' : 'auto',
+          height: "calc(100vh - 200px)",
         }}
-
       />
 
-      {/* Event Modal */}
-      <Dialog
-        open={!!selectedEvent}
-        onClose={() => setSelectedEvent(null)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle
-          sx={{
-            color: 'var(--dark-green-1)',
-            textAlign: 'center',
-            fontWeight: 600,
-          }}
-        >
+      {/* Event detail modal */}
+      <Dialog open={!!selectedEvent} onClose={() => setSelectedEvent(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ color: "var(--dark-green-1)", textAlign: "center", fontWeight: 600 }}>
           {selectedEvent?.title}
         </DialogTitle>
-        <DialogContent sx={{ textAlign: 'center' }}>
+        <DialogContent sx={{ textAlign: "center" }}>
           <Typography variant="body2" sx={{ mb: 1 }}>
-            <strong>Start:</strong> {selectedEvent ? format(selectedEvent.start, "MMM d, yyyy h:mm a", { locale: enUS }) : ''}
+            <strong>Start:</strong>{" "}
+            {selectedEvent
+              ? format(selectedEvent.start, "MMM d, yyyy h:mm a", { locale: enUS })
+              : ""}
           </Typography>
           <Typography variant="body2" sx={{ mb: 1 }}>
-            <strong>End:</strong> {selectedEvent ? format(selectedEvent.end, "MMM d, yyyy h:mm a", { locale: enUS }) : ''}
+            <strong>End:</strong>{" "}
+            {selectedEvent
+              ? format(selectedEvent.end, "MMM d, yyyy h:mm a", { locale: enUS })
+              : ""}
           </Typography>
           <Typography variant="body2">
-            <strong>Board:</strong> {selectedEvent?.resource?.board ?
-              selectedEvent.resource.board.charAt(0).toUpperCase() + selectedEvent.resource.board.slice(1) :
-              "Default"}
+            <strong>Board:</strong>{" "}
+            {selectedEvent?.resource?.board
+              ? selectedEvent.resource.board.charAt(0).toUpperCase() +
+              selectedEvent.resource.board.slice(1)
+              : "Default"}
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', gap: 2 }}>
-          <Button
-            onClick={() => handleDeleteEvent(selectedEvent!)}
-            variant="contained"
-            sx={{
-              backgroundColor: '#f44336',
-              color: 'white',
-              '&:hover': {
-                backgroundColor: '#d32f2f',
-              },
-            }}
-          >
-            Delete Event
-          </Button>
+        <DialogActions sx={{ justifyContent: "center", gap: 2 }}>
+          {/* Only show delete for editable calendar events */}
+          {selectedEvent?.resource?.type === "event" && (
+            <Button
+              onClick={() => handleDeleteEvent(selectedEvent!)}
+              variant="contained"
+              sx={{
+                backgroundColor: "#f44336",
+                color: "white",
+                "&:hover": { backgroundColor: "#d32f2f" },
+              }}
+            >
+              Delete Event
+            </Button>
+          )}
           <Button
             onClick={() => setSelectedEvent(null)}
             variant="outlined"
-            sx={{ color: 'var(--dark-green-1)', borderColor: 'var(--green-3)' }}
+            sx={{ color: "var(--dark-green-1)", borderColor: "var(--green-3)" }}
           >
             Close
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Add Event Modal */}
-      <Dialog
-        open={showAddEvent}
-        onClose={() => setShowAddEvent(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle
-          sx={{
-            color: 'var(--dark-green-1)',
-            textAlign: 'center',
-            fontWeight: 600,
-          }}
-        >
+      {/* Add event modal */}
+      <Dialog open={showAddEvent} onClose={() => setShowAddEvent(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ color: "var(--dark-green-1)", textAlign: "start", fontWeight: 600 }}>
           Add Event
         </DialogTitle>
         <DialogContent>
-          <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box component="form" sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               fullWidth
               label="Event Title"
               value={newEvent.title}
-              onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) => setNewEvent((prev) => ({ ...prev, title: e.target.value }))}
               required
             />
             <TextField
@@ -479,10 +420,10 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
               label="Start Date & Time"
               type="datetime-local"
               value={format(newEvent.start, "yyyy-MM-dd'T'HH:mm")}
-              onChange={(e) => setNewEvent(prev => ({ ...prev, start: new Date(e.target.value) }))}
-              InputProps={{
-                inputProps: { step: 900 }
-              }}
+              onChange={(e) =>
+                setNewEvent((prev) => ({ ...prev, start: new Date(e.target.value) }))
+              }
+              InputProps={{ inputProps: { step: 900 } }}
               InputLabelProps={{ shrink: true }}
               required
             />
@@ -491,10 +432,10 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
               label="End Date & Time"
               type="datetime-local"
               value={format(newEvent.end, "yyyy-MM-dd'T'HH:mm")}
-              onChange={(e) => setNewEvent(prev => ({ ...prev, end: new Date(e.target.value) }))}
-              InputProps={{
-                inputProps: { step: "900" }
-              }}
+              onChange={(e) =>
+                setNewEvent((prev) => ({ ...prev, end: new Date(e.target.value) }))
+              }
+              InputProps={{ inputProps: { step: "900" } }}
               InputLabelProps={{ shrink: true }}
               required
             />
@@ -503,7 +444,9 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
               <Select
                 value={newEvent.board}
                 label="Board"
-                onChange={(e) => setNewEvent(prev => ({ ...prev, board: e.target.value as typeof prev.board }))}
+                onChange={(e) =>
+                  setNewEvent((prev) => ({ ...prev, board: e.target.value }))
+                }
               >
                 {boards.map((board) => (
                   <MenuItem key={board.id} value={board.name.toLowerCase()}>
@@ -514,18 +457,9 @@ export default function PlanwiseCalendar({ taskEvents = [] }: CalendarViewProps)
             </FormControl>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', gap: 2, paddingX: "24px" }}>
-          <FormButton
-            onClick={() => setShowAddEvent(false)}
-            variant="clear"
-            text="Cancel"
-          />
-          <FormButton
-            onClick={handleSaveEvent}
-            variant="confirm"
-            text="Save Event"
-          />
-
+        <DialogActions sx={{ justifyContent: "center", gap: 2, paddingX: "24px" }}>
+          <FormButton onClick={() => setShowAddEvent(false)} variant="clear" text="Cancel" />
+          <FormButton onClick={handleSaveEvent} variant="confirm" text="Save Event" />
         </DialogActions>
       </Dialog>
     </Paper>
