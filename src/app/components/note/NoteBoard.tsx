@@ -6,7 +6,6 @@ import InventoryRoundedIcon from "@mui/icons-material/InventoryRounded";
 import { IconButton, Tooltip } from '@mui/material';
 import EditableNote from './EditableNote';
 import ArchiveModal from './ArchiveModal';
-import LoadingSpinner from '@/src/common/LoadingSpinner';
 
 type NoteType = {
   id: string;
@@ -42,29 +41,33 @@ function normalizeNote(n: any): NoteType {
   };
 }
 
+function loadNotesFromStorage(): NoteType[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('notes');
+    if (!raw) return [];
+    return JSON.parse(raw).map(normalizeNote);
+  } catch {
+    return [];
+  }
+}
+
+function loadArchivedFromStorage(): NoteType[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('archived_notes');
+    if (!raw) return [];
+    return JSON.parse(raw).map(normalizeNote);
+  } catch {
+    return [];
+  }
+}
+
 export default function NoteBoard() {
-  const [notes, setNotes] = useState<NoteType[]>([]);
-  const [archivedNotes, setArchivedNotes] = useState<NoteType[]>([]);
+  const [notes, setNotes] = useState<NoteType[]>(loadNotesFromStorage);
+  const [archivedNotes, setArchivedNotes] = useState<NoteType[]>(loadArchivedFromStorage);
   const [archiveOpen, setArchiveOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const boardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const loadNotes = async () => {
-      try {
-        // TODO: Replace with API call when integrated, e.g. const data = await fetchNotes();
-        const savedNotes = localStorage.getItem('notes');
-        const savedArchived = localStorage.getItem('archived_notes');
-
-        if (savedNotes) setNotes(JSON.parse(savedNotes).map(normalizeNote));
-        if (savedArchived)
-          setArchivedNotes(JSON.parse(savedArchived).map(normalizeNote));
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadNotes();
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('notes', JSON.stringify(notes));
@@ -156,14 +159,6 @@ export default function NoteBoard() {
       })
     );
   };
-
-  if (loading) {
-    return (
-      <div className="flex w-full h-full">
-        <LoadingSpinner label="Loading notes..." fullPage className="flex-1" />
-      </div>
-    );
-  }
 
   return (
     <div ref={boardRef} className="h-full w-full relative">

@@ -45,13 +45,20 @@ export default function AIChatBot() {
       background: "var(--green-1)",
       color: "#ffffff",
       padding: "12px 14px",
-      fontWeight: 600,
+      fontWeight: 400,
       letterSpacing: "-0.2px",
       borderColor: "var(--border)"
     },
     bodyStyle: {
       backgroundColor: "var(--background)",
       padding: "12px",
+    },
+    userBubbleStyle: {
+      textAlign: "left",
+      fontSize: "14px"
+    },
+    botBubbleStyle: {
+      fontSize: "14px"
     },
     chatInputContainerStyle: {
       backgroundColor: "var(--off-white)",
@@ -66,6 +73,7 @@ export default function AIChatBot() {
       borderColor: "var(--input-border)",
       borderRadius: "var(--radius-md)",
       padding: "10px 12px",
+      fontSize: "12px"
     },
     chatInputAreaFocusedStyle: {
       borderColor: "var(--green-1)",
@@ -80,13 +88,13 @@ export default function AIChatBot() {
     },
     characterLimitStyle: {
       color: "var(--dark-green-2)",
-      fontSize: 12,
+      fontSize: "12px",
       minWidth: "50px"
     },
     characterLimitReachedStyle: {
       color: "var(--red)",
-      fontSize: 12,
-      fontWeight: 600,
+      fontSize: "12px",
+      fontWeight: 400,
     },
     botOptionStyle: {
       backgroundColor: "var(--menu-bg)",
@@ -117,6 +125,9 @@ export default function AIChatBot() {
     },
     botBubble: {
       simulateStream: true,
+    },
+    notification: {
+      showCount: false,
     },
     fileAttachment: {
       disabled: true,

@@ -460,3 +460,109 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* ─── React Big Calendar – Planwise overrides ─────────────────────────────── */
+
+/* Light mode: replace the default bright-blue today highlight with a green tint */
+.rbc-planwise .rbc-today {
+  background-color: rgba(58, 102, 65, 0.08);
+}
+
+/* Dark mode overrides */
+.dark .rbc-planwise,
+.dark .rbc-planwise .rbc-month-view,
+.dark .rbc-planwise .rbc-time-view,
+.dark .rbc-planwise .rbc-agenda-view {
+  background-color: var(--background);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+/* Grid borders */
+.dark .rbc-planwise .rbc-month-view,
+.dark .rbc-planwise .rbc-time-view,
+.dark .rbc-planwise .rbc-header,
+.dark .rbc-planwise .rbc-header + .rbc-header,
+.dark .rbc-planwise .rbc-month-row + .rbc-month-row,
+.dark .rbc-planwise .rbc-day-bg + .rbc-day-bg,
+.dark .rbc-planwise .rbc-timeslot-group,
+.dark .rbc-planwise .rbc-time-content,
+.dark .rbc-planwise .rbc-time-content > * + * > *,
+.dark .rbc-planwise .rbc-time-header-content,
+.dark .rbc-planwise .rbc-time-header.rbc-overflowing,
+.dark .rbc-planwise .rbc-day-slot .rbc-time-slot,
+.dark .rbc-planwise .rbc-agenda-view table.rbc-agenda-table,
+.dark .rbc-planwise .rbc-agenda-view table.rbc-agenda-table thead > tr > th,
+.dark .rbc-planwise .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  border-color: var(--border);
+}
+
+/* Day of week headers */
+.dark .rbc-planwise .rbc-header {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Day cells */
+.dark .rbc-planwise .rbc-day-bg {
+  background-color: transparent;
+}
+
+/* Today highlight – subtle green tint instead of bright blue */
+.dark .rbc-planwise .rbc-today {
+  background-color: rgba(48, 89, 63, 0.22);
+}
+
+/* Off-range dates (days from prev/next month) */
+.dark .rbc-planwise .rbc-off-range-bg {
+  background-color: rgba(255, 255, 255, 0.025);
+}
+
+.dark .rbc-planwise .rbc-off-range {
+  color: var(--dark-green-2);
+}
+
+/* Date cell numbers */
+.dark .rbc-planwise .rbc-date-cell {
+  color: var(--foreground);
+}
+
+/* Time gutter labels */
+.dark .rbc-planwise .rbc-label,
+.dark .rbc-planwise .rbc-time-slot {
+  color: var(--dark-green-2);
+}
+
+/* All-day cell in week/day view */
+.dark .rbc-planwise .rbc-allday-cell {
+  background-color: var(--background);
+}
+
+/* Show more link */
+.dark .rbc-planwise .rbc-show-more {
+  color: var(--green-3);
+  background-color: transparent;
+}
+
+/* Current time indicator */
+.dark .rbc-planwise .rbc-current-time-indicator {
+  background-color: var(--green-3);
+}
+
+/* DnD drag preview / drop target */
+.dark .rbc-planwise .rbc-addons-dnd-drag-preview {
+  opacity: 0.75;
+}
+
+.dark .rbc-planwise .rbc-addons-dnd-over {
+  background-color: rgba(48, 89, 63, 0.18);
+}
+
+/* Agenda view */
+.dark .rbc-planwise .rbc-agenda-empty,
+.dark .rbc-planwise .rbc-agenda-date-cell,
+.dark .rbc-planwise .rbc-agenda-time-cell,
+.dark .rbc-planwise .rbc-agenda-event-cell {
+  color: var(--foreground);
+  background-color: var(--background);
+}

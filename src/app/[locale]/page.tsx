@@ -61,8 +61,6 @@ export default function Home() {
   const [newTaskName, setNewTaskName] = useState("");
   const [selectedBoardId, setSelectedBoardId] = useState<string>("");
   const [selectedPriority, setSelectedPriority] = useState<number>(1);
-  const [newNoteTitle, setNewNoteTitle] = useState("");
-  const [newNoteBody, setNewNoteBody] = useState("");
 
   /** Load tasks, events, and notes once boards/tags are ready (from preload) */
   useEffect(() => {
@@ -148,8 +146,8 @@ export default function Home() {
     }
   };
 
-  const handleAddNote = () => {
-    if (!newNoteTitle.trim()) return;
+  const handleAddNote = (title: string, body: string) => {
+    if (!title.trim()) return;
 
     const NOTE_COLORS = ['bg-pink', 'bg-blue', 'bg-cream', 'bg-lilac'];
 
@@ -159,8 +157,8 @@ export default function Home() {
       y: 120 + Math.random() * 100,
       width: 380,
       height: 300,
-      title: newNoteTitle.trim(),
-      body: newNoteBody.trim() || "Start writing your note here...",
+      title: title.trim(),
+      body: body.trim() || "Start writing your note here...",
       color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
       timestamp: new Date().toISOString(),
       links: [],
@@ -177,9 +175,6 @@ export default function Home() {
     // Update state
     setNotes(updatedNotes);
 
-    // Clear inputs
-    setNewNoteTitle("");
-    setNewNoteBody("");
   };
 
 
@@ -228,18 +223,19 @@ export default function Home() {
 
   return (
     <Box
-      className="content-fade-in w-full h-full overflow-hidden"
+      className="content-fade-in w-full h-full"
       sx={{
         p: { xs: 2, sm: 3, md: 4 },
         backgroundColor: "var(--background)",
         display: "flex",
         flexDirection: "column",
-        // Hide scrollbars on desktop/laptop
-        "&::-webkit-scrollbar": {
-          display: "none",
+        // Slightly tighten vertical padding on shorter laptop heights
+        "@media (max-height: 900px)": {
+          p: { xs: 1.5, sm: 2, md: 3 },
         },
-        scrollbarWidth: "none",
-        msOverflowStyle: "none",
+        "@media (max-height: 800px)": {
+          p: { xs: 1, sm: 1.5, md: 2.5 },
+        },
       }}
     >
       {/* Single row layout with 3 columns */}
@@ -253,6 +249,15 @@ export default function Home() {
           },
           gap: { xs: 2, sm: 3, md: 3 },
           alignItems: "start",
+          // Reduce gaps vertically on short viewports so more fits without scroll
+          "@media (max-height: 900px)": {
+            rowGap: 2,
+            columnGap: 2.5,
+          },
+          "@media (max-height: 800px)": {
+            rowGap: 1.5,
+            columnGap: 2,
+          },
         }}
       >
         {/* Left column - Greeting and Quick Access */}
@@ -262,6 +267,12 @@ export default function Home() {
             flexDirection: "column",
             gap: 3,
             order: { xs: 1, md: "unset" }, // Reorder on mobile if needed
+            "@media (max-height: 900px)": {
+              gap: 2.5,
+            },
+            "@media (max-height: 800px)": {
+              gap: 2,
+            },
           }}
         >
           <GreetingWidget userName={userName} />
@@ -276,6 +287,12 @@ export default function Home() {
             flexDirection: "column",
             gap: 3,
             order: { xs: 2, md: "unset" }, // Reorder on mobile
+            "@media (max-height: 900px)": {
+              gap: 2.5,
+            },
+            "@media (max-height: 800px)": {
+              gap: 2,
+            },
           }}
         >
           <TasksWidget
@@ -292,6 +309,12 @@ export default function Home() {
             flexDirection: "column",
             gap: 3,
             order: { xs: 3, md: "unset" }, // Reorder on mobile
+            "@media (max-height: 900px)": {
+              gap: 2.5,
+            },
+            "@media (max-height: 800px)": {
+              gap: 2,
+            },
           }}
         >
           <CalendarWidget events={events} tasks={tasks} boards={boards} />

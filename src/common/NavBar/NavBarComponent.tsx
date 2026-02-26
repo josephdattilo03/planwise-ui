@@ -13,7 +13,7 @@ import {
   ListItemText,
   Divider,
 } from "@mui/material";
-import { ReactElement, useState } from "react";
+import { ReactElement, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
@@ -87,7 +87,35 @@ export default function NavBarComponent() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const { theme } = useTheme();
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const profileRef = useRef<HTMLDivElement | null>(null);
 
+  // Close the user menu when clicking anywhere outside of it (including portals
+  // like the chatbot input). Using capture phase so stopPropagation inside
+  // third-party components doesn't prevent this.
+  // Must be declared before the early return to keep hook order stable.
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDownCapture = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+
+      if (
+        menuRef.current?.contains(target) ||
+        profileRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setAnchorEl(null);
+    };
+
+    window.addEventListener("pointerdown", handlePointerDownCapture, true);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDownCapture, true);
+    };
+  }, [open]);
 
   // Don't render navbar if not authenticated
   if (status === "loading" || !session) {
@@ -161,14 +189,15 @@ export default function NavBarComponent() {
         })}
       </Tabs>
       <div className="shrink-0 flex items-center gap-2">
-        <IconButton>
+        {/* <IconButton>
           <SearchIcon className="text-dark-green-2" />
         </IconButton>
         <IconButton>
           <SettingsOutlinedIcon className="text-dark-green-2" />
-        </IconButton>
+        </IconButton> */}
 
         <div
+          ref={profileRef}
           onClick={handleClick}
           className="flex flex-row gap-2 p-2 border border-border bg-card-bg rounded-lg cursor-pointer hover:bg-menu-item-hover transition-colors"
           aria-controls={open ? "user-menu" : undefined}
@@ -195,6 +224,7 @@ export default function NavBarComponent() {
       </div>
 
       <Menu
+        ref={menuRef}
         id="user-menu"
         anchorEl={anchorEl}
         open={open}

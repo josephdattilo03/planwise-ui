@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Card, CardContent, Typography, Button, TextField, Chip } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface NotesWidgetProps {
   notes: any[];
@@ -9,6 +9,7 @@ interface NotesWidgetProps {
 
 export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteBody, setNewNoteBody] = useState("");
 
@@ -44,7 +45,11 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
         cursor: "pointer",
       }}
       elevation={0}
-      onClick={() => router.push("/notes")}
+      onClick={() => {
+        const locale = pathname.split("/")[1] || "";
+        const href = locale ? `/${locale}/notes` : "/notes";
+        router.push(href);
+      }}
     >
       <CardContent sx={{ p: 3 }}>
         <Typography
