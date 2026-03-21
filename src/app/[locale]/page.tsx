@@ -49,6 +49,7 @@ export default function Home() {
 
   const { data: session, status } = useSession();
   const router = useRouter();
+  const userId = session?.user?.email ?? undefined;
 
   const userName = session?.user?.name
     ? session?.user?.name.split(" ")[0]
@@ -70,7 +71,7 @@ export default function Home() {
       try {
         setDashboardLoading(true);
         const [tasksData, eventsData] = await Promise.all([
-          fetchTasks(boards, tags),
+          fetchTasks(userId, boards, tags),
           fetchEvents(boards),
         ]);
         if (!cancelled) {
@@ -92,7 +93,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [status, boardsTagsLoading, boards, tags]);
+  }, [status, boardsTagsLoading, boards, tags, userId, selectedBoardId]);
 
   const loading = boardsTagsLoading || dashboardLoading;
 
@@ -130,15 +131,18 @@ export default function Home() {
 
     try {
       const selectedBoard = boards.find(board => board.id === selectedBoardId) || boards[0];
-      const newTask = createTask({
+      await createTask(
+        {
         name: newTaskName.trim(),
         board: selectedBoard,
         dueDate: new Date(Date.now() + 86400000),
         priorityLevel: selectedPriority,
-      });
+      },
+        userId
+      );
 
       // Refresh tasks list (boards/tags from preload)
-      const refreshedTasks = await fetchTasks(boards, tags);
+      const refreshedTasks = await fetchTasks(userId, boards, tags);
       setTasks(refreshedTasks);
       setNewTaskName("");
     } catch (error) {

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { FolderNode, WorkspaceNode } from "../../types/workspace";
+import { WorkspaceNode } from "../../types/workspace";
 import TreeItem from "./TreeItem";
 import LoadingSpinner from "@/src/common/LoadingSpinner";
 import { useWorkspace } from "../../providers/workspace/WorkspaceContext";
+import { collectFolderSubtreeIds } from "./workspaceTreeUtils";
 
 interface Props {
   onSelectBoard: (node: string) => void;
@@ -15,9 +16,15 @@ export default function FolderTreeDisplay({
   onSelectBoard,
   refreshKey,
 }: Props) {
-  const { workspace, loading, loadChildren: loadChildrenFromContext, refetch } = useWorkspace();
+  const {
+    workspace,
+    loading,
+    loadChildren: loadChildrenFromContext,
+    refetch,
+    expandedFolderIds,
+    setExpandedFolderIds,
+  } = useWorkspace();
   const [loadingFolders, setLoadingFolders] = useState<Set<string>>(new Set());
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set(["root"]));
   const [selectedNode, setSelectedNode] = useState<WorkspaceNode | null>(null);
   const refreshKeyRef = useRef(refreshKey);
 
@@ -44,13 +51,23 @@ export default function FolderTreeDisplay({
   };
 
   const toggleFolder = async (folderId: string) => {
-    const wasExpanded = expandedFolders.has(folderId);
-    setExpandedFolders((prev) => {
+    if (!workspace) return;
+    const wasExpanded = expandedFolderIds.has(folderId);
+    const subtreeIds = collectFolderSubtreeIds(workspace, folderId);
+
+    setExpandedFolderIds((prev) => {
       const next = new Set(prev);
-      if (wasExpanded) next.delete(folderId);
-      else next.add(folderId);
+      if (wasExpanded) {
+        for (const id of subtreeIds) next.delete(id);
+      } else {
+        for (const id of subtreeIds) {
+          if (id !== folderId) next.delete(id);
+        }
+        next.add(folderId);
+      }
       return next;
     });
+
     if (!wasExpanded) await loadChildren(folderId);
   };
 
@@ -70,7 +87,7 @@ export default function FolderTreeDisplay({
     <div className="h-screen bg-sidebar-bg content-fade-in">
       <TreeItem
         node={workspace}
-        expandedFolders={expandedFolders}
+        expandedFolders={expandedFolderIds}
         toggleFolder={toggleFolder}
         onSelectNode={setSelectedNode}
         onSelectBoard={onSelectBoard}

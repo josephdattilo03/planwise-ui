@@ -34,6 +34,7 @@ import {
 import { updateTask } from "../../services/tasks/taskService";
 import { Event as AppEvent } from "../../types/event";
 import { Task } from "../../types/task";
+import { useSession } from "next-auth/react";
 
 const locales = { "en-US": enUS };
 
@@ -95,6 +96,8 @@ export default function PlanwiseCalendar({
   const [showAddEvent, setShowAddEvent] = useState(false);
 
   const { boards, selectedBoardIds } = useFilters();
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
 
   // ── Add-event form state ───────────────────────────────────────────────────
 
@@ -127,7 +130,6 @@ export default function PlanwiseCalendar({
         return matchedBoard ? selectedBoardIds.has(matchedBoard.id) : false;
       });
 
-  console.log(filteredEvents)
   // ── Navigation label ──────────────────────────────────────────────────────
 
   const getCurrentLabel = () => {
@@ -169,7 +171,7 @@ export default function PlanwiseCalendar({
   const handleDeleteEvent = async (eventToDelete: CalendarEvent) => {
     const source = eventToDelete.resource?.event;
     if (source) {
-      await deleteEvent(source.id);
+      await deleteEvent(source.board.id, source.id);
       onEventsChanged?.();
     }
     setSelectedEvent(null);
@@ -190,12 +192,13 @@ export default function PlanwiseCalendar({
 
     if (calEvent.resource?.event) {
       const updated = { ...calEvent.resource.event, startTime: startDate, endTime: endDate };
-      await updateEvent(updated, boards);
-      onEventUpdated?.(updated);
+      const persisted = await updateEvent(updated, boards);
+      onEventUpdated?.(persisted);
     } else if (calEvent.resource?.task) {
       const updated: Task = { ...calEvent.resource.task, dueDate: startDate };
-      updateTask(updated);
-      onTaskUpdated?.(updated);
+      if (!userId) return;
+      const persisted = await updateTask(updated, userId);
+      onTaskUpdated?.(persisted);
     }
   };
 
@@ -214,8 +217,8 @@ export default function PlanwiseCalendar({
     const startDate = typeof start === "string" ? new Date(start) : start;
     const endDate = typeof end === "string" ? new Date(end) : end;
     const updated = { ...source, startTime: startDate, endTime: endDate };
-    await updateEvent(updated, boards);
-    onEventUpdated?.(updated);
+    const persisted = await updateEvent(updated, boards);
+    onEventUpdated?.(persisted);
   };
 
   // ── Event style ───────────────────────────────────────────────────────────

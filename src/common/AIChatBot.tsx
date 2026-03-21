@@ -158,5 +158,7 @@ export default function AIChatBot() {
     },
   };
 
-  return <ChatBot settings={settings} styles={styles} flow={flow} />;
+  // `react-chatbotify` has a fairly strict `Styles` type; these CSS variable
+  // values are runtime strings, so we cast to avoid build-time failures.
+  return <ChatBot settings={settings} styles={styles as any} flow={flow} />;
 }

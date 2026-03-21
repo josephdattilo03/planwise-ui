@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import type { Board, Tag } from "../../types";
 import {
   createBoard as createBoardService,
@@ -31,12 +32,12 @@ type FiltersContextType = {
   toggleDateRange: (dateRange: DateRange) => void;
 
   selectedBoardIds: Set<string>;
-  selectedTagIds: Set<number>;
+  selectedTagIds: Set<string>;
   selectedDate: Date | null;
   smartRecs: boolean;
 
   toggleBoard: (id: string) => void;
-  toggleTag: (id: number) => void;
+  toggleTag: (id: string) => void;
   setSelectedDate: (date: Date | null) => void;
   setSmartRecs: (v: boolean) => void;
 
@@ -44,19 +45,21 @@ type FiltersContextType = {
   editTag: (tag: Tag) => Promise<void>;
 
   clearAll: () => void;
-  createBoard: (name: string, color: string) => Board;
+  createBoard: (name: string, color: string) => Promise<Board>;
 };
 
 const FiltersContext = createContext<FiltersContextType | undefined>(undefined);
 
 export function FiltersProvider({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
   const { boards, tags, loading, error, setBoards, setTags } = useBoardsTags();
 
   const [selectedBoardIds, setSelectedBoardIds] = useState<Set<string>>(
     new Set()
   );
-  const [selectedTagIds, setSelectedTagIds] = useState<Set<number>>(new Set());
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
   const [selectedPriorities, setSelectedPriorities] = useState<Set<number>>(
     new Set()
   );
@@ -99,7 +102,7 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Toggle tag
-  const toggleTag = (id: number) => {
+  const toggleTag = (id: string) => {
     setSelectedTagIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -114,16 +117,16 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
 
   // Create tag (updates preload cache so sidebar stays in sync)
   const createTag = async (data: Partial<Tag>) => {
-    const newTag = createTagService(data);
+    const newTag = await createTagService(data, userId);
     setTags((prev) => [...prev, newTag]);
-    return Promise.resolve(newTag);
+    return newTag;
   };
 
   // Edit tag (updates preload cache)
   const editTag = async (tag: Tag) => {
-    updateTagService(tag);
+    await updateTagService(tag, userId);
     setTags((prev) => prev.map((t) => (t.id === tag.id ? tag : t)));
-    return Promise.resolve();
+    return;
   };
 
   // Clear all filters
@@ -141,8 +144,8 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Create board (updates preload cache so sidebar stays in sync)
-  const createBoard = (name: string, color: string): Board => {
-    const newBoard = createBoardService(name, color);
+  const createBoard = async (name: string, color: string): Promise<Board> => {
+    const newBoard = await createBoardService(name, color);
     setBoards((prev) => [...prev, newBoard]);
     return newBoard;
   };

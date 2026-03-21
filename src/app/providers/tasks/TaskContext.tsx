@@ -9,6 +9,7 @@ import React, {
 } from "react";
 
 import type { Board, Tag, Task } from "../../types";
+import { useSession } from "next-auth/react";
 import { fetchBoards } from "../../services/boards/boardService";
 import {
   fetchTags,
@@ -29,7 +30,7 @@ type TaskContextType = {
   isEditMode: boolean;
 
   /** FORM fields (always used in both modes) */
-  id: number;
+  id: string;
   title: string;
   description: string;
   dueDate: Date | null;
@@ -37,7 +38,7 @@ type TaskContextType = {
   status: string;
 
   newBoardId: string;
-  newTagIds: Set<number>;
+  newTagIds: Set<string>;
 
   /** All boards and tags available */
   boards: Board[];
@@ -54,10 +55,10 @@ type TaskContextType = {
   setStatus: (v: string) => void;
 
   changeBoard: (id: string) => void;
-  toggleTag: (id: number) => void;
+  toggleTag: (id: string) => void;
 
-  createTag: (data: Partial<Tag>) => Tag;
-  editTag: (tag: Tag) => void;
+  createTag: (data: Partial<Tag>) => Promise<Tag>;
+  editTag: (tag: Tag) => Promise<void>;
 
   /** Reset form fields to current task (Edit mode) or defaults (Create mode) */
   resetTaskState: () => void;
@@ -73,6 +74,8 @@ export function TaskProvider({
   children: ReactNode;
   task: Task | null;
 }) {
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
   /** GLOBAL data */
   const [boards, setBoards] = useState<Board[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -85,7 +88,7 @@ export function TaskProvider({
   const isEditMode = !!currTask;
 
   /** FORM STATE — always used, even in edit mode */
-  const [id, setId] = useState<number>(task?.id ?? -1);
+  const [id, setId] = useState<string>(task?.id ?? "");
   const [title, setTitle] = useState<string>(task?.name ?? "");
   const [description, setDescription] = useState<string>(
     task?.description ?? ""
@@ -99,7 +102,7 @@ export function TaskProvider({
   /** Board / Tag form fields */
   const [newBoardId, setNewBoardId] = useState<string>(task?.board?.id ?? "");
 
-  const [newTagIds, setNewTagIds] = useState<Set<number>>(
+  const [newTagIds, setNewTagIds] = useState<Set<string>>(
     new Set(task?.tags?.map((t) => t.id) ?? [])
   );
 
@@ -109,8 +112,8 @@ export function TaskProvider({
       try {
         setLoading(true);
         const [boardData, tagData] = await Promise.all([
-          fetchBoards(),
-          fetchTags(),
+          fetchBoards(userId),
+          fetchTags(userId),
         ]);
 
         setBoards(boardData);
@@ -124,7 +127,7 @@ export function TaskProvider({
     }
 
     load();
-  }, []);
+  }, [userId]);
 
   /** When parent passes a NEW task to edit, reset form fields */
   useEffect(() => {
@@ -146,7 +149,7 @@ export function TaskProvider({
   };
 
   /** Tag toggle */
-  const toggleTag = (id: number) => {
+  const toggleTag = (id: string) => {
     setNewTagIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -155,15 +158,15 @@ export function TaskProvider({
   };
 
   // Create tag
-  const createTag = (data: Partial<Tag>) => {
-    const newTag = createTagService(data);
+  const createTag = async (data: Partial<Tag>) => {
+    const newTag = await createTagService(data, userId);
     setTags((prev) => [...prev, newTag]);
     return newTag;
   };
 
   // Edit tag
-  const editTag = (tag: Tag) => {
-    updateTagService(tag);
+  const editTag = async (tag: Tag) => {
+    await updateTagService(tag, userId);
     setTags((prev) => prev.map((t) => (t.id === tag.id ? tag : t)));
   };
 

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import type { Board, Tag } from "../../types";
 import { fetchBoards } from "../../services/boards/boardService";
 import { fetchTags } from "../../services/tags/tagService";
+import { useSession } from "next-auth/react";
 
 type BoardsTagsContextType = {
   boards: Board[];
@@ -29,6 +30,9 @@ export function BoardsTagsProvider({ children }: { children: React.ReactNode }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -36,8 +40,8 @@ export function BoardsTagsProvider({ children }: { children: React.ReactNode }) 
         setLoading(true);
         setError(null);
         const [boardData, tagData] = await Promise.all([
-          fetchBoards(),
-          fetchTags(),
+          fetchBoards(userId),
+          fetchTags(userId),
         ]);
         if (!cancelled) {
           setBoards(boardData);
@@ -56,7 +60,7 @@ export function BoardsTagsProvider({ children }: { children: React.ReactNode }) 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userId]);
 
   return (
     <BoardsTagsContext.Provider

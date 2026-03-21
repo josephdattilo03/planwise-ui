@@ -12,6 +12,7 @@ import { fetchTasks } from "../../services/tasks/taskService";
 import LoadingSpinner from "@/src/common/LoadingSpinner";
 import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
 import { CalendarEvent } from "../../components/calendar/CalendarView";
+import { useSession } from "next-auth/react";
 
 const CalendarView = dynamic(
   () => import("../../components/calendar/CalendarView"),
@@ -60,6 +61,8 @@ const convertTasksToEvents = (tasks: Task[], boards: Board[]): CalendarEvent[] =
 
 export default function CalendarPage() {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
   const [events, setEvents] = useState<Event[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -93,7 +96,7 @@ export default function CalendarPage() {
         setDataLoading(true);
         const [eventData, taskData] = await Promise.all([
           fetchEvents(boards),
-          fetchTasks(boards, tags),
+          fetchTasks(userId, boards, tags),
         ]);
         if (!cancelled) {
           setEvents(eventData);
@@ -109,7 +112,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [boardsTagsLoading, boards, tags]);
+  }, [boardsTagsLoading, boards, tags, userId]);
 
   const calendarEvents = convertEventsForCalendar(events);
   const taskEvents = convertTasksToEvents(tasks, boards);
