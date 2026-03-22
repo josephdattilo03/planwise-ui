@@ -6,9 +6,10 @@ import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 
 import FormButton from "@/src/common/button/FormButton";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import GoogleIcon from "@mui/icons-material/Google";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFilters } from "../../providers/filters/useFilters";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
@@ -20,6 +21,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
+  Tooltip,
   TextField,
   FormControl,
   InputLabel,
@@ -58,7 +61,7 @@ export type CalendarEvent = {
   resource?: {
     board?: string;
     color?: string;
-    type?: "task" | "event";
+    type?: "task" | "event" | "google";
     /** Original domain objects kept for service calls */
     event?: AppEvent;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,6 +97,13 @@ export default function PlanwiseCalendar({
   const [date, setDate] = useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showAddEvent, setShowAddEvent] = useState(false);
+  const [showGoogleDialog, setShowGoogleDialog] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const [googleLastSynced, setGoogleLastSynced] = useState<Date | null>(null);
+  const [selectedGoogleCalendarId, setSelectedGoogleCalendarId] = useState("primary");
 
   const { boards, selectedBoardIds } = useFilters();
   const { data: session } = useSession();
@@ -115,14 +125,155 @@ export default function PlanwiseCalendar({
     board: "",
   });
 
+  const googleCalendars = useMemo(
+    () => [
+      { id: "primary", name: "Primary" },
+      { id: "work", name: "Work" },
+      { id: "personal", name: "Personal" },
+    ],
+    []
+  );
+
+  const buildMockGoogleEvents = useMemo(
+    () => (baseDate: Date, calendarId: string): CalendarEvent[] => {
+      const calendarName =
+        googleCalendars.find((cal) => cal.id === calendarId)?.name ?? "Primary";
+      const start = startOfWeek(baseDate, { weekStartsOn: 0 });
+      const eventAStart = new Date(start);
+      eventAStart.setDate(start.getDate() + 2);
+      eventAStart.setHours(10, 0, 0, 0);
+      const eventAEnd = new Date(eventAStart);
+      eventAEnd.setHours(11, 0, 0, 0);
+
+      const eventBStart = new Date(start);
+      eventBStart.setDate(start.getDate() + 4);
+      eventBStart.setHours(15, 30, 0, 0);
+      const eventBEnd = new Date(eventBStart);
+      eventBEnd.setHours(16, 30, 0, 0);
+
+      return [
+        {
+          title: `Google Calendar (${calendarName}): Focus Block`,
+          start: eventAStart,
+          end: eventAEnd,
+          resource: { type: "google", color: "google" },
+        },
+        {
+          title: `Google Calendar (${calendarName}): 1:1`,
+          start: eventBStart,
+          end: eventBEnd,
+          resource: { type: "google", color: "googleAlt" },
+        },
+      ];
+    },
+    [googleCalendars]
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedConnected =
+      localStorage.getItem("planwise.googleCalendar.connected") === "true";
+    const storedEvents = localStorage.getItem("planwise.googleCalendar.events");
+    const storedCalendarId =
+      localStorage.getItem("planwise.googleCalendar.calendarId");
+    const storedLastSynced = localStorage.getItem("planwise.googleCalendar.lastSynced");
+    if (storedCalendarId) {
+      setSelectedGoogleCalendarId(storedCalendarId);
+    }
+    if (storedLastSynced) {
+      const parsedDate = new Date(storedLastSynced);
+      if (!Number.isNaN(parsedDate.getTime())) {
+        setGoogleLastSynced(parsedDate);
+      }
+    }
+    if (storedConnected) {
+      setGoogleConnected(true);
+      if (storedEvents) {
+        try {
+          const parsed = JSON.parse(storedEvents) as CalendarEvent[];
+          const hydrated = parsed.map((event) => ({
+            ...event,
+            start: new Date(event.start),
+            end: new Date(event.end),
+          }));
+          setGoogleEvents(hydrated);
+          return;
+        } catch {
+          // Fall through to default mock events
+        }
+      }
+      const mockEvents = buildMockGoogleEvents(
+        new Date(),
+        storedCalendarId ?? "primary"
+      );
+      setGoogleEvents(mockEvents);
+    }
+  }, [buildMockGoogleEvents]);
+
+  const handleConnectGoogleCalendar = async () => {
+    setGoogleLoading(true);
+    setGoogleError(null);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      const mockEvents = buildMockGoogleEvents(date, selectedGoogleCalendarId);
+      const now = new Date();
+      setGoogleConnected(true);
+      setGoogleEvents(mockEvents);
+      setGoogleLastSynced(now);
+      localStorage.setItem("planwise.googleCalendar.connected", "true");
+      localStorage.setItem("planwise.googleCalendar.events", JSON.stringify(mockEvents));
+      localStorage.setItem("planwise.googleCalendar.calendarId", selectedGoogleCalendarId);
+      localStorage.setItem("planwise.googleCalendar.lastSynced", now.toISOString());
+      setShowGoogleDialog(false);
+    } catch (err) {
+      setGoogleError("Failed to connect Google Calendar. Please try again.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleSyncGoogleCalendar = async () => {
+    setGoogleLoading(true);
+    setGoogleError(null);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const mockEvents = buildMockGoogleEvents(date, selectedGoogleCalendarId);
+      const now = new Date();
+      setGoogleEvents(mockEvents);
+      setGoogleLastSynced(now);
+      localStorage.setItem("planwise.googleCalendar.events", JSON.stringify(mockEvents));
+      localStorage.setItem("planwise.googleCalendar.calendarId", selectedGoogleCalendarId);
+      localStorage.setItem("planwise.googleCalendar.lastSynced", now.toISOString());
+    } catch (err) {
+      setGoogleError("Failed to sync. Please try again.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleDisconnectGoogleCalendar = () => {
+    setGoogleConnected(false);
+    setGoogleEvents([]);
+    setGoogleLastSynced(null);
+    localStorage.removeItem("planwise.googleCalendar.connected");
+    localStorage.removeItem("planwise.googleCalendar.events");
+    localStorage.removeItem("planwise.googleCalendar.calendarId");
+    localStorage.removeItem("planwise.googleCalendar.lastSynced");
+  };
+
   // ── Derived event list ────────────────────────────────────────────────────
 
-  const allEvents: CalendarEvent[] = [...calendarEvents, ...taskEvents];
+  const allEvents: CalendarEvent[] = [
+    ...calendarEvents,
+    ...taskEvents,
+    ...googleEvents,
+  ];
 
   const filteredEvents =
     selectedBoardIds.size === 0
       ? allEvents
       : allEvents.filter((event) => {
+        if (event.resource?.type === "google") return true;
         if (!event.resource?.board) return false;
         const matchedBoard = boards.find(
           (b) => b.name.toLowerCase() === event.resource!.board
@@ -233,6 +384,8 @@ export default function PlanwiseCalendar({
       orange: { backgroundColor: "#FF9800", borderColor: "#F57C00", color: "white" },
       purple: { backgroundColor: "#9C27B0", borderColor: "#7B1FA2", color: "white" },
       lilac: { backgroundColor: "#E1BEE7", borderColor: "#CE93D8", color: "#333" },
+      google: { backgroundColor: "#4285F4", borderColor: "#3367D6", color: "white" },
+      googleAlt: { backgroundColor: "#0F9D58", borderColor: "#0B8043", color: "white" },
     };
 
     const color = event.resource?.color ?? "green";
@@ -271,8 +424,9 @@ export default function PlanwiseCalendar({
         </Typography>
 
         <Box display="flex" alignItems="center" gap={2}>
-          {/* Prev / next */}
-          <Box display="flex" alignItems="center">
+          {/* Prev / next + Google Calendar */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <Box display="flex" alignItems="center">
             {(["prev", "next"] as const).map((dir) => (
               <Button
                 key={dir}
@@ -290,6 +444,41 @@ export default function PlanwiseCalendar({
                 {dir === "prev" ? "‹" : "›"}
               </Button>
             ))}
+            </Box>
+
+            <Tooltip title={googleConnected ? "Google Calendar connected" : "Connect Google Calendar"}>
+              <Button
+                onClick={() => setShowGoogleDialog(true)}
+                size="small"
+                startIcon={<GoogleIcon />}
+                className="py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground bg-surface-color hover:bg-beige"
+                sx={{ textTransform: "none" }}
+                aria-label={googleConnected ? "Google Calendar connected" : "Connect Google Calendar"}
+              >
+                <span className="hidden sm:inline">
+                  {googleConnected ? "Google" : "Connect Google"}
+                </span>
+                <span className="sm:hidden">Google</span>
+                {googleConnected && (
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: "#34A853",
+                      display: "inline-block",
+                      ml: 1,
+                    }}
+                  />
+                )}
+              </Button>
+            </Tooltip>
+            {googleConnected && googleLastSynced && (
+              <Typography variant="caption" sx={{ color: "var(--text-muted)", ml: 1 }}>
+                Synced {format(googleLastSynced, "MMM d, h:mm a")}
+              </Typography>
+            )}
           </Box>
 
           {/* View switcher */}
@@ -331,8 +520,10 @@ export default function PlanwiseCalendar({
       <DnDCalendar
         localizer={localizer}
         events={filteredEvents}
-        // draggableAccessor={(event: CalendarEvent) => event.resource?.type !== "task"}
-        resizableAccessor={(event: CalendarEvent) => event.resource?.type !== "task"}
+        draggableAccessor={(event: CalendarEvent) => event.resource?.type !== "google"}
+        resizableAccessor={(event: CalendarEvent) =>
+          event.resource?.type !== "task" && event.resource?.type !== "google"
+        }
         onEventDrop={handleEventDrop}
         onEventResize={handleEventResize}
         startAccessor="start"
@@ -378,6 +569,11 @@ export default function PlanwiseCalendar({
               selectedEvent.resource.board.slice(1)
               : "Default"}
           </Typography>
+          {selectedEvent?.resource?.type === "google" && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              <strong>Source:</strong> Google Calendar
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ justifyContent: "center", gap: 2 }}>
           {/* Only show delete for editable calendar events */}
@@ -401,6 +597,91 @@ export default function PlanwiseCalendar({
           >
             Close
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Google Calendar connect modal */}
+      <Dialog open={showGoogleDialog} onClose={() => setShowGoogleDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ color: "var(--dark-green-1)", textAlign: "start", fontWeight: 600 }}>
+          Connect Google Calendar
+        </DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Typography variant="body2">
+            This will link your Google Calendar and display synced events directly on this calendar.
+          </Typography>
+          <FormControl fullWidth size="small">
+            <InputLabel>Calendar</InputLabel>
+            <Select
+              value={selectedGoogleCalendarId}
+              label="Calendar"
+              onChange={(e) => {
+                const nextId = e.target.value;
+                setSelectedGoogleCalendarId(nextId);
+                if (googleConnected) {
+                  localStorage.setItem("planwise.googleCalendar.calendarId", nextId);
+                }
+              }}
+              disabled={googleLoading}
+            >
+              {googleCalendars.map((calendar) => (
+                <MenuItem key={calendar.id} value={calendar.id}>
+                  {calendar.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {googleLastSynced && (
+            <Typography variant="caption" color="text.secondary">
+              Last synced: {format(googleLastSynced, "MMM d, h:mm a")}
+            </Typography>
+          )}
+          {googleError && (
+            <Typography variant="body2" color="error">
+              {googleError}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "space-between", px: "24px", pb: "16px" }}>
+          {googleConnected ? (
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                onClick={handleSyncGoogleCalendar}
+                variant="contained"
+                disabled={googleLoading}
+                sx={{ backgroundColor: "var(--green-2)", "&:hover": { backgroundColor: "var(--green-1)" } }}
+              >
+                {googleLoading ? "Syncing..." : "Sync now"}
+              </Button>
+              <Button
+                onClick={() => {
+                  handleDisconnectGoogleCalendar();
+                  setShowGoogleDialog(false);
+                }}
+                variant="outlined"
+                sx={{ color: "var(--dark-green-1)", borderColor: "var(--green-3)" }}
+              >
+                Disconnect
+              </Button>
+            </Box>
+          ) : (
+            <Button
+              onClick={handleConnectGoogleCalendar}
+              variant="contained"
+              startIcon={<GoogleIcon />}
+              disabled={googleLoading}
+              sx={{ backgroundColor: "#4285F4", "&:hover": { backgroundColor: "#3367D6" } }}
+            >
+              {googleLoading ? "Connecting..." : "Connect"}
+            </Button>
+          )}
+          <Button
+            onClick={() => setShowGoogleDialog(false)}
+            variant="text"
+            sx={{ color: "var(--dark-green-1)" }}
+          >
+            Close
+          </Button>
+          {googleLoading && <CircularProgress size={20} />}
         </DialogActions>
       </Dialog>
 
