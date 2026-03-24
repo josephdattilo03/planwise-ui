@@ -1,114 +1,232 @@
-"use client";
+'use client';
 
-import ChatBot from "react-chatbotify";
-import { useTheme } from "@/src/common/ThemeProvider";
-import type { Flow } from "react-chatbotify";
+import { useRef } from 'react';
+import ChatBot from 'react-chatbotify';
+import { useTheme } from '@/src/common/ThemeProvider';
+import type { Flow, Params } from 'react-chatbotify';
+
+const APPLY_LABEL = 'Yes, apply';
+const CANCEL_LABEL = 'No, cancel';
+
+function ConfirmButtons({
+  onApply,
+  onCancel,
+  optionStyle,
+}: {
+  onApply: () => Promise<void>;
+  onCancel: () => Promise<void>;
+  optionStyle: React.CSSProperties;
+}) {
+  return (
+    <div
+      className="rcb-options-container"
+      style={{
+        display: 'flex',
+        gap: '8px',
+        flexWrap: 'wrap',
+        marginTop: 4,
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onApply()}
+        style={{
+          ...optionStyle,
+          cursor: 'pointer',
+          font: 'inherit',
+        }}
+      >
+        {APPLY_LABEL}
+      </button>
+      <button
+        type="button"
+        onClick={() => onCancel()}
+        style={{
+          ...optionStyle,
+          cursor: 'pointer',
+          font: 'inherit',
+        }}
+      >
+        {CANCEL_LABEL}
+      </button>
+    </div>
+  );
+}
 
 export default function AIChatBot() {
   const { theme } = useTheme();
+  const pendingPlanRef = useRef<{
+    proposed_actions: unknown[];
+  } | null>(null);
 
   const flow: Flow = {
     start: {
-      message: "Ask me for help with your schedule!",
-      path: "gemini",
+      message: 'Ask me for help with your schedule!',
+      path: 'gemini',
     },
     gemini: {
       message: async (params) => {
-        const res = await fetch("/api/ai/gemini", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ prompt: params.userInput }),
+        pendingPlanRef.current = null;
+        const res = await fetch('/api/ai/schedule-agent', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            prompt: params.userInput,
+            plan_only: true,
+          }),
         });
         const data = await res.json();
-        return data.text ?? "Sorry—something went wrong.";
+        if (!res.ok) return data.error ?? 'Sorry—something went wrong.';
+        const text = data.text ?? 'Sorry—something went wrong.';
+        const actions = Array.isArray(data.proposed_actions)
+          ? data.proposed_actions
+          : [];
+        if (actions.length > 0) {
+          pendingPlanRef.current = { proposed_actions: actions };
+          return `${text}\n\nApply these changes?`;
+        }
+        return text;
       },
-      path: "gemini",
+      component: (params: Params) => {
+        if (!pendingPlanRef.current?.proposed_actions?.length) return null;
+        const optionStyle = {
+          backgroundColor: 'var(--menu-bg)',
+          color: theme === 'dark' ? '#ffffff' : 'var(--green-2)',
+          border: '1px solid var(--green-2)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '10px 12px',
+        };
+        return (
+          <ConfirmButtons
+            optionStyle={optionStyle}
+            onApply={async () => {
+              await params.injectMessage(APPLY_LABEL, 'USER');
+              await params.goToPath('execute_plan');
+            }}
+            onCancel={async () => {
+              await params.injectMessage(CANCEL_LABEL, 'USER');
+              await params.goToPath('cancelled');
+            }}
+          />
+        );
+      },
+      path: () => 'gemini',
+    },
+    confirm_plan: {
+      message: '',
+      options: [APPLY_LABEL, CANCEL_LABEL],
+      path: (params) => {
+        if (params.userInput === APPLY_LABEL) return 'execute_plan';
+        return 'cancelled';
+      },
+    },
+    execute_plan: {
+      message: async () => {
+        const pending = pendingPlanRef.current;
+        pendingPlanRef.current = null;
+        if (!pending?.proposed_actions?.length) {
+          return 'No pending actions.';
+        }
+        const res = await fetch('/api/ai/schedule-agent', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ execute_plan: pending.proposed_actions }),
+        });
+        const data = await res.json();
+        if (!res.ok)
+          return data.error ?? 'Something went wrong applying changes.';
+        return data.text ?? 'Changes applied.';
+      },
+      path: 'gemini',
+    },
+    cancelled: {
+      message: 'No changes made.',
+      path: 'gemini',
     },
   };
 
   const styles = {
     tooltipStyle: {
-      backgroundColor: "var(--menu-bg)",
-      color: "var(--foreground)",
+      backgroundColor: 'var(--menu-bg)',
+      color: 'var(--foreground)',
       // border: "1px solid var(--card-border)",
-      borderRadius: "var(--radius-md)",
-      padding: "8px 10px",
-      fontSize: "12px",
+      borderRadius: 'var(--radius-md)',
+      padding: '8px 10px',
+      fontSize: '12px',
     },
     notificationBadgeStyle: {
-      backgroundColor: "var(--red)",
-      color: "#ffffff",
+      backgroundColor: 'var(--red)',
+      color: '#ffffff',
       borderRadius: 999,
-      border: "2px solid var(--card-bg)",
+      border: '2px solid var(--card-bg)',
     },
     headerStyle: {
-      background: "var(--green-1)",
-      color: "#ffffff",
-      padding: "12px 14px",
+      background: 'var(--green-1)',
+      color: '#ffffff',
+      padding: '12px 14px',
       fontWeight: 600,
-      letterSpacing: "-0.2px",
-      borderColor: "var(--border)"
+      letterSpacing: '-0.2px',
+      borderColor: 'var(--border)',
     },
     bodyStyle: {
-      backgroundColor: "var(--background)",
-      padding: "12px",
+      backgroundColor: 'var(--background)',
+      padding: '12px',
     },
     chatInputContainerStyle: {
-      backgroundColor: "var(--off-white)",
-      borderTop: "1px solid var(--card-border)",
-      padding: "10px",
+      backgroundColor: 'var(--off-white)',
+      borderTop: '1px solid var(--card-border)',
+      padding: '10px',
     },
     chatInputAreaStyle: {
-      backgroundColor: "var(--input-bg)",
-      color: "var(--input-text)",
-      borderWidth: "1px",
-      borderStyle: "solid",
-      borderColor: "var(--input-border)",
-      borderRadius: "var(--radius-md)",
-      padding: "10px 12px",
+      backgroundColor: 'var(--input-bg)',
+      color: 'var(--input-text)',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderColor: 'var(--input-border)',
+      borderRadius: 'var(--radius-md)',
+      padding: '10px 12px',
     },
     chatInputAreaFocusedStyle: {
-      borderColor: "var(--green-1)",
+      borderColor: 'var(--green-1)',
       boxShadow:
-        "0 0 0 3px color-mix(in srgb, var(--green-1) 22%, transparent)",
+        '0 0 0 3px color-mix(in srgb, var(--green-1) 22%, transparent)',
     },
     chatInputAreaDisabledStyle: {
-      backgroundColor: "var(--task-inactive-button)",
-      borderColor: "var(--task-inactive-stroke)",
-      color: "var(--dark-green-2)",
-      cursor: "not-allowed",
+      backgroundColor: 'var(--task-inactive-button)',
+      borderColor: 'var(--task-inactive-stroke)',
+      color: 'var(--dark-green-2)',
+      cursor: 'not-allowed',
     },
     characterLimitStyle: {
-      color: "var(--dark-green-2)",
+      color: 'var(--dark-green-2)',
       fontSize: 12,
-      minWidth: "50px"
+      minWidth: '50px',
     },
     characterLimitReachedStyle: {
-      color: "var(--red)",
+      color: 'var(--red)',
       fontSize: 12,
       fontWeight: 600,
     },
     botOptionStyle: {
-      backgroundColor: "var(--menu-bg)",
-      color: theme === "dark" ? "#ffffff" : "var(--green-2)",
-      border: "1px solid var(--green-2)",
-      borderRadius: "var(--radius-lg)",
-      padding: "10px 12px",
+      backgroundColor: 'var(--menu-bg)',
+      color: theme === 'dark' ? '#ffffff' : 'var(--green-2)',
+      border: '1px solid var(--green-2)',
+      borderRadius: 'var(--radius-lg)',
+      padding: '10px 12px',
     },
     botOptionHoveredStyle: {
-      backgroundColor: "var(--green-2)",
-      color: "#ffffff",
-      border: "1px solid var(--green-2)",
-      borderRadius: "var(--radius-lg)",
-      padding: "10px 12px",
+      backgroundColor: 'var(--green-2)',
+      color: '#ffffff',
+      border: '1px solid var(--green-2)',
+      borderRadius: 'var(--radius-lg)',
+      padding: '10px 12px',
     },
     chatHistoryButtonStyle: {
-      backgroundColor: "transparent",
+      backgroundColor: 'transparent',
     },
     sendButtonStyle: {
-      borderRadius: "var(--radius-md)",
-    }
-
+      borderRadius: 'var(--radius-md)',
+    },
   };
 
   const settings = {
@@ -116,19 +234,19 @@ export default function AIChatBot() {
       disabled: true,
     },
     botBubble: {
-      simulateStream: true,
+      simulateStream: false, // Off so path runs right after reply; confirmation shows immediately
     },
     fileAttachment: {
       disabled: true,
     },
     general: {
-      primaryColor: "var(--green-2)",
-      secondaryColor: "var(--green-1)",
+      primaryColor: 'var(--green-2)',
+      secondaryColor: 'var(--green-1)',
       showFooter: false,
-      fontFamily: "var(--font-plex-sans)",
+      fontFamily: 'var(--font-plex-sans)',
     },
     header: {
-      title: "Planwise AI",
+      title: 'Planwise AI',
       showAvatar: false,
     },
     emoji: {
@@ -137,13 +255,14 @@ export default function AIChatBot() {
     chatInput: {
       characterLimit: 200,
       showCharacterCount: true,
+      botDelay: 0, // Show confirmation buttons immediately after the proposal (no 1s wait)
     },
     tooltip: {
-      mode: "CLOSE",
-      text: "Ask me for help with your schedule!",
+      mode: 'CLOSE',
+      text: 'Ask me for help with your schedule!',
     },
     chatButton: {
-      icon: "/owl.svg",
+      icon: '/owl.svg',
     },
   };
 

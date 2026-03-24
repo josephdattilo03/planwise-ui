@@ -1,5 +1,5 @@
-import type { NextAuthConfig } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import type { NextAuthConfig } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
 
 export const authConfig = {
   providers: [
@@ -9,6 +9,21 @@ export const authConfig = {
     }),
   ],
   pages: {
-    signIn: "/api/auth/signin",
+    signIn: '/api/auth/signin',
+  },
+  callbacks: {
+    jwt({ token, profile }) {
+      if (profile?.sub) {
+        token.id = profile.sub;
+        console.log('[Auth] User signed in, id:', profile.sub);
+      }
+      return token;
+    },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = (token.id as string) ?? token.sub ?? '';
+      }
+      return session;
+    },
   },
 } satisfies NextAuthConfig;
