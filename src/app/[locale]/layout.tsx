@@ -13,6 +13,7 @@ import { routing } from "@/src/i18n";
 import NavBarComponent from "@/src/common/NavBar/NavBarComponent";
 import AIChatBotGate from "@/src/common/AIChatBotGate";
 import ThemeRegistry from "@/src/common/ThemeRegistry";
+import { GoogleCalendarLoginSync } from "@/src/app/components/calendar/GoogleCalendarLoginSync";
 import NextAuthSessionProvider from "@/src/app/providers/SessionProvider";
 import { ThemeProvider } from "@/src/common/ThemeProvider";
 import { BoardsTagsProvider } from "@/src/app/providers/boardsTags/BoardsTagsContext";
@@ -50,6 +51,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         <ThemeProvider>
           <ThemeRegistry>
             <NextAuthSessionProvider>
+              <GoogleCalendarLoginSync />
               <NextIntlClientProvider locale={locale} messages={messages}>
                 <BoardsTagsProvider>
                   <WorkspaceProvider>

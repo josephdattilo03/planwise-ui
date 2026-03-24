@@ -9,6 +9,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import GoogleIcon from "@mui/icons-material/Google";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useFilters } from "../../providers/filters/useFilters";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -37,13 +38,12 @@ import {
 import { updateTask } from "../../services/tasks/taskService";
 import { getDataMode } from "../../services/dataMode";
 import {
-  buildGoogleAuthUrl,
   getGoogleCalendarStorage,
   importGoogleCalendarEvents,
 } from "../../services/googleCalendarService";
 import { Event as AppEvent } from "../../types/event";
 import { Task } from "../../types/task";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 const locales = { "en-US": enUS };
 
@@ -119,6 +119,7 @@ export default function PlanwiseCalendar({
 
   const { boards, selectedBoardIds } = useFilters();
   const { data: session } = useSession();
+  const pathname = usePathname();
   const userId = session?.user?.email ?? undefined;
   const isMock = getDataMode() === "mock";
   // Add-event form state
@@ -266,7 +267,8 @@ export default function PlanwiseCalendar({
         localStorage.setItem(storage.lastSyncedKey, now.toISOString());
         setShowGoogleDialog(false);
       } else {
-        window.location.href = buildGoogleAuthUrl(userId);
+        // Use NextAuth (localhost:3000/api/auth/callback/google) — matches typical Google Cloud OAuth client.
+        void signIn("google", { redirectTo: pathname || "/" });
         return;
       }
     } catch (err) {

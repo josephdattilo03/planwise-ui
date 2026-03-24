@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_BASE_URL =
-  process.env.PLANWISE_BACKEND_BASE_URL || "http://127.0.0.1:3001";
+  process.env.PLANWISE_BACKEND_BASE_URL || "http://localhost:3001";
 
 function buildBackendUrl(pathname: string, search: string) {
   // Incoming pathname looks like: /api/backend/<forwarded>

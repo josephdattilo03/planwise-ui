@@ -6,6 +6,12 @@ function backendUrl(path: string) {
 
 export const GOOGLE_CALENDAR_BOARD_ID = "google-calendar";
 
+/**
+ * SAM API OAuth (`/auth/google` → `/auth/callback` on the API port). Requires that
+ * exact redirect URI in Google Cloud (e.g. http://localhost:3001/auth/callback).
+ * For the usual Web client with only NextAuth URIs registered, use `signIn("google")`
+ * from the UI instead.
+ */
 export function buildGoogleAuthUrl(userId: string) {
   const query = new URLSearchParams({ user_id: userId }).toString();
   return backendUrl(`/auth/google?${query}`);
