@@ -70,6 +70,7 @@ export default function AIChatBot() {
         const res = await fetch('/api/ai/schedule-agent', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             prompt: params.userInput,
             plan_only: true,
@@ -130,6 +131,7 @@ export default function AIChatBot() {
         const res = await fetch('/api/ai/schedule-agent', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ execute_plan: pending.proposed_actions }),
         });
         const data = await res.json();

@@ -40,7 +40,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const url = `${backendBaseUrl.replace(/\/$/, '')}/user/${session.user.id}/schedule/agent`;
+  const uid = encodeURIComponent(session.user.id);
+  const url = `${backendBaseUrl.replace(/\/$/, '')}/user/${uid}/schedule/agent`;
   const payload = hasExecutePlan
     ? { execute_plan: body.execute_plan }
     : {

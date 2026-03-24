@@ -33,22 +33,12 @@ export const authConfig = {
     signIn: '/api/auth/signin',
   },
   callbacks: {
-    jwt({ token, profile }) {
+    async jwt({ token, account, profile, user }) {
       if (profile?.sub) {
         token.id = profile.sub;
-        console.log('[Auth] User signed in, id:', profile.sub);
+      } else if (user?.id) {
+        token.id = user.id;
       }
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = (token.id as string) ?? token.sub ?? '';
-      }
-      return session;
-    },
-  },
-  callbacks: {
-    async jwt({ token, account }) {
       if (account) {
         token.googleAccessToken = account.access_token ?? undefined;
         token.googleRefreshToken =
@@ -59,6 +49,7 @@ export const authConfig = {
     },
     async session({ session, token }) {
       if (session.user) {
+        session.user.id = (token.id as string) ?? token.sub ?? '';
         session.googleCalendarConnected =
           Boolean(token.googleAccessToken) && !skipCalendarScope;
       }
