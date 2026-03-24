@@ -46,6 +46,9 @@ export const authConfig = {
       if (session.user) {
         session.googleCalendarConnected =
           Boolean(token.googleAccessToken) && !skipCalendarScope;
+        // Exposed for browser-side Calendar API sync (same scope as calendar.readonly).
+        session.googleAccessToken =
+          (token.googleAccessToken as string | undefined) ?? undefined;
       }
       return session;
     },
