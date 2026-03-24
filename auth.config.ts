@@ -1,5 +1,5 @@
-import type { NextAuthConfig } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import type { NextAuthConfig } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
 
 /**
  * Set NEXT_PUBLIC_SKIP_GOOGLE_CALENDAR_SCOPE=true to use only basic scopes
@@ -30,10 +30,15 @@ export const authConfig = {
     }),
   ],
   pages: {
-    signIn: "/api/auth/signin",
+    signIn: '/api/auth/signin',
   },
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile, user }) {
+      if (profile?.sub) {
+        token.id = profile.sub;
+      } else if (user?.id) {
+        token.id = user.id;
+      }
       if (account) {
         token.googleAccessToken = account.access_token ?? undefined;
         token.googleRefreshToken =
@@ -44,6 +49,7 @@ export const authConfig = {
     },
     async session({ session, token }) {
       if (session.user) {
+        session.user.id = (token.id as string) ?? token.sub ?? '';
         session.googleCalendarConnected =
           Boolean(token.googleAccessToken) && !skipCalendarScope;
         // Exposed for browser-side Calendar API sync (same scope as calendar.readonly).
