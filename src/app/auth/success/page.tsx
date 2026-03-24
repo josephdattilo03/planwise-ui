@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   getGoogleCalendarStorage,
@@ -15,7 +15,7 @@ function getLocaleFromCookie(): string {
   return "en";
 }
 
-export default function GoogleAuthSuccessPage() {
+function GoogleAuthSuccessContent() {
   const params = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
@@ -88,5 +88,24 @@ export default function GoogleAuthSuccessPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function GoogleAuthSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen w-full items-center justify-center bg-background text-foreground">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="text-lg font-semibold">
+              Connecting to Google Calendar...
+            </div>
+            <div className="text-sm text-muted">This may take a few seconds.</div>
+          </div>
+        </div>
+      }
+    >
+      <GoogleAuthSuccessContent />
+    </Suspense>
   );
 }
