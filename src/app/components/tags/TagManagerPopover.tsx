@@ -22,16 +22,16 @@ type Props = {
 
   tags: Tag[];
   /** Set of selected tag ids */
-  selectedTagIds: Set<number>;
+  selectedTagIds: Set<string>;
 
   /** Toggle selection for a single tag id */
-  onToggleTag: (id: number) => void;
+  onToggleTag: (id: string) => void;
 
   /** Create a new tag, returns the created Tag (so we get its id) */
-  onCreateTag: (tag: Partial<Tag>) => Tag;
+  onCreateTag: (tag: Partial<Tag>) => Promise<Tag>;
 
   /** Edit existing tag (you can wire this to a dialog in parent) */
-  onEditTag: (tag: Tag) => void;
+  onEditTag: (tag: Tag) => Promise<void>;
 };
 
 const filter = createFilterOptions<TagOption>();
@@ -94,7 +94,7 @@ export default function TagManagerPopover({
             if (params.inputValue !== "") {
               filtered.push({
                 // synthetic option for “Add "<input>”
-                id: -1,
+                id: "__synthetic__",
                 name: params.inputValue,
                 backgroundColor: "#E0E0E0",
                 textColor: "#333333",
@@ -139,25 +139,29 @@ export default function TagManagerPopover({
               </li>
             );
           }}
-          onChange={(event, newValue) => {
+          onChange={async (_event, newValue) => {
             // Handle “create new tag” first
-            let createdTag: Tag | null = null;
+            let created: Tag | null = null;
 
-            newValue.forEach((option) => {
+            for (const option of newValue) {
               if (typeof option === "string") {
                 const name = option.trim();
-                if (!name) return;
-                createdTag = onCreateTag({ name });
-              } else if (option.inputValue) {
-                const name = option.inputValue.trim();
-                if (!name) return;
-                createdTag = onCreateTag({ name });
+                if (!name) continue;
+                created = await onCreateTag({ name });
+                break;
               }
-            });
 
-            if (createdTag) {
+              if (option.inputValue) {
+                const name = option.inputValue.trim();
+                if (!name) continue;
+                created = await onCreateTag({ name });
+                break;
+              }
+            }
+
+            if (created) {
               // ensure newly created tag is selected
-              onToggleTag(createdTag.id);
+              onToggleTag(created.id);
               return;
             }
 
@@ -207,7 +211,9 @@ export default function TagManagerPopover({
         tag={editTag}
         onClose={() => setEditTag(null)}
         onSave={(updated) => {
-          onEditTag(updated); // calls FiltersContext.editTag if using context
+          // Fire-and-forget; UI closes dialog immediately.
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          onEditTag(updated);
           setEditTag(null);
         }}
       />

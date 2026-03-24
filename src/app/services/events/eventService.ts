@@ -1,7 +1,23 @@
-import { Event, Recurrence } from "../../types/event";
+import { Event } from "../../types/event";
 import { Board } from "../../types/board";
+import { getDataMode } from "../dataMode";
 
-function toEvent(raw: any, boards: Board[]): Event {
+const BACKEND_PROXY_PREFIX = "/api/backend";
+
+function backendUrl(path: string) {
+  return `${BACKEND_PROXY_PREFIX}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+async function backendJSON<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(backendUrl(path), init);
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(text || `Backend request failed (${res.status})`);
+  }
+  return JSON.parse(text) as T;
+}
+
+function toEventMock(raw: any, boards: Board[]): Event {
   return {
     id: raw.id,
     calendarId: raw.calendarId,
@@ -12,47 +28,96 @@ function toEvent(raw: any, boards: Board[]): Event {
     description: raw.description,
     location: raw.location,
     timezone: raw.timezone,
-    board: boards.find((b) => b.id === raw.boardId) || { id: raw.boardId, name: "Default Board", color: "#ccc" },
-    recurrence: raw.recurrence ? {
-      frequency: raw.recurrence.frequency,
-      dayOfWeek: raw.recurrence.dayOfWeek,
-      dateUntil: new Date(raw.recurrence.dateUntil),
-      dateStart: raw.recurrence.dateStart ? new Date(raw.recurrence.dateStart) : undefined,
-    } : undefined,
+    board:
+      boards.find((b) => b.id === raw.boardId) || {
+        id: raw.boardId,
+        name: "Default Board",
+        color: "#ccc",
+      },
+    recurrence: raw.recurrence
+      ? {
+          frequency: raw.recurrence.frequency,
+          dayOfWeek: raw.recurrence.dayOfWeek,
+          dateUntil: new Date(raw.recurrence.dateUntil),
+          dateStart: raw.recurrence.dateStart
+            ? new Date(raw.recurrence.dateStart)
+            : undefined,
+        }
+      : undefined,
   };
 }
 
-function toRawEvent(event: Event): any {
+function toBackendYMD(d: Date) {
+  return d.toISOString().split("T")[0];
+}
+
+function toEventBackend(raw: any, boardById: Map<string, Board>): Event {
+  const board = boardById.get(String(raw.board_id)) || {
+    id: String(raw.board_id),
+    name: "Unknown Board",
+    color: "#ccc",
+  };
+
+  const recurrence = raw.recurrence
+    ? {
+        frequency: raw.recurrence.frequency,
+        dayOfWeek: raw.recurrence.day_of_week,
+        dateUntil: new Date(`${raw.recurrence.termination_date}T00:00:00`),
+        dateStart: raw.recurrence.date_start
+          ? new Date(`${raw.recurrence.date_start}T00:00:00`)
+          : undefined,
+      }
+    : undefined;
+
+  return {
+    id: String(raw.id),
+    // Backend doesn't have calendarId; UI expects it, so keep a default.
+    calendarId: "default",
+    startTime: new Date(`${raw.start_time}T00:00:00`),
+    endTime: new Date(`${raw.end_time}T00:00:00`),
+    eventColor: raw.event_color,
+    isAllDay: raw.is_all_day,
+    description: raw.description,
+    location: raw.location,
+    timezone: "UTC",
+    board,
+    recurrence,
+  };
+}
+
+function toBackendEventPayload(event: Event) {
   return {
     id: event.id,
-    calendarId: event.calendarId,
-    boardId: event.board.id,
-    startTime: event.startTime.toISOString().split('T')[0], // date format
-    endTime: event.endTime.toISOString().split('T')[0],
-    eventColor: event.eventColor,
-    isAllDay: event.isAllDay,
+    board_id: event.board.id,
+    start_time: toBackendYMD(event.startTime),
+    end_time: toBackendYMD(event.endTime),
+    event_color: event.eventColor,
+    is_all_day: event.isAllDay,
     description: event.description,
     location: event.location,
-    timezone: event.timezone,
-    recurrence: event.recurrence ? {
-      frequency: event.recurrence.frequency,
-      dayOfWeek: event.recurrence.dayOfWeek,
-      dateUntil: event.recurrence.dateUntil.toISOString().split('T')[0],
-      dateStart: event.recurrence.dateStart?.toISOString().split('T')[0],
-    } : undefined,
+    recurrence: event.recurrence
+      ? {
+          frequency: event.recurrence.frequency,
+          day_of_week: event.recurrence.dayOfWeek,
+          termination_date: toBackendYMD(event.recurrence.dateUntil),
+          date_start: event.recurrence.dateStart
+            ? toBackendYMD(event.recurrence.dateStart)
+            : null,
+        }
+      : undefined,
   };
 }
 
-export async function fetchEvents(boards: Board[]): Promise<Event[]> {
+async function fetchEventsMock(boards: Board[]): Promise<Event[]> {
   await new Promise((r) => setTimeout(r, 300)); // simulates network delay
 
   const dummyEvents = [
     {
       id: "event-1",
       calendarId: "default",
-      boardId: "board-3", // Quick Notes board
-      startTime: new Date().toISOString().split('T')[0],
-      endTime: new Date().toISOString().split('T')[0],
+      boardId: "board-3",
+      startTime: new Date().toISOString().split("T")[0],
+      endTime: new Date().toISOString().split("T")[0],
       eventColor: "#1976d2",
       isAllDay: true,
       description: "Team standup meeting",
@@ -62,9 +127,11 @@ export async function fetchEvents(boards: Board[]): Promise<Event[]> {
     {
       id: "event-2",
       calendarId: "default",
-      boardId: "board-1", // Website Redesign board
-      startTime: new Date(Date.now() + 172800000).toISOString().split('T')[0], // +2 days
-      endTime: new Date(Date.now() + 172800000).toISOString().split('T')[0],
+      boardId: "board-1",
+      startTime: new Date(Date.now() + 172800000)
+        .toISOString()
+        .split("T")[0],
+      endTime: new Date(Date.now() + 172800000).toISOString().split("T")[0],
       eventColor: "#d32f2f",
       isAllDay: false,
       description: "Client presentation rehearsal",
@@ -74,9 +141,9 @@ export async function fetchEvents(boards: Board[]): Promise<Event[]> {
     {
       id: "event-3",
       calendarId: "default",
-      boardId: "board-2", // Mobile App board
-      startTime: new Date(Date.now() + 86400000).toISOString().split('T')[0], // +1 day
-      endTime: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      boardId: "board-2",
+      startTime: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+      endTime: new Date(Date.now() + 86400000).toISOString().split("T")[0],
       eventColor: "#2e7d32",
       isAllDay: true,
       description: "Project milestone review",
@@ -93,50 +160,146 @@ export async function fetchEvents(boards: Board[]): Promise<Event[]> {
   }
 
   const events = JSON.parse(localStorage.getItem("events") || "[]");
-  return events.map((raw: any) => toEvent(raw, boards));
+  return events.map((raw: any) => toEventMock(raw, boards));
 }
 
-export async function createEvent(eventData: Partial<Event>, boards: Board[]): Promise<Event> {
-  const events = JSON.parse(localStorage.getItem("events") || "[]");
+export async function fetchEvents(boards: Board[]): Promise<Event[]> {
+  if (getDataMode() === "mock") {
+    return fetchEventsMock(boards);
+  }
 
-  const newEvent: Event = {
-    id: `event-${Date.now()}`,
-    calendarId: eventData.calendarId || "default",
-    startTime: eventData.startTime || new Date(),
-    endTime: eventData.endTime || new Date(),
-    eventColor: eventData.eventColor || "#1976d2",
+  const boardById = new Map(boards.map((b) => [b.id, b]));
+  const eventsPerBoard = await Promise.all(
+    boards.map((b) =>
+      backendJSON<any[]>(`/board/${encodeURIComponent(b.id)}/event/`, {
+        method: "GET",
+      })
+    )
+  );
+
+  return eventsPerBoard
+    .flat()
+    .map((raw) => toEventBackend(raw, boardById));
+}
+
+export async function createEvent(
+  eventData: Partial<Event>,
+  boards: Board[]
+): Promise<Event> {
+  if (getDataMode() === "mock") {
+    const events = JSON.parse(localStorage.getItem("events") || "[]");
+
+    const newEvent: Event = {
+      id: `event-${Date.now()}`,
+      calendarId: eventData.calendarId || "default",
+      startTime: eventData.startTime || new Date(),
+      endTime: eventData.endTime || new Date(),
+      eventColor: eventData.eventColor || "#1976d2",
+      isAllDay: eventData.isAllDay ?? true,
+      description: eventData.description || "",
+      location: eventData.location || "",
+      timezone: eventData.timezone || "America/New_York",
+      board:
+        eventData.board || {
+          id: "board-3",
+          name: "Quick Notes",
+          color: "#ccc",
+        },
+      recurrence: eventData.recurrence,
+    };
+
+    // Preserve mock behavior exactly as before.
+    const rawEvent = {
+      ...newEvent,
+      boardId: newEvent.board.id,
+      startTime: newEvent.startTime.toISOString().split("T")[0],
+      endTime: newEvent.endTime.toISOString().split("T")[0],
+      recurrence: newEvent.recurrence
+        ? {
+            frequency: newEvent.recurrence.frequency,
+            dayOfWeek: newEvent.recurrence.dayOfWeek,
+            dateUntil: newEvent.recurrence.dateUntil
+              .toISOString()
+              .split("T")[0],
+            dateStart: newEvent.recurrence.dateStart
+              ? newEvent.recurrence.dateStart.toISOString().split("T")[0]
+              : undefined,
+          }
+        : undefined,
+    };
+
+    localStorage.setItem("events", JSON.stringify([...events, rawEvent]));
+    return newEvent;
+  }
+
+  const board = eventData.board ?? boards[0];
+  if (!board) throw new Error("No boards available");
+
+  const eventToCreate: Event = {
+    id: eventData.id ?? `event-${Date.now()}`,
+    calendarId: eventData.calendarId ?? "default",
+    startTime: eventData.startTime ?? new Date(),
+    endTime: eventData.endTime ?? new Date(),
+    eventColor: eventData.eventColor ?? board.color,
     isAllDay: eventData.isAllDay ?? true,
-    description: eventData.description || "",
-    location: eventData.location || "",
-    timezone: eventData.timezone || "America/New_York",
-    board: eventData.board || { id: "board-3", name: "Quick Notes", color: "#ccc" },
+    description: eventData.description ?? "",
+    location: eventData.location ?? "",
+    timezone: eventData.timezone ?? "UTC",
+    board,
     recurrence: eventData.recurrence,
   };
 
-  const rawEvent = toRawEvent(newEvent);
-  const updated = [...events, rawEvent];
+  const res = await backendJSON<{ event_id?: string }>(`/board/event`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(toBackendEventPayload(eventToCreate)),
+  });
 
-  localStorage.setItem("events", JSON.stringify(updated));
-  return newEvent;
+  return { ...eventToCreate, id: String(res.event_id ?? eventToCreate.id) };
 }
 
-export async function updateEvent(updatedEvent: Event, boards: Board[]): Promise<Event> {
-  const events = JSON.parse(localStorage.getItem("events") || "[]");
+export async function updateEvent(
+  updatedEvent: Event,
+  boards: Board[]
+): Promise<Event> {
+  if (getDataMode() === "mock") {
+    const events = JSON.parse(localStorage.getItem("events") || "[]");
 
-  const updated = events.map((e: any) =>
-    e.id === updatedEvent.id ? toRawEvent(updatedEvent) : e
+    const updated = events.map((e: any) => e.id === updatedEvent.id ? updatedEvent : e);
+    localStorage.setItem("events", JSON.stringify(updated));
+    return updatedEvent;
+  }
+
+  const boardById = new Map(boards.map((b) => [b.id, b]));
+  const payload = toBackendEventPayload(updatedEvent);
+
+  const res = await backendJSON<{ event?: any }>(
+    `/board/${encodeURIComponent(updatedEvent.board.id)}/event/${encodeURIComponent(updatedEvent.id)}`,
+    {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    }
   );
 
-  localStorage.setItem("events", JSON.stringify(updated));
-  return updatedEvent;
+  if (!res.event) return updatedEvent;
+  return toEventBackend(res.event, boardById);
 }
 
-export async function deleteEvent(eventId: string): Promise<void> {
-  const events = JSON.parse(localStorage.getItem("events") || "[]");
+export async function deleteEvent(
+  boardId: string,
+  eventId: string
+): Promise<void> {
+  if (getDataMode() === "mock") {
+    const events = JSON.parse(localStorage.getItem("events") || "[]");
+    const updated = events.filter((e: any) => e.id !== eventId);
+    localStorage.setItem("events", JSON.stringify(updated));
+    return;
+  }
 
-  const updated = events.filter((e: any) => e.id !== eventId);
-
-  localStorage.setItem("events", JSON.stringify(updated));
+  await backendJSON(`/board/${encodeURIComponent(boardId)}/event/${encodeURIComponent(eventId)}`, {
+    method: "DELETE",
+  });
 }
 
 export async function getEventsByTimeRange(
@@ -145,15 +308,31 @@ export async function getEventsByTimeRange(
   boards: Board[]
 ): Promise<Event[]> {
   const allEvents = await fetchEvents(boards);
-
-  return allEvents.filter((event) =>
-    event.startTime >= startDate && event.endTime <= endDate
-  );
+  return allEvents.filter((event) => {
+    return event.startTime >= startDate && event.endTime <= endDate;
+  });
 }
 
-export async function getEventById(eventId: string, boards: Board[]): Promise<Event | null> {
-  const events = JSON.parse(localStorage.getItem("events") || "[]");
-  const rawEvent = events.find((e: any) => e.id === eventId);
+export async function getEventById(
+  eventId: string,
+  boards: Board[]
+): Promise<Event | null> {
+  if (getDataMode() === "mock") {
+    const events = JSON.parse(localStorage.getItem("events") || "[]");
+    const rawEvent = events.find((e: any) => e.id === eventId);
+    return rawEvent ? toEventMock(rawEvent, boards) : null;
+  }
 
-  return rawEvent ? toEvent(rawEvent, boards) : null;
+  for (const b of boards) {
+    const events = await backendJSON<any[]>(
+      `/board/${encodeURIComponent(b.id)}/event/`,
+      { method: "GET" }
+    );
+    const found = events.find((e: any) => String(e.id) === eventId);
+    if (found) {
+      const boardById = new Map(boards.map((bb) => [bb.id, bb]));
+      return toEventBackend(found, boardById);
+    }
+  }
+  return null;
 }

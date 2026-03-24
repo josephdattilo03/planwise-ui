@@ -7,15 +7,20 @@ import FolderTreeDisplay from "../../components/folderTree/FolderTreeDisplay";
 import BoardDisplayPage from "../../components/boards/BoardDisplayPage";
 import { createBoardNode } from "../../services/folders/folderService";
 import { createBoard } from "../../services/boards/boardService";
+import { getDataMode } from "../../services/dataMode";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import { Button } from "@mui/material";
 import BoardCreateDialog from "../../components/boards/BoardCreateDialog";
+import { useSession } from "next-auth/react";
 
 export default function FoldersPage() {
   const searchParams = useSearchParams();
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
+  const mode = getDataMode();
 
   // Handle board parameter from URL
   useEffect(() => {
@@ -29,17 +34,20 @@ export default function FoldersPage() {
     setSelectedBoardId(boardId);
   };
 
-  const handleCreateBoard = (
+  const handleCreateBoard = async (
     name: string,
     color: string,
     parentFolderId: string
   ) => {
-    // Save to "boards" localStorage (for fetchBoards / FiltersContext)
-    const newBoard = createBoard(name, color);
+    // Save to "boards" localStorage (for fetchBoards / FiltersContext) only in mock mode.
+    if (mode === "mock" || !userId || parentFolderId === "root") {
+      const newBoard = await createBoard(name, color);
+      createBoardNode(parentFolderId, newBoard);
+      setRefreshKey((prev) => prev + 1);
+      return;
+    }
 
-    createBoardNode(parentFolderId, newBoard);
-
-    // Trigger tree refresh
+    await createBoard(name, color, userId, parentFolderId);
     setRefreshKey((prev) => prev + 1);
   };
 
@@ -60,7 +68,10 @@ export default function FoldersPage() {
         showClearAll={false}
         topContent={addBoardButton}
       >
-        <FolderTreeDisplay onSelectBoard={handleBoardSelect} />
+        <FolderTreeDisplay
+          onSelectBoard={handleBoardSelect}
+          refreshKey={refreshKey}
+        />
       </FilterSidebar>
 
       <BoardCreateDialog

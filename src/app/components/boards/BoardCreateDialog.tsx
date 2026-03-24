@@ -16,11 +16,16 @@ import {
 import FormButton from "@/src/common/button/FormButton";
 import { FolderNode } from "../../types/workspace";
 import { fetchAllFolders } from "../../services/folders/folderService";
+import { useSession } from "next-auth/react";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  onSave: (name: string, color: string, parentFolderId: string) => void;
+  onSave: (
+    name: string,
+    color: string,
+    parentFolderId: string
+  ) => void | Promise<void>;
 };
 
 const PRESET_COLORS = [
@@ -41,19 +46,21 @@ export default function BoardCreateDialog({ open, onClose, onSave }: Props) {
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [parentFolderId, setParentFolderId] = useState("root");
   const [folders, setFolders] = useState<FolderNode[]>([]);
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
 
   // Load folders when dialog opens
   useEffect(() => {
     if (open) {
-      fetchAllFolders().then((data) => {
+      fetchAllFolders(userId).then((data) => {
         setFolders(data);
       });
     }
-  }, [open]);
+  }, [open, userId]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) return;
-    onSave(name.trim(), color, parentFolderId);
+    await onSave(name.trim(), color, parentFolderId);
     // Reset form
     setName("");
     setColor(PRESET_COLORS[0]);
@@ -149,7 +156,7 @@ export default function BoardCreateDialog({ open, onClose, onSave }: Props) {
       <DialogActions className="px-6 pb-4">
         <FormButton onClick={handleClose} text="Cancel" variant="clear" />
         <FormButton
-          onClick={handleSave}
+          onClick={() => void handleSave()}
           text="Create"
           variant="confirm"
           disabled={!name.trim()}

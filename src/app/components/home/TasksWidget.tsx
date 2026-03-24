@@ -31,8 +31,8 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
 
   // Get recent tasks (next 5 upcoming tasks)
   const recentTasks = tasks
-    .filter(task => task.dueDate >= new Date())
-    .sort((a, b) => a.dueDate - b.dueDate)
+    .filter((task) => task.dueDate !== null && task.dueDate >= new Date())
+    .sort((a, b) => (a.dueDate?.getTime() ?? 0) - (b.dueDate?.getTime() ?? 0))
     .slice(0, 5);
 
   const handleAddTask = () => {
@@ -92,7 +92,8 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
 
               // Count tasks due on this specific day
               const tasksForDay = tasks.filter(task => {
-                const taskDate = new Date(task.dueDate);
+                if (!task.dueDate) return false;
+                const taskDate = task.dueDate;
                 return taskDate.toDateString() === date.toDateString();
               }).length;
 

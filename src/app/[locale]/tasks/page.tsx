@@ -9,9 +9,12 @@ import TaskFilterComponent from "../../components/tasks/TaskFilterComponent";
 import { FiltersProvider } from "../../providers/filters/FiltersContext";
 import LoadingSpinner from "@/src/common/LoadingSpinner";
 import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
+import { useSession } from "next-auth/react";
 
 export default function TasksPage() {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [mode, setMode] = useState<"create" | "edit">("create");
@@ -25,7 +28,7 @@ export default function TasksPage() {
     async function load() {
       try {
         setTasksLoading(true);
-        const taskData = await fetchTasks(boards, tags);
+        const taskData = await fetchTasks(userId, boards, tags);
         if (!cancelled) setTasks(taskData);
       } catch (err) {
         console.error(err);
@@ -37,7 +40,7 @@ export default function TasksPage() {
     return () => {
       cancelled = true;
     };
-  }, [boardsTagsLoading, boards, tags]);
+  }, [boardsTagsLoading, boards, tags, userId]);
 
 
 
@@ -52,7 +55,7 @@ export default function TasksPage() {
   };
 
   const handleSaveSuccess = async () => {
-    const taskData = await fetchTasks(boards, tags);
+    const taskData = await fetchTasks(userId, boards, tags);
     setTasks(taskData);
     setMode("create");
   };

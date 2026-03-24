@@ -1,4 +1,11 @@
 import { Board } from "../../types";
+import { getDataMode } from "../dataMode";
+
+const BACKEND_PROXY_PREFIX = "/api/backend";
+
+function backendUrl(path: string) {
+  return `${BACKEND_PROXY_PREFIX}${path.startsWith("/") ? "" : "/"}${path}`;
+}
 
 function toBoard(raw: any): Board {
   return {
@@ -8,7 +15,7 @@ function toBoard(raw: any): Board {
   };
 }
 
-export async function fetchBoards() {
+async function fetchBoardsMock(): Promise<Board[]> {
   await new Promise((r) => setTimeout(r, 500)); // simulates network delay
 
   if (localStorage.getItem("boards")) {
@@ -30,7 +37,27 @@ export async function fetchBoards() {
   return raw.map(toBoard);
 }
 
-export function createBoard(name: string, color: string): Board {
+export async function fetchBoards(userId?: string): Promise<Board[]> {
+  if (getDataMode() === "mock") {
+    return fetchBoardsMock();
+  }
+  if (!userId) {
+    return [];
+  }
+
+  const res = await fetch(
+    backendUrl(`/user/${encodeURIComponent(userId)}/board/`),
+    { method: "GET" }
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `Failed to fetch boards (${res.status})`);
+  }
+  const raw = (await res.json()) as any[];
+  return raw.map(toBoard);
+}
+
+function createBoardMock(name: string, color: string): Board {
   // Get existing boards from localStorage
   const existingRaw = JSON.parse(localStorage.getItem("boards") || "[]");
 
@@ -48,4 +75,53 @@ export function createBoard(name: string, color: string): Board {
   localStorage.setItem("boards", JSON.stringify(updatedBoards));
 
   return newBoard;
+}
+
+async function backendJSON<T>(path: string, init: RequestInit): Promise<T> {
+  const res = await fetch(backendUrl(path), init);
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(text || `Backend request failed (${res.status})`);
+  }
+  return JSON.parse(text) as T;
+}
+
+export async function createBoard(
+  name: string,
+  color: string,
+  userId?: string,
+  parentFolderId?: string
+): Promise<Board> {
+  if (getDataMode() === "mock") {
+    return createBoardMock(name, color);
+  }
+  if (!userId || !parentFolderId) {
+    throw new Error("createBoard requires userId and parentFolderId in backend mode");
+  }
+
+  // Backend needs `path` + `depth`; fetch them from the selected parent folder.
+  const parentFolder = await backendJSON<any>(
+    `/user/${encodeURIComponent(userId)}/folder/${encodeURIComponent(
+      parentFolderId
+    )}`,
+    { method: "GET" }
+  );
+
+  const res = await backendJSON<{ board_id?: string }>(`/user/board`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      name,
+      color,
+      path: parentFolder.path,
+      depth: parentFolder.depth,
+    }),
+  });
+
+  return {
+    id: String(res.board_id ?? ""),
+    name,
+    color,
+  };
 }

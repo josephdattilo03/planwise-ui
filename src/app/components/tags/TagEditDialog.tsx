@@ -19,7 +19,7 @@ type Props = {
   open: boolean;
   tag: Tag | null;
   onClose: () => void;
-  onSave: (tag: Tag) => void;
+  onSave: (tag: Tag) => void | Promise<void>;
 };
 
 export default function TagEditDialog({ open, tag, onClose, onSave }: Props) {

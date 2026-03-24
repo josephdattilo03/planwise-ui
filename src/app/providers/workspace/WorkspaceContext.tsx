@@ -1,11 +1,20 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import type { FolderNode, WorkspaceNode } from "../../types/workspace";
+import { useSession } from "next-auth/react";
 import {
   fetchRootFolder,
   fetchChildrenByParentId,
 } from "../../services/folders/folderService";
+import { getDataMode } from "../../services/dataMode";
 
 type WorkspaceContextType = {
   workspace: FolderNode | null;
@@ -13,6 +22,9 @@ type WorkspaceContextType = {
   error: string | null;
   loadChildren: (folderId: string) => Promise<void>;
   refetch: () => Promise<void>;
+  /** Persists across client navigations until full reload (same as provider lifetime). */
+  expandedFolderIds: Set<string>;
+  setExpandedFolderIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 };
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
@@ -38,6 +50,18 @@ function updateFolderChildren(
   };
 }
 
+function collectAllFolderIds(node: FolderNode): Set<string> {
+  const ids = new Set<string>([node.id]);
+  for (const child of node.children) {
+    if (child.type === "folder") {
+      for (const id of collectAllFolderIds(child as FolderNode)) {
+        ids.add(id);
+      }
+    }
+  }
+  return ids;
+}
+
 /**
  * Preloads the workspace folder tree (root + root's children) so the boards
  * page sidebar can show the tree without a loading state on every visit.
@@ -46,14 +70,21 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [workspace, setWorkspace] = useState<FolderNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  const { data: session, status } = useSession();
+  const userId = session?.user?.email ?? undefined;
+  const backendMode = getDataMode() === "backend";
 
   const loadRoot = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const root = await fetchRootFolder();
+      const root = await fetchRootFolder(userId);
       if (root) {
-        const children = await fetchChildrenByParentId(root.id);
+        const children = await fetchChildrenByParentId(root.id, userId);
         setWorkspace({ ...root, children });
       } else {
         setWorkspace(null);
@@ -64,19 +95,56 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
+    if (backendMode) {
+      if (status === "loading") {
+        return;
+      }
+      if (status === "unauthenticated") {
+        setWorkspace(null);
+        setLoading(false);
+        return;
+      }
+      if (!userId) {
+        setWorkspace(null);
+        setLoading(false);
+        return;
+      }
+    }
     loadRoot();
-  }, [loadRoot]);
+  }, [loadRoot, backendMode, status, userId]);
 
-  const loadChildren = useCallback(async (folderId: string) => {
-    const children = await fetchChildrenByParentId(folderId);
-    setWorkspace((prev) => {
-      if (!prev) return null;
-      return updateFolderChildren(prev, folderId, children);
+  useLayoutEffect(() => {
+    if (!workspace) {
+      setExpandedFolderIds(new Set());
+      return;
+    }
+    setExpandedFolderIds((prev) => {
+      const validIds = collectAllFolderIds(workspace);
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (validIds.has(id)) next.add(id);
+      }
+      if (next.size === 0) {
+        next.add(workspace.id);
+      }
+      return next;
     });
-  }, []);
+  }, [workspace]);
+
+  const loadChildren = useCallback(
+    async (folderId: string) => {
+      if (backendMode && !userId) return;
+      const children = await fetchChildrenByParentId(folderId, userId);
+      setWorkspace((prev) => {
+        if (!prev) return null;
+        return updateFolderChildren(prev, folderId, children);
+      });
+    },
+    [userId, backendMode]
+  );
 
   const refetch = useCallback(async () => {
     await loadRoot();
@@ -84,7 +152,15 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <WorkspaceContext.Provider
-      value={{ workspace, loading, error, loadChildren, refetch }}
+      value={{
+        workspace,
+        loading,
+        error,
+        loadChildren,
+        refetch,
+        expandedFolderIds,
+        setExpandedFolderIds,
+      }}
     >
       {children}
     </WorkspaceContext.Provider>

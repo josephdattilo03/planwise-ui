@@ -24,6 +24,9 @@ import FormButton from "@/src/common/button/FormButton";
 import BoardChip from "../boards/BoardChip";
 import { Tag, TagOption } from "../../types";
 import TagChip from "../tags/TagChip";
+import { useSession } from "next-auth/react";
+import { createTask, updateTask } from "../../services/tasks/taskService";
+import type { Task } from "../../types";
 
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import TagEditDialog from "../tags/TagEditDialog";
@@ -70,6 +73,9 @@ export default function NewTaskComponent({
     clearTaskState,
   } = useTask();
 
+  const { data: session } = useSession();
+  const userId = session?.user?.email ?? undefined;
+
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -101,59 +107,35 @@ export default function NewTaskComponent({
 
     try {
       if (!isEditMode) {
-        // BUILD PAYLOAD FOR CREATE
-        const payload = {
-          id: id,
+        if (!selectedBoard) return;
+        const taskToCreate = {
+          id,
           name: title.trim(),
           description: description.trim(),
-          dueDate: dueDate,
-          priorityLevel: priorityLevel,
-          progress: status,
-          boardId: newBoardId,
-          tagIds: Array.from(newTagIds),
+          dueDate: dueDate ?? new Date(),
+          priorityLevel,
+          progress: status as Task["progress"],
+          board: selectedBoard,
+          tags: selectedTags,
         };
 
-        console.log("✔ CREATE TASK PAYLOAD:", payload);
-
-        // TODO: call your create task service
-        // Save to localStorage for demo
-        const existingTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-        existingTasks.push(payload);
-        localStorage.setItem("tasks", JSON.stringify(existingTasks));
-
+        await createTask(taskToCreate, userId);
         clearTaskState();
         onSaveSuccess?.();
       } else {
-        // EDIT MODE
-        const payload = {
-          id: id,
+        if (!selectedBoard || !id) return;
+        const taskToUpdate = {
+          id,
           name: title.trim(),
           description: description.trim(),
-          dueDate: dueDate,
-          priorityLevel: priorityLevel,
-          progress: status,
-          boardId: newBoardId,
-          tagIds: Array.from(newTagIds),
+          dueDate: dueDate ?? new Date(),
+          priorityLevel,
+          progress: status as Task["progress"],
+          board: selectedBoard,
+          tags: selectedTags,
         };
 
-        console.log("✔ EDIT TASK PAYLOAD:", payload);
-
-        // TODO: call your update task service
-        // Save to localStorage for demo
-        const existingTasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-
-        // find the index
-        const index = existingTasks.findIndex((t: any) => t.id === id);
-
-        if (index !== -1) {
-          existingTasks[index] = payload; // overwrite
-        } else {
-          console.warn("⚠ Task not found, adding instead");
-          existingTasks.push(payload);
-        }
-
-        localStorage.setItem("tasks", JSON.stringify(existingTasks));
-
+        await updateTask(taskToUpdate as Task, userId);
         clearTaskState();
         onSaveSuccess?.();
       }
@@ -402,7 +384,7 @@ export default function NewTaskComponent({
                 if (params.inputValue !== "") {
                   filtered.push({
                     // synthetic option for “Add "<input>”
-                    id: -1,
+                    id: "__synthetic__",
                     name: params.inputValue,
                     backgroundColor: "#E0E0E0",
                     textColor: "#333333",
@@ -432,7 +414,7 @@ export default function NewTaskComponent({
                   <li key={key} {...optionProps}>
                     <div className="group flex w-full items-center justify-between gap-2 font-sans">
                       <TagChip tag={option} />
-                      {!option.inputValue && option.id !== -1 && (
+                      {!option.inputValue && (
                         <IconButton
                           size="small"
                           sx={{ "& .MuiSvgIcon-root": { fontSize: 16 } }}
@@ -449,21 +431,27 @@ export default function NewTaskComponent({
                   </li>
                 );
               }}
-              onChange={(event, newValue) => {
+              onChange={async (event, newValue) => {
                 // Handle “create new tag” first
-                let createdTagId: number | null = null;
+                let createdTagId: string | null = null;
 
-                newValue.forEach((option) => {
+                for (const option of newValue) {
                   if (typeof option === "string") {
                     const name = option.trim();
-                    if (!name) return;
-                    createdTagId = createTag({ name }).id;
-                  } else if (option.inputValue) {
-                    const name = option.inputValue.trim();
-                    if (!name) return;
-                    createdTagId = createTag({ name }).id;
+                    if (!name) continue;
+                    const created = await createTag({ name });
+                    createdTagId = created.id;
+                    break;
                   }
-                });
+
+                  if (option.inputValue) {
+                    const name = option.inputValue.trim();
+                    if (!name) continue;
+                    const created = await createTag({ name });
+                    createdTagId = created.id;
+                    break;
+                  }
+                }
 
                 if (createdTagId !== null) {
                   // ensure newly created tag is selected
@@ -519,8 +507,8 @@ export default function NewTaskComponent({
             open={!!isEditTag}
             tag={isEditTag}
             onClose={() => setIsEditTag(null)}
-            onSave={(updated) => {
-              editTag(updated);
+            onSave={async (updated) => {
+              await editTag(updated);
               setIsEditTag(null);
             }}
           />

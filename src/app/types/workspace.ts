@@ -8,6 +8,9 @@ export interface FolderNode {
   name: string;
   children: WorkspaceNode[];
   type: 'folder'
+  // Backend mode metadata (optional for mock mode)
+  depth?: number;
+  path?: string;
 }
 
 export interface BoardNode {
