@@ -15,6 +15,7 @@ import {
   fetchChildrenByParentId,
 } from "../../services/folders/folderService";
 import { getDataMode } from "../../services/dataMode";
+import { SCHEDULE_AGENT_MUTATED_EVENT } from "../../services/scheduleAgentRefresh";
 
 type WorkspaceContextType = {
   workspace: FolderNode | null;
@@ -149,6 +150,16 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const refetch = useCallback(async () => {
     await loadRoot();
   }, [loadRoot]);
+
+  useEffect(() => {
+    if (!backendMode) return;
+    const onAgentMutated = () => {
+      void loadRoot();
+    };
+    window.addEventListener(SCHEDULE_AGENT_MUTATED_EVENT, onAgentMutated);
+    return () =>
+      window.removeEventListener(SCHEDULE_AGENT_MUTATED_EVENT, onAgentMutated);
+  }, [backendMode, loadRoot]);
 
   return (
     <WorkspaceContext.Provider

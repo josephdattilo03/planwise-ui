@@ -109,6 +109,15 @@
   --home-alert-button: #e65c2c;
   --home-alert-button-hover: #d24f21;
 
+  /* AI chat: Yes / No confirm buttons (on chat body; inherits .dark) */
+  --chatbot-confirm-default-bg: var(--menu-bg);
+  --chatbot-confirm-default-fg: var(--green-2);
+  --chatbot-confirm-default-border: var(--green-2);
+  --chatbot-confirm-hover-bg: var(--green-2);
+  --chatbot-confirm-hover-fg: #ffffff;
+  --chatbot-confirm-hover-shadow: 0 2px 10px color-mix(in srgb, var(--green-2) 40%, transparent);
+  --chatbot-confirm-focus-ring: var(--green-1);
+
   /* Type scale (one set for notes + page text) */
   --font-size-xs: 13px;
   --font-size-sm: 14px;
@@ -464,6 +473,9 @@
   --home-alert-text: #e8b899;
   --home-alert-button: #ff6633;
   --home-alert-button-hover: #ff7744;
+
+  --chatbot-confirm-default-fg: var(--foreground);
+  --chatbot-confirm-focus-ring: var(--green-3);
 }
 
 body {
@@ -576,4 +588,10 @@ body {
 .dark .rbc-planwise .rbc-agenda-event-cell {
   color: var(--foreground);
   background-color: var(--background);
+}
+
+/* Planwise AI chat: confirm actions (Yes / No) — keyboard focus */
+.planwise-confirm-btn:focus-visible {
+  outline: 2px solid var(--chatbot-confirm-focus-ring);
+  outline-offset: 3px;
 }
