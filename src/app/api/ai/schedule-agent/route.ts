@@ -32,10 +32,16 @@ export async function POST(req: Request) {
   }
 
   const message = body.message ?? body.prompt;
-  const hasExecutePlan = Array.isArray(body.execute_plan) && body.execute_plan.length > 0;
-  if (!hasExecutePlan && (message === undefined || typeof message !== 'string')) {
+  const hasExecutePlan =
+    Array.isArray(body.execute_plan) && body.execute_plan.length > 0;
+  if (
+    !hasExecutePlan &&
+    (message === undefined || typeof message !== 'string')
+  ) {
     return NextResponse.json(
-      { error: 'Missing message or prompt in body (or execute_plan for apply)' },
+      {
+        error: 'Missing message or prompt in body (or execute_plan for apply)',
+      },
       { status: 400 },
     );
   }

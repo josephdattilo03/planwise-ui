@@ -1,13 +1,13 @@
 'use client';
 
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import ChatBot from 'react-chatbotify';
+import { useCanvasBriefing } from '@/src/app/providers/CanvasBriefingProvider';
 import { useTheme } from '@/src/common/ThemeProvider';
 import type { Flow, Params } from 'react-chatbotify';
 
 const APPLY_LABEL = 'Yes, apply';
 const CANCEL_LABEL = 'No, cancel';
-
 function ConfirmButtons({
   onApply,
   onCancel,
@@ -55,97 +55,114 @@ function ConfirmButtons({
 
 export default function AIChatBot() {
   const { theme } = useTheme();
+  const { briefing: canvasBriefing, briefingNonce } = useCanvasBriefing();
   const pendingPlanRef = useRef<{
     proposed_actions: unknown[];
   } | null>(null);
 
-  const flow: Flow = {
-    start: {
-      message: 'Ask me for help with your schedule!',
-      path: 'gemini',
-    },
-    gemini: {
-      message: async (params) => {
-        pendingPlanRef.current = null;
-        const res = await fetch('/api/ai/schedule-agent', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            prompt: params.userInput,
-            plan_only: true,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) return data.error ?? 'Sorry—something went wrong.';
-        const text = data.text ?? 'Sorry—something went wrong.';
-        const actions = Array.isArray(data.proposed_actions)
-          ? data.proposed_actions
-          : [];
-        if (actions.length > 0) {
-          pendingPlanRef.current = { proposed_actions: actions };
-          return `${text}\n\nApply these changes?`;
-        }
-        return text;
+  const flow: Flow = useMemo(() => {
+    const confirmComponent = (params: Params) => {
+      if (!pendingPlanRef.current?.proposed_actions?.length) return null;
+      const optionStyle = {
+        backgroundColor: 'var(--menu-bg)',
+        color: theme === 'dark' ? '#ffffff' : 'var(--green-2)',
+        border: '1px solid var(--green-2)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '10px 12px',
+      };
+      return (
+        <ConfirmButtons
+          optionStyle={optionStyle}
+          onApply={async () => {
+            await params.injectMessage(APPLY_LABEL, 'USER');
+            await params.goToPath('execute_plan');
+          }}
+          onCancel={async () => {
+            await params.injectMessage(CANCEL_LABEL, 'USER');
+            await params.goToPath('cancelled');
+          }}
+        />
+      );
+    };
+
+    return {
+      start: {
+        message: async () => {
+          if (canvasBriefing) {
+            const actions = canvasBriefing.proposed_actions ?? [];
+            pendingPlanRef.current =
+              actions.length > 0 ? { proposed_actions: actions } : null;
+            const base = canvasBriefing.text;
+            return actions.length > 0
+              ? `${base}\n\nApply these changes?`
+              : base;
+          }
+          return 'Ask me for help with your schedule!';
+        },
+        component: confirmComponent,
+        path: 'gemini',
       },
-      component: (params: Params) => {
-        if (!pendingPlanRef.current?.proposed_actions?.length) return null;
-        const optionStyle = {
-          backgroundColor: 'var(--menu-bg)',
-          color: theme === 'dark' ? '#ffffff' : 'var(--green-2)',
-          border: '1px solid var(--green-2)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '10px 12px',
-        };
-        return (
-          <ConfirmButtons
-            optionStyle={optionStyle}
-            onApply={async () => {
-              await params.injectMessage(APPLY_LABEL, 'USER');
-              await params.goToPath('execute_plan');
-            }}
-            onCancel={async () => {
-              await params.injectMessage(CANCEL_LABEL, 'USER');
-              await params.goToPath('cancelled');
-            }}
-          />
-        );
+      gemini: {
+        message: async (params) => {
+          pendingPlanRef.current = null;
+          const res = await fetch('/api/ai/schedule-agent', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              prompt: params.userInput,
+              plan_only: true,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) return data.error ?? 'Sorry—something went wrong.';
+          const text = data.text ?? 'Sorry—something went wrong.';
+          const actions = Array.isArray(data.proposed_actions)
+            ? data.proposed_actions
+            : [];
+          if (actions.length > 0) {
+            pendingPlanRef.current = { proposed_actions: actions };
+            return `${text}\n\nApply these changes?`;
+          }
+          return text;
+        },
+        component: confirmComponent,
+        path: () => 'gemini',
       },
-      path: () => 'gemini',
-    },
-    confirm_plan: {
-      message: '',
-      options: [APPLY_LABEL, CANCEL_LABEL],
-      path: (params) => {
-        if (params.userInput === APPLY_LABEL) return 'execute_plan';
-        return 'cancelled';
+      confirm_plan: {
+        message: '',
+        options: [APPLY_LABEL, CANCEL_LABEL],
+        path: (params) => {
+          if (params.userInput === APPLY_LABEL) return 'execute_plan';
+          return 'cancelled';
+        },
       },
-    },
-    execute_plan: {
-      message: async () => {
-        const pending = pendingPlanRef.current;
-        pendingPlanRef.current = null;
-        if (!pending?.proposed_actions?.length) {
-          return 'No pending actions.';
-        }
-        const res = await fetch('/api/ai/schedule-agent', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ execute_plan: pending.proposed_actions }),
-        });
-        const data = await res.json();
-        if (!res.ok)
-          return data.error ?? 'Something went wrong applying changes.';
-        return data.text ?? 'Changes applied.';
+      execute_plan: {
+        message: async () => {
+          const pending = pendingPlanRef.current;
+          pendingPlanRef.current = null;
+          if (!pending?.proposed_actions?.length) {
+            return 'No pending actions.';
+          }
+          const res = await fetch('/api/ai/schedule-agent', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ execute_plan: pending.proposed_actions }),
+          });
+          const data = await res.json();
+          if (!res.ok)
+            return data.error ?? 'Something went wrong applying changes.';
+          return data.text ?? 'Changes applied.';
+        },
+        path: 'gemini',
       },
-      path: 'gemini',
-    },
-    cancelled: {
-      message: 'No changes made.',
-      path: 'gemini',
-    },
-  };
+      cancelled: {
+        message: 'No changes made.',
+        path: 'gemini',
+      },
+    };
+  }, [canvasBriefing, theme]);
 
   const styles = {
     tooltipStyle: {
@@ -257,6 +274,7 @@ export default function AIChatBot() {
       secondaryColor: 'var(--green-1)',
       showFooter: false,
       fontFamily: 'var(--font-plex-sans)',
+      flowStartTrigger: 'ON_CHATBOT_INTERACT',
     },
     header: {
       title: 'Planwise AI',
@@ -279,7 +297,20 @@ export default function AIChatBot() {
     },
   };
 
+  // Remount when a Canvas briefing arrives (or a new one replaces the last).
+  const chatKey = canvasBriefing
+    ? `planwise-canvas-${briefingNonce}`
+    : `planwise-default-${briefingNonce}`;
+
   // `react-chatbotify` has a fairly strict `Styles` type; these CSS variable
   // values are runtime strings, so we cast to avoid build-time failures.
-  return <ChatBot settings={settings} styles={styles as any} flow={flow} />;
+  return (
+    <ChatBot
+      key={chatKey}
+      settings={settings}
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- library Styles type is narrower than CSS variables
+      styles={styles as any}
+      flow={flow}
+    />
+  );
 }
