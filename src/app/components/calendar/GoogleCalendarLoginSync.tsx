@@ -56,11 +56,14 @@ export function GoogleCalendarLoginSync() {
     }
     syncInFlight.current = true;
 
+    // Record an attempt timestamp immediately so transient backend errors
+    // (e.g. a 502) don't trigger repeated sync attempts on every re-render.
+    sessionStorage.setItem(key, String(Date.now()));
+
     void (async () => {
       try {
         const result = await syncGoogleCalendar(session);
         if (result.ok) {
-          sessionStorage.setItem(key, String(Date.now()));
           window.dispatchEvent(new CustomEvent("planwise:google-calendar-synced"));
         } else if (process.env.NODE_ENV === "development") {
           console.warn("[GoogleCalendarLoginSync] skipped", result.reason);

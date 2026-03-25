@@ -6,12 +6,11 @@ import { ColHeader } from "./ColHeader";
 import { ColFooter } from "./ColFooter";
 import { BoardCardList } from "./BoardCardList";
 import { Task } from "../../types/task";
-import { Board } from "../../types/board";
-import { fetchTasks, createTask } from "../../services/tasks/taskService";
-import { Tag } from "../../types/tag";
+import { fetchTasks, createTask, updateTask } from "../../services/tasks/taskService";
 import LoadingSpinner from "@/src/common/LoadingSpinner";
 import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
 import { useSession } from "next-auth/react";
+import { useTaskDrawer } from "../../providers/tasks/TaskDrawerContext";
 
 interface BoardDisplayPageProps {
   boardId: string;
@@ -22,6 +21,7 @@ const COLUMNS: Task["progress"][] = ["to-do", "in-progress", "done", "pending"];
 const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
   const { data: session, status: sessionStatus } = useSession();
+  const { openEdit } = useTaskDrawer();
   const userId = session?.user?.email ?? undefined;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
@@ -60,21 +60,39 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
   const handleAddTask =
     (progress: Task["progress"]) =>
     async (title: string) => {
-    const currentBoard = boards.find((b) => b.id === boardId);
-    if (!currentBoard) return;
+      const currentBoard = boards.find((b) => b.id === boardId);
+      if (!currentBoard) return;
 
-    const newTask = await createTask(
-      {
-        name: title,
-        progress,
-        board: currentBoard,
-        dueDate: new Date(),
-        tags: [],
-      },
-      userId
+      const newTask = await createTask(
+        {
+          name: title,
+          progress,
+          board: currentBoard,
+          dueDate: new Date(),
+          tags: [],
+        },
+        userId
+      );
+
+      setTasks((prev) => [...prev, newTask]);
+    };
+
+  const handleMoveTask = async (taskId: string, toProgress: Task["progress"]) => {
+    const movingTask = tasks.find((t) => t.id === taskId);
+    if (!movingTask || movingTask.progress === toProgress) return;
+
+    const prevTasks = tasks;
+    const nextTasks = tasks.map((t) =>
+      t.id === taskId ? { ...t, progress: toProgress } : t
     );
+    setTasks(nextTasks);
 
-    setTasks((prev) => [...prev, newTask]);
+    try {
+      await updateTask({ ...movingTask, progress: toProgress }, userId);
+    } catch (error) {
+      console.error("Failed to move task:", error);
+      setTasks(prevTasks);
+    }
   };
 
   const loading = boardsTagsLoading || tasksLoading;
@@ -108,9 +126,14 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
             >
               <ColHeader taskID={col} count={columnTasks.length} />
               <Divider />
-              <BoardCardList tasks={columnTasks} />
-              {/* <Divider />
-              <ColFooter onAddTask={handleAddTask(column.id)} /> */}
+              <BoardCardList
+                tasks={columnTasks}
+                progress={col}
+                onSelectTask={openEdit}
+                onMoveTask={handleMoveTask}
+              />
+              <Divider />
+              <ColFooter onAddTask={handleAddTask(col)} />
             </Paper>
           );
         })}

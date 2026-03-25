@@ -6,9 +6,14 @@ import { useFilters } from "../../providers/filters/useFilters";
 interface TaskListProps {
   taskList: Task[];
   onSelectTask?: (task: Task) => void;
+  layout?: "list" | "grid";
 }
 
-export default function TaskList({ taskList, onSelectTask }: TaskListProps) {
+export default function TaskList({
+  taskList,
+  onSelectTask,
+  layout = "list",
+}: TaskListProps) {
   const {
     selectedBoardIds,
     selectedTagIds,
@@ -83,8 +88,13 @@ export default function TaskList({ taskList, onSelectTask }: TaskListProps) {
     );
   }
 
+  const containerClass =
+    layout === "grid"
+      ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"
+      : "flex flex-col gap-2";
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className={containerClass}>
       {filteredTasks.map((task) => (
         <TaskCard
           key={task.id}

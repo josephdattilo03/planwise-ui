@@ -30,7 +30,7 @@ export default function FormButton({
     <Button
       onClick={onClick}
       disabled={disabled}
-      className={`${fullWidth ? "w-full" : ""} ${baseClasses} ${variants[variant]}`}
+      className={`${fullWidth ? "w-full" : ""} ${baseClasses} ${variants[variant]} ${disabled ? "opacity-50 cursor-not-allowed hover:bg-inherit" : ""}`}
     >
       {text}
     </Button>

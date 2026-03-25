@@ -35,7 +35,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
 
   return (
     <div
-      className="flex flex-col gap-2 border border-border rounded-lg p-3 cursor-pointer"
+      className="flex flex-col gap-2 border border-border rounded-lg p-3 cursor-pointer bg-background"
       onClick={onClick}
     >
       <div>

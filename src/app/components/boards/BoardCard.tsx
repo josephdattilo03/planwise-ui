@@ -9,9 +9,11 @@ import { resolveTagsWithCatalog } from "../../services/tags/tagService";
 
 interface BoardCardProps {
   task: Task;
+  onClick?: (task: Task) => void;
+  onDragStart?: (task: Task, event: React.DragEvent) => void;
 }
 
-export const BoardCard = ({ task }: BoardCardProps) => {
+export const BoardCard = ({ task, onClick, onDragStart }: BoardCardProps) => {
   const { tags: tagCatalog } = useBoardsTags();
   const displayTags = useMemo(
     () => resolveTagsWithCatalog(task.tags, tagCatalog),
@@ -29,9 +31,13 @@ export const BoardCard = ({ task }: BoardCardProps) => {
     <Card
       variant="outlined"
       className="mx-2 mb-4"
+      draggable
+      onDragStart={(event) => onDragStart?.(task, event)}
+      onClick={() => onClick?.(task)}
       sx={{
         borderLeft: `4px solid ${task.board.color}`,
         borderRadius: "var(--radius-md)",
+        cursor: "pointer",
       }}
     >
       <CardContent className="flex flex-col gap-2 p-4">

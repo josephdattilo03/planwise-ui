@@ -24,8 +24,10 @@ import {
 } from "../components/home";
 import { useTheme } from "@/src/common/ThemeProvider";
 import LoadingSpinner from "@/src/common/LoadingSpinner";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
   const { theme } = useTheme();
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
 
@@ -132,6 +134,10 @@ export default function Home() {
     } catch (e) {
       console.error("Error creating note:", e);
     }
+  };
+
+  const handleSelectTaskFromWidget = (task: Task) => {
+    router.push(`/tasks?taskId=${encodeURIComponent(task.id)}`);
   };
 
   if (status === "loading") {
@@ -246,7 +252,12 @@ export default function Home() {
             },
           }}
         >
-          <TasksWidget tasks={tasks} boards={boards} onAddTask={handleAddTask} />
+          <TasksWidget
+            tasks={tasks}
+            boards={boards}
+            onAddTask={handleAddTask}
+            onSelectTask={handleSelectTaskFromWidget}
+          />
         </Box>
 
         <Box

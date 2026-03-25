@@ -13,27 +13,32 @@ import {
   InputLabel,
   type SelectChangeEvent,
 } from "@mui/material";
-import TaskIcon from "@mui/icons-material/Task";
-import { useRouter } from "next/navigation";
 import { Task } from "../../types/task";
 import { Board } from "../../types/board";
+import TaskCard from "../tasks/TaskCard";
 
 interface TasksWidgetProps {
   tasks: Task[];
   boards: Board[];
   onAddTask: (taskName: string, boardId: string, priority: number) => void | Promise<void>;
+  onSelectTask?: (task: Task) => void;
 }
 
 function taskBoardsOnly(boards: Board[]): Board[] {
   return boards.filter((b) => !b.id.startsWith("gcal:"));
 }
 
-export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetProps) {
-  const router = useRouter();
+export default function TasksWidget({
+  tasks,
+  boards,
+  onAddTask,
+  onSelectTask,
+}: TasksWidgetProps) {
   const [newTaskName, setNewTaskName] = useState("");
   const selectableBoards = taskBoardsOnly(boards);
   const [selectedBoardId, setSelectedBoardId] = useState("");
   const [selectedPriority, setSelectedPriority] = useState(1);
+  const [selectedDayOffset, setSelectedDayOffset] = useState(0);
 
   const boardSelectValue = useMemo(() => {
     if (selectableBoards.length === 0) return "";
@@ -43,11 +48,24 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
     return selectableBoards[0].id;
   }, [selectableBoards, selectedBoardId]);
 
-  // Get recent tasks (next 5 upcoming tasks)
-  const recentTasks = tasks
-    .filter((task) => task.dueDate !== null && task.dueDate >= new Date())
-    .sort((a, b) => (a.dueDate?.getTime() ?? 0) - (b.dueDate?.getTime() ?? 0))
-    .slice(0, 5);
+  const selectedDate = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + selectedDayOffset);
+    return date;
+  }, [selectedDayOffset]);
+
+  const dayTasks = useMemo(() => {
+    return tasks
+      .filter((task) => {
+        if (!task.dueDate) return false;
+        const taskDate = new Date(task.dueDate);
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === selectedDate.getTime();
+      })
+      .sort((a, b) => (a.dueDate?.getTime() ?? 0) - (b.dueDate?.getTime() ?? 0))
+      .slice(0, 5);
+  }, [tasks, selectedDate]);
 
   const handleAddTask = () => {
     if (!newTaskName.trim() || !boardSelectValue) return;
@@ -61,12 +79,10 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
         borderRadius: "var(--radius-lg)",
         border: "1px solid var(--card-border)",
         backgroundColor: "var(--home-tasks-bg)",
-        cursor: "pointer",
         display: "flex",
         flexDirection: "column",
       }}
       elevation={0}
-      onClick={() => router.push("/tasks")}
     >
       <CardContent
         sx={{
@@ -114,16 +130,20 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
               return (
                 <Paper
                   key={idx}
+                  onClick={() => setSelectedDayOffset(idx)}
                   sx={{
                     textAlign: "center",
                     p: 1,
                     borderRadius: "var(--radius-md)",
-                    backgroundColor: isToday ? "var(--green-2)" : "var(--menu-bg)",
-                    color: isToday ? "white" : "var(--foreground)",
+                    backgroundColor:
+                      selectedDayOffset === idx ? "var(--green-2)" : "var(--menu-bg)",
+                    color: selectedDayOffset === idx ? "white" : "var(--foreground)",
                     fontSize: 14,
-                    fontWeight: isToday ? 700 : 500,
+                    fontWeight: selectedDayOffset === idx ? 700 : 500,
                     border: "1px solid var(--card-border)",
                     position: "relative",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
                   }}
                 >
                   {dayName} {dayNumber}
@@ -160,116 +180,21 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
               flexDirection: "column",
               gap: 1.5,
               mb: 2,
+              transition: "max-height 220ms ease, opacity 220ms ease",
+              maxHeight: dayTasks.length > 0 ? 560 : 180,
+              opacity: 1,
+              overflow: "hidden",
             }}
           >
-            {recentTasks.length > 0 ? recentTasks.map((task) => {
-              // Convert priority number to string
-              const priorityLabels = { 0: "Low", 1: "Medium", 2: "High", 3: "Now" };
-              const priorityString =
-                priorityLabels[task.priorityLevel as keyof typeof priorityLabels] || "Low";
-
-              const priorityStyle =
-                priorityString === "Now" || priorityString === "High"
-                  ? { color: "#d32f2f", bg: "rgba(211, 47, 47, 0.1)" }
-                  : priorityString === "Medium"
-                    ? { color: "#f57c00", bg: "rgba(245, 124, 0, 0.1)" }
-                    : { color: "#2e7d32", bg: "rgba(46, 125, 50, 0.1)" };
-
-              return (
-                <Paper
+            {dayTasks.length > 0 ? (
+              dayTasks.map((task) => (
+                <TaskCard
                   key={task.id}
-                  sx={{
-                    p: 1.5,
-                    borderRadius: "var(--radius-md)",
-                    backgroundColor: "var(--menu-bg)",
-                    border: "1px solid var(--card-border)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 0.5,
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      backgroundColor: "var(--menu-item-hover)",
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: "var(--dark-green-1)",
-                      }}
-                    >
-                      {task.name}
-                    </Typography>
-                    <TaskIcon
-                      sx={{ fontSize: 14, color: "var(--green-2)" }}
-                    />
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 500,
-                          color: "var(--dark-green-2)",
-                          fontSize: 11,
-                        }}
-                      >
-                        {task.board.name}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "var(--dark-green-2)" }}
-                      >
-                        Due {task.dueDate.toLocaleDateString()}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "flex-start",
-                      }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 700,
-                          color: priorityStyle.color,
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: "var(--radius-md)",
-                          backgroundColor: priorityStyle.bg,
-                          fontSize: 11,
-                        }}
-                      >
-                        {priorityString}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Paper>
-              );
-            }) : (
+                  task={task}
+                  onClick={() => onSelectTask?.(task)}
+                />
+              ))
+            ) : (
               <Typography
                 variant="body2"
                 sx={{
@@ -279,7 +204,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                   fontStyle: "italic"
                 }}
               >
-                No upcoming tasks
+                No tasks for this day
               </Typography>
             )}
           </Box>

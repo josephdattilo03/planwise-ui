@@ -18,6 +18,8 @@ import NextAuthSessionProvider from "@/src/app/providers/SessionProvider";
 import { ThemeProvider } from "@/src/common/ThemeProvider";
 import { BoardsTagsProvider } from "@/src/app/providers/boardsTags/BoardsTagsContext";
 import { WorkspaceProvider } from "@/src/app/providers/workspace/WorkspaceContext";
+import { TaskDrawerProvider } from "@/src/app/providers/tasks/TaskDrawerContext";
+import TaskDrawer from "@/src/app/components/tasks/TaskDrawer";
 
 type Props = {
   children: React.ReactNode;
@@ -54,11 +56,14 @@ export default async function LocaleLayout({ children, params }: Props) {
               <GoogleCalendarLoginSync />
               <NextIntlClientProvider locale={locale} messages={messages}>
                 <BoardsTagsProvider>
-                  <WorkspaceProvider>
-                    <NavBarComponent />
-                    <main className="flex-1 overflow-auto font-sans">{children}</main>
-                    <AIChatBotGate />
-                  </WorkspaceProvider>
+                  <TaskDrawerProvider>
+                    <WorkspaceProvider>
+                      <NavBarComponent />
+                      <main className="flex-1 overflow-auto font-sans">{children}</main>
+                      <TaskDrawer />
+                      {/* <AIChatBotGate /> */}
+                    </WorkspaceProvider>
+                  </TaskDrawerProvider>
                 </BoardsTagsProvider>
               </NextIntlClientProvider>
             </NextAuthSessionProvider>

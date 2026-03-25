@@ -20,6 +20,7 @@ import { useSession } from "next-auth/react";
 import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
 
 export default function FoldersPage() {
+  const LAST_BOARD_KEY = "planwise:last-selected-board";
   const searchParams = useSearchParams();
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -35,11 +36,25 @@ export default function FoldersPage() {
     const boardParam = searchParams.get('board');
     if (boardParam) {
       setSelectedBoardId(boardParam);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(LAST_BOARD_KEY, boardParam);
+      }
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const lastSelected = sessionStorage.getItem(LAST_BOARD_KEY);
+      if (lastSelected) {
+        setSelectedBoardId(lastSelected);
+      }
     }
   }, [searchParams]);
 
   const handleBoardSelect = (boardId: string) => {
     setSelectedBoardId(boardId);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(LAST_BOARD_KEY, boardId);
+    }
   };
 
   const handleCreateBoard = async (
@@ -73,7 +88,17 @@ export default function FoldersPage() {
   };
 
   const handleBoardRemovedFromTree = (boardId: string) => {
-    setSelectedBoardId((cur) => (cur === boardId ? null : cur));
+    setSelectedBoardId((cur) => {
+      const next = cur === boardId ? null : cur;
+      if (typeof window !== "undefined") {
+        if (next) {
+          sessionStorage.setItem(LAST_BOARD_KEY, next);
+        } else {
+          sessionStorage.removeItem(LAST_BOARD_KEY);
+        }
+      }
+      return next;
+    });
     setBoards((prev) => prev.filter((b) => b.id !== boardId));
   };
 
