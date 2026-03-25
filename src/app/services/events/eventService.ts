@@ -1,22 +1,8 @@
 import { Event } from "../../types/event";
 import { Board } from "../../types/board";
+import { backendJSON } from "../backendJson";
 import { getDataMode } from "../dataMode";
 import { googleCalendarBoardIdForUser } from "../googleCalendarService";
-
-const BACKEND_PROXY_PREFIX = "/api/backend";
-
-function backendUrl(path: string) {
-  return `${BACKEND_PROXY_PREFIX}${path.startsWith("/") ? "" : "/"}${path}`;
-}
-
-async function backendJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(backendUrl(path), init);
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(text || `Backend request failed (${res.status})`);
-  }
-  return JSON.parse(text) as T;
-}
 
 function toEventMock(raw: any, boards: Board[]): Event {
   return {
@@ -52,6 +38,21 @@ function toBackendYMD(d: Date) {
   return d.toISOString().split("T")[0];
 }
 
+/**
+ * API returns `YYYY-MM-DD` or full ISO (`2026-03-26T00:00:00`). Do not append `T00:00:00`
+ * when the string already includes `T` — that produces Invalid Date and breaks the calendar.
+ */
+function parseBackendEventTime(value: unknown): Date {
+  const s = String(value ?? "").trim();
+  if (!s) {
+    return new Date(NaN);
+  }
+  if (s.includes("T")) {
+    return new Date(s);
+  }
+  return new Date(`${s}T00:00:00`);
+}
+
 function toEventBackend(raw: any, boardById: Map<string, Board>): Event {
   const bid = String(raw.board_id);
   const board =
@@ -83,8 +84,8 @@ function toEventBackend(raw: any, boardById: Map<string, Board>): Event {
     id: String(raw.id),
     // Backend doesn't have calendarId; UI expects it, so keep a default.
     calendarId: "default",
-    startTime: new Date(`${raw.start_time}T00:00:00`),
-    endTime: new Date(`${raw.end_time}T00:00:00`),
+    startTime: parseBackendEventTime(raw.start_time),
+    endTime: parseBackendEventTime(raw.end_time),
     eventColor: raw.event_color,
     isAllDay: raw.is_all_day,
     description: raw.description,

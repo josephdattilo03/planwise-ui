@@ -1,7 +1,10 @@
 import { Task } from "@/src/app/types";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import BoardChip from "../boards/BoardChip";
 import TagChip from "../tags/TagChip";
+import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
+import { resolveTagsWithCatalog } from "../../services/tags/tagService";
 
 interface TaskCardProps {
   task: Task;
@@ -10,6 +13,11 @@ interface TaskCardProps {
 
 export default function TaskCard({ task, onClick }: TaskCardProps) {
   const t = useTranslations("TaskCard");
+  const { tags: tagCatalog } = useBoardsTags();
+  const displayTags = useMemo(
+    () => resolveTagsWithCatalog(task.tags, tagCatalog),
+    [task.tags, tagCatalog]
+  );
   const getProgressClass = (progress: Task["progress"]) => {
     switch (progress) {
       case "to-do":
@@ -61,8 +69,8 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
         </div>
       </div>
       <div className="flex flex-row gap-3">
-        {task.tags.map((tag, idx) => (
-          <TagChip key={idx} tag={tag}></TagChip>
+        {displayTags.map((tag) => (
+          <TagChip key={tag.id} tag={tag}></TagChip>
         ))}
       </div>
     </div>

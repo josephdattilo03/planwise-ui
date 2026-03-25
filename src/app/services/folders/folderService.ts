@@ -1,5 +1,6 @@
 import { WorkspaceNode, FolderNode, BoardNode } from "../../types/workspace";
 import { Board } from "../../types/board";
+import { backendJSON } from "../backendJson";
 import { getDataMode } from "../dataMode";
 
 function toFolderNode(raw: any): FolderNode {
@@ -26,12 +27,6 @@ function toBoardNode(raw: any): BoardNode {
   };
 }
 
-const BACKEND_PROXY_PREFIX = "/api/backend";
-
-function backendUrl(path: string) {
-  return `${BACKEND_PROXY_PREFIX}${path.startsWith("/") ? "" : "/"}${path}`;
-}
-
 function toPathPlus(path: string) {
   // pathPlus comes from backend folder.path (which commonly starts with `/`).
   // API Gateway uses `{path+}` where slashes separate segments, so we must keep
@@ -43,15 +38,6 @@ function toPathPlus(path: string) {
     .filter(Boolean)
     .map((seg) => encodeURIComponent(seg))
     .join("/");
-}
-
-async function backendJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(backendUrl(path), init);
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(text || `Backend request failed (${res.status})`);
-  }
-  return JSON.parse(text) as T;
 }
 
 async function fetchRootFolderMock(): Promise<FolderNode | null> {
@@ -169,6 +155,9 @@ export async function fetchChildrenByParentId(
   const parentPathPlus = toPathPlus(String(parentFolder.path ?? ""));
 
   const childFolderDepth = parentDepth + 1;
+  // Boards live at depth = parentDepth + 1 (same as child folders). Using parentDepth
+  // queried DEPTH#0#… for root and missed boards stored as DEPTH#1#PATH#/root/...
+  const childBoardDepth = parentDepth + 1;
 
   const foldersPathPart =
     parentPathPlus === ""
@@ -177,10 +166,10 @@ export async function fetchChildrenByParentId(
 
   const boardsPathPart =
     parentPathPlus === ""
-      ? `/user/${encodeURIComponent(userId)}/board/${parentDepth}/`
+      ? `/user/${encodeURIComponent(userId)}/board/${childBoardDepth}/`
       : `/user/${encodeURIComponent(
           userId
-        )}/board/${parentDepth}/${parentPathPlus}`;
+        )}/board/${childBoardDepth}/${parentPathPlus}`;
 
   const [childFoldersRaw, boardsRaw] = await Promise.all([
     backendJSON<any[]>(foldersPathPart, { method: "GET" }),
@@ -270,7 +259,7 @@ export async function fetchAllBoardNodes(
   }
 
   const boards = await backendJSON<any[]>(
-    `/user/${encodeURIComponent(userId)}/board/0/root`,
+    `/user/${encodeURIComponent(userId)}/board/1/root`,
     { method: "GET" }
   );
 
@@ -390,4 +379,106 @@ export function deleteBoardNode(boardId: string) {
 
   localStorage.setItem("boardNodes", JSON.stringify(updated));
   return updated;
+}
+
+function slugFolderName(name: string): string {
+  const s = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return s || "folder";
+}
+
+/** Create folder via API (or mock localStorage). */
+export async function createFolderRemote(
+  userId: string,
+  name: string,
+  parentFolderId: string
+): Promise<FolderNode> {
+  if (getDataMode() === "mock") {
+    return createFolder({ name, parentId: parentFolderId });
+  }
+  if (!userId) {
+    throw new Error("createFolderRemote requires userId in backend mode");
+  }
+  const parent = await backendJSON<any>(
+    `/user/${encodeURIComponent(userId)}/folder/${encodeURIComponent(
+      parentFolderId
+    )}`,
+    { method: "GET" }
+  );
+  const base = String(parent.path ?? "/root").replace(/\/+$/, "");
+  const folderPath = `${base}/${slugFolderName(name)}-${Date.now()
+    .toString(36)
+    .slice(-8)}`;
+  const depth = Number(parent.depth ?? 0) + 1;
+  const res = await backendJSON<{ folder_id?: string }>(`/user/folder`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      name,
+      path: folderPath,
+      depth,
+    }),
+  });
+  const id = String(res.folder_id ?? "");
+  return {
+    id,
+    name,
+    parentId: parentFolderId,
+    children: [],
+    type: "folder",
+    depth,
+    path: folderPath,
+  };
+}
+
+/** Delete folder and descendants (API) or mock tree. */
+export async function deleteFolderRemote(
+  userId: string,
+  folderId: string
+): Promise<void> {
+  if (getDataMode() === "mock") {
+    deleteFolder(folderId);
+    return;
+  }
+  if (folderId === "root") {
+    throw new Error("Cannot delete root folder");
+  }
+  await backendJSON(
+    `/user/${encodeURIComponent(userId)}/folder/${encodeURIComponent(folderId)}`,
+    { method: "DELETE" }
+  );
+}
+
+/** Mock-only: change folder parent in localStorage. */
+export function moveFolderMock(folderId: string, newParentId: string) {
+  const folders = JSON.parse(localStorage.getItem("folders") || "[]");
+  const updated = folders.map((f: { id: string; parentId?: string }) =>
+    f.id === folderId ? { ...f, parentId: newParentId } : f
+  );
+  localStorage.setItem("folders", JSON.stringify(updated));
+}
+
+export async function moveFolderRemote(
+  userId: string,
+  folderId: string,
+  newParentFolderId: string
+): Promise<void> {
+  if (getDataMode() === "mock") {
+    moveFolderMock(folderId, newParentFolderId);
+    return;
+  }
+  await backendJSON(
+    `/user/${encodeURIComponent(userId)}/folder/${encodeURIComponent(
+      folderId
+    )}/move`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ new_parent_folder_id: newParentFolderId }),
+    }
+  );
 }

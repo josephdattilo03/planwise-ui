@@ -1,15 +1,23 @@
 "use client";
 
-import React from "react";
-import { Card, CardContent, Chip, Typography, Box } from "@mui/material";
+import React, { useMemo } from "react";
+import { Card, CardContent, Typography, Box } from "@mui/material";
 import { Task } from "../../types/task";
 import TagChip from "../tags/TagChip";
+import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
+import { resolveTagsWithCatalog } from "../../services/tags/tagService";
 
 interface BoardCardProps {
   task: Task;
 }
 
 export const BoardCard = ({ task }: BoardCardProps) => {
+  const { tags: tagCatalog } = useBoardsTags();
+  const displayTags = useMemo(
+    () => resolveTagsWithCatalog(task.tags, tagCatalog),
+    [task.tags, tagCatalog]
+  );
+
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("en-US", {
       month: "short",
@@ -54,9 +62,9 @@ export const BoardCard = ({ task }: BoardCardProps) => {
           </p>
         </Box>
 
-        {task.tags.length > 0 && (
+        {displayTags.length > 0 && (
           <Box className="flex flex-wrap gap-1 mt-1">
-            {task.tags.map((tag) => (
+            {displayTags.map((tag) => (
               <TagChip key={tag.id} tag={tag} />
             ))}
           </Box>

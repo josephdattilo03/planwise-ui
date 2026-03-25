@@ -2,8 +2,33 @@ import { useState } from "react";
 import { Box, Card, CardContent, Typography, Button, TextField, Chip } from "@mui/material";
 import { useRouter, usePathname } from "next/navigation";
 
+import type { StickyNote } from "../../types/note";
+
+function noteSortTime(n: StickyNote): number {
+  if (n.updatedAt && !Number.isNaN(Date.parse(n.updatedAt))) {
+    return new Date(n.updatedAt).getTime();
+  }
+  if (n.timestamp) {
+    const t = Date.parse(n.timestamp);
+    if (!Number.isNaN(t)) return t;
+  }
+  return 0;
+}
+
+function displayDateLabel(n: StickyNote): string {
+  const iso = n.updatedAt || n.timestamp;
+  if (iso && !Number.isNaN(Date.parse(iso))) {
+    return new Date(iso).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+  return "RECENTLY";
+}
+
 interface NotesWidgetProps {
-  notes: any[];
+  notes: StickyNote[];
   onAddNote: (title: string, body: string) => void;
 }
 
@@ -13,19 +38,14 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteBody, setNewNoteBody] = useState("");
 
-  // Get recent notes (last 3 edited)
-  const recentNotes = notes
-    .sort((a, b) => {
-      const dateA = new Date(a.timestamp || 0).getTime();
-      const dateB = new Date(b.timestamp || 0).getTime();
-      return dateB - dateA;
-    })
+  const recentNotes = [...notes]
+    .sort((a, b) => noteSortTime(b) - noteSortTime(a))
     .slice(0, 3);
 
   const mainNote = recentNotes[0] || {
     title: "No notes yet",
     body: "Create your first note to get started!",
-    timestamp: new Date().toLocaleString()
+    timestamp: new Date().toLocaleString(),
   };
   const noteTags = recentNotes.slice(1);
 
@@ -62,11 +82,7 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
             mb: 1,
           }}
         >
-          LAST EDITED {mainNote.timestamp ? new Date(mainNote.timestamp).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-          }).toUpperCase() : 'RECENTLY'}
+          LAST EDITED {displayDateLabel(mainNote as StickyNote).toUpperCase()}
         </Typography>
 
         <Typography
@@ -85,14 +101,12 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
             lineHeight: 1.4,
           }}
         >
-          {mainNote.body ? mainNote.body.substring(0, 150) + (mainNote.body.length > 150 ? '...' : '') :
-            'Create your first note to get started with organizing your thoughts!'}
+          {mainNote.body
+            ? mainNote.body.substring(0, 150) + (mainNote.body.length > 150 ? "..." : "")
+            : "Create your first note to get started with organizing your thoughts!"}
         </Typography>
 
-        <Box
-          sx={{ mb: 1.5 }}
-          onClick={(e: React.MouseEvent) => e.stopPropagation()}
-        >
+        <Box sx={{ mb: 1.5 }} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           <TextField
             fullWidth
             placeholder="Quick note title..."
@@ -110,10 +124,41 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
                 backgroundColor: "var(--input-bg)",
                 color: "var(--input-text)",
                 "& fieldset": {
-                  borderColor: "var(--input-border)"
+                  borderColor: "var(--input-border)",
                 },
                 "&:hover fieldset": {
-                  borderColor: "var(--green-2)"
+                  borderColor: "var(--green-2)",
+                },
+                "&.Mui-focused fieldset": { borderColor: "var(--green-2)" },
+              },
+              "& .MuiInputBase-input": {
+                color: "var(--input-text)",
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            placeholder="Optional body..."
+            value={newNoteBody}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              e.stopPropagation();
+              setNewNoteBody(e.target.value);
+            }}
+            variant="outlined"
+            size="small"
+            multiline
+            minRows={2}
+            sx={{
+              mb: 0.5,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "var(--radius-md)",
+                backgroundColor: "var(--input-bg)",
+                color: "var(--input-text)",
+                "& fieldset": {
+                  borderColor: "var(--input-border)",
+                },
+                "&:hover fieldset": {
+                  borderColor: "var(--green-2)",
                 },
                 "&.Mui-focused fieldset": { borderColor: "var(--green-2)" },
               },
@@ -141,8 +186,8 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
               "&:hover": { backgroundColor: "#1b5e20" },
               "&:disabled": {
                 backgroundColor: "rgba(0,0,0,0.12)",
-                color: "rgba(0,0,0,0.26)"
-              }
+                color: "rgba(0,0,0,0.26)",
+              },
             }}
           >
             + Create Note
@@ -150,31 +195,35 @@ export default function NotesWidget({ notes, onAddNote }: NotesWidgetProps) {
         </Box>
 
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {noteTags.length > 0 ? noteTags.map((note) => (
-            <Chip
-              key={note.id || note.title}
-              label={note.title}
-              size="small"
-              sx={{
-                backgroundColor: "var(--menu-bg)",
-                color: "var(--foreground)",
-                borderRadius: "var(--radius-lg)",
-                border: "1px solid var(--card-border)",
-                fontSize: 11,
-                fontWeight: 500,
-                py: 0.5,
-              }}
-            />
-          )) : (
+          {noteTags.length > 0 ? (
+            noteTags.map((note) => (
+              <Chip
+                key={note.id || note.title}
+                label={note.title}
+                size="small"
+                sx={{
+                  backgroundColor: "var(--menu-bg)",
+                  color: "var(--foreground)",
+                  borderRadius: "var(--radius-lg)",
+                  border: "1px solid var(--card-border)",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  py: 0.5,
+                }}
+              />
+            ))
+          ) : (
             <Typography
               variant="caption"
               sx={{
                 color: "var(--dark-green-2)",
                 fontStyle: "italic",
-                fontSize: 11
+                fontSize: 11,
               }}
             >
-              {recentNotes.length <= 1 ? 'Create more notes to see them here' : 'No additional recent notes'}
+              {recentNotes.length <= 1
+                ? "Create more notes to see them here"
+                : "No additional recent notes"}
             </Typography>
           )}
         </Box>

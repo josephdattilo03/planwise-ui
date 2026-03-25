@@ -1,35 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-  Card,
-  CardContent,
-  Paper,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Chip
-} from "@mui/material";
-import {
-  Apps as AppsIcon,
-  Google as GoogleIcon,
-  Task as TaskIcon,
-  Event as EventIcon
-} from "@mui/icons-material";
+import { Box, Button } from "@mui/material";
+import { Google as GoogleIcon } from "@mui/icons-material";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { signOut, useSession, signIn } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { fetchTasks, createTask } from "../services/tasks/taskService";
 import { fetchEvents } from "../services/events/eventService";
+import { fetchNotes, createNote } from "../services/notes/noteService";
+import { getDataMode } from "../services/dataMode";
+import type { StickyNote } from "../types/note";
 import { Task } from "../types/task";
 import { Event } from "../types/event";
-import { Board } from "../types/board";
-import { Tag } from "../types/tag";
 import { useBoardsTags } from "../providers/boardsTags/BoardsTagsContext";
 
 import {
@@ -48,7 +30,6 @@ export default function Home() {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
 
   const { data: session, status } = useSession();
-  const router = useRouter();
   const userId = session?.user?.email ?? undefined;
 
   const userName = session?.user?.name
@@ -57,11 +38,8 @@ export default function Home() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [notes, setNotes] = useState<any[]>([]);
+  const [notes, setNotes] = useState<StickyNote[]>([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [newTaskName, setNewTaskName] = useState("");
-  const [selectedBoardId, setSelectedBoardId] = useState<string>("");
-  const [selectedPriority, setSelectedPriority] = useState<number>(1);
 
   /** Load tasks, events, and notes once boards/tags are ready (from preload) */
   useEffect(() => {
@@ -70,18 +48,15 @@ export default function Home() {
     async function loadData() {
       try {
         setDashboardLoading(true);
-        const [tasksData, eventsData] = await Promise.all([
+        const [tasksData, eventsData, notesData] = await Promise.all([
           fetchTasks(userId, boards, tags),
           fetchEvents(boards, userId),
+          fetchNotes(userId),
         ]);
         if (!cancelled) {
           setTasks(tasksData);
           setEvents(eventsData);
-          if (boards.length > 0 && !selectedBoardId) {
-            setSelectedBoardId(boards[0].id);
-          }
-          const savedNotes = localStorage.getItem("notes");
-          if (savedNotes) setNotes(JSON.parse(savedNotes));
+          setNotes(notesData.active);
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -93,94 +68,71 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [status, boardsTagsLoading, boards, tags, userId, selectedBoardId]);
+  }, [status, boardsTagsLoading, boards, tags, userId]);
 
   const loading = boardsTagsLoading || dashboardLoading;
 
-  // Get recent tasks (next 5 upcoming tasks)
-  const recentTasks = tasks
-    .filter(task => {
-      const dueDate = task.dueDate instanceof Date ? task.dueDate : new Date(task.dueDate);
-      return dueDate >= new Date();
-    })
-    .sort((a, b) => {
-      const dateA = a.dueDate instanceof Date ? a.dueDate : new Date(a.dueDate);
-      const dateB = b.dueDate instanceof Date ? b.dueDate : new Date(b.dueDate);
-      return dateA.getTime() - dateB.getTime();
-    })
-    .slice(0, 5);
-
-  // Get recent notes (last 3 edited)
-  const recentNotes = notes
-    .sort((a, b) => {
-      const dateA = new Date(a.timestamp || 0).getTime();
-      const dateB = new Date(b.timestamp || 0).getTime();
-      return dateB - dateA;
-    })
-    .slice(0, 3);
-
-  const mainNote = recentNotes[0] || {
-    title: "No notes yet",
-    body: "Create your first note to get started!",
-    timestamp: new Date().toLocaleString()
-  };
-  const noteTags = recentNotes.slice(1);
-
-  const handleAddTask = async () => {
-    if (!newTaskName.trim()) return;
+  const handleAddTask = async (taskName: string, boardId: string, priority: number) => {
+    if (!taskName.trim() || !userId) return;
+    const selectedBoard = boards.find((b) => b.id === boardId) || boards.find((b) => !b.id.startsWith("gcal:"));
+    if (!selectedBoard) return;
 
     try {
-      const selectedBoard = boards.find(board => board.id === selectedBoardId) || boards[0];
       await createTask(
         {
-        name: newTaskName.trim(),
-        board: selectedBoard,
-        dueDate: new Date(Date.now() + 86400000),
-        priorityLevel: selectedPriority,
-      },
+          name: taskName.trim(),
+          board: selectedBoard,
+          dueDate: new Date(Date.now() + 86400000),
+          priorityLevel: priority,
+          description: "",
+          progress: "to-do",
+          tags: [],
+        },
         userId
       );
 
-      // Refresh tasks list (boards/tags from preload)
       const refreshedTasks = await fetchTasks(userId, boards, tags);
       setTasks(refreshedTasks);
-      setNewTaskName("");
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error("Error creating task:", error);
     }
   };
 
-  const handleAddNote = (title: string, body: string) => {
+  const handleAddNote = async (title: string, body: string) => {
     if (!title.trim()) return;
 
-    const NOTE_COLORS = ['bg-pink', 'bg-blue', 'bg-cream', 'bg-lilac'];
+    const NOTE_COLORS = ["bg-pink", "bg-blue", "bg-cream", "bg-lilac"];
 
-    const newNote = {
+    const newNote: StickyNote = {
       id: crypto.randomUUID(),
-      x: 100 + Math.random() * 200, // Random position like NoteBoard
+      x: 100 + Math.random() * 200,
       y: 120 + Math.random() * 100,
       width: 380,
       height: 300,
       title: title.trim(),
       body: body.trim() || "Start writing your note here...",
       color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toLocaleString(),
       links: [],
     };
 
-    // Get existing notes and add new one
-    const savedNotes = localStorage.getItem('notes');
-    const existingNotes = savedNotes ? JSON.parse(savedNotes) : [];
-    const updatedNotes = [newNote, ...existingNotes];
+    if (getDataMode() === "mock") {
+      const existing = JSON.parse(localStorage.getItem("notes") || "[]");
+      localStorage.setItem("notes", JSON.stringify([newNote, ...existing]));
+      setNotes([newNote, ...notes]);
+      return;
+    }
 
-    // Save to localStorage
-    localStorage.setItem('notes', JSON.stringify(updatedNotes));
+    if (!userId) return;
 
-    // Update state
-    setNotes(updatedNotes);
-
+    try {
+      await createNote(userId, newNote);
+      const { active } = await fetchNotes(userId);
+      setNotes(active);
+    } catch (e) {
+      console.error("Error creating note:", e);
+    }
   };
-
 
   if (status === "loading") {
     return (
@@ -233,7 +185,6 @@ export default function Home() {
         backgroundColor: "var(--background)",
         display: "flex",
         flexDirection: "column",
-        // Slightly tighten vertical padding on shorter laptop heights
         "@media (max-height: 900px)": {
           p: { xs: 1.5, sm: 2, md: 3 },
         },
@@ -242,18 +193,16 @@ export default function Home() {
         },
       }}
     >
-      {/* Single row layout with 3 columns */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: {
-            xs: "1fr", // Single column on mobile
-            sm: "1fr", // Single column on small tablets
-            md: "1fr 2fr 1fr", // Left: 1 part, Middle: 2 parts, Right: 1 part on medium+
+            xs: "1fr",
+            sm: "1fr",
+            md: "1fr 2fr 1fr",
           },
           gap: { xs: 2, sm: 3, md: 3 },
           alignItems: "start",
-          // Reduce gaps vertically on short viewports so more fits without scroll
           "@media (max-height: 900px)": {
             rowGap: 2,
             columnGap: 2.5,
@@ -264,13 +213,12 @@ export default function Home() {
           },
         }}
       >
-        {/* Left column - Greeting and Quick Access */}
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             gap: 3,
-            order: { xs: 1, md: "unset" }, // Reorder on mobile if needed
+            order: { xs: 1, md: "unset" },
             "@media (max-height: 900px)": {
               gap: 2.5,
             },
@@ -281,16 +229,15 @@ export default function Home() {
         >
           <GreetingWidget userName={userName} />
           <ScheduleAlertWidget />
-          <QuickAccessWidget />
+          <QuickAccessWidget boards={boards} />
         </Box>
 
-        {/* Middle column - Tasks Widget and Schedule Alert */}
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             gap: 3,
-            order: { xs: 2, md: "unset" }, // Reorder on mobile
+            order: { xs: 2, md: "unset" },
             "@media (max-height: 900px)": {
               gap: 2.5,
             },
@@ -299,20 +246,15 @@ export default function Home() {
             },
           }}
         >
-          <TasksWidget
-            tasks={tasks}
-            boards={boards}
-            onAddTask={handleAddTask}
-          />
+          <TasksWidget tasks={tasks} boards={boards} onAddTask={handleAddTask} />
         </Box>
 
-        {/* Right column - Calendar and Notes */}
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             gap: 3,
-            order: { xs: 3, md: "unset" }, // Reorder on mobile
+            order: { xs: 3, md: "unset" },
             "@media (max-height: 900px)": {
               gap: 2.5,
             },

@@ -38,6 +38,7 @@ import { getDataMode } from "../../services/dataMode";
 import { Event as AppEvent } from "../../types/event";
 import { Task } from "../../types/task";
 import { useSession } from "next-auth/react";
+import { googleCalendarBoardIdForUser } from "../../services/googleCalendarService";
 
 type MockStoredEvent = {
   title?: string;
@@ -124,9 +125,10 @@ export default function PlanwiseCalendar({
   const [selectedGoogleCalendarId, setSelectedGoogleCalendarId] =
     useState("primary");
 
-  const { boards, selectedBoardIds } = useFilters();
+  const { boards, selectedBoardIds, selectedTagIds } = useFilters();
   const { data: session } = useSession();
   const userId = session?.user?.email ?? undefined;
+  const googleBoardId = userId ? googleCalendarBoardIdForUser(userId) : undefined;
   const isMock = getDataMode() === "mock";
   // Add-event form state
 
@@ -304,17 +306,51 @@ export default function PlanwiseCalendar({
     ...(isMock ? mockGoogleEvents : []),
   ];
 
-  const filteredEvents =
-    selectedBoardIds.size === 0
-      ? allEvents
-      : allEvents.filter((event) => {
-          if (event.resource?.type === "google") return true;
-          if (!event.resource?.board) return false;
+  const filteredEvents = useMemo(() => {
+    const noBoardFilter = selectedBoardIds.size === 0;
+    const noTagFilter = selectedTagIds.size === 0;
+    if (noBoardFilter && noTagFilter) {
+      return allEvents;
+    }
+
+    return allEvents.filter((ev) => {
+      if (!noBoardFilter) {
+        if (ev.resource?.type === "google") {
+          if (!googleBoardId || !selectedBoardIds.has(googleBoardId)) {
+            return false;
+          }
+        } else if (ev.resource?.type === "event" && ev.resource.event?.board?.id) {
+          if (!selectedBoardIds.has(ev.resource.event.board.id)) return false;
+        } else if (ev.resource?.type === "task" && ev.resource.task?.board?.id) {
+          if (!selectedBoardIds.has(ev.resource.task.board.id)) return false;
+        } else if (ev.resource?.board) {
           const matchedBoard = boards.find(
-            (b) => b.name.toLowerCase() === event.resource!.board,
+            (b) => b.name.toLowerCase() === ev.resource!.board,
           );
-          return matchedBoard ? selectedBoardIds.has(matchedBoard.id) : false;
-        });
+          if (!matchedBoard || !selectedBoardIds.has(matchedBoard.id)) return false;
+        } else {
+          return false;
+        }
+      }
+
+      if (!noTagFilter) {
+        if (ev.resource?.type === "task" && ev.resource.task) {
+          const hasSelectedTag = ev.resource.task.tags.some((tag) =>
+            selectedTagIds.has(tag.id),
+          );
+          if (!hasSelectedTag) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    allEvents,
+    boards,
+    googleBoardId,
+    selectedBoardIds,
+    selectedTagIds,
+  ]);
   // Navigation label
 
   const getCurrentLabel = () => {

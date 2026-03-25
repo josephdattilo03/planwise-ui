@@ -1,11 +1,6 @@
 import { Tag } from "../../types";
+import { backendJSON } from "../backendJson";
 import { getDataMode } from "../dataMode";
-
-const BACKEND_PROXY_PREFIX = "/api/backend";
-
-function backendUrl(path: string) {
-  return `${BACKEND_PROXY_PREFIX}${path.startsWith("/") ? "" : "/"}${path}`;
-}
 
 function backendTagToUI(raw: any): Tag {
   return {
@@ -28,18 +23,9 @@ export function toTag(raw: any): Tag {
   };
 }
 
-async function backendJSON<T>(path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(backendUrl(path), init);
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(text || `Backend request failed (${res.status})`);
-  }
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return text as any as T;
-  }
+/** Merge tag ids on a task with the global tag catalog so labels stay correct if tasks were mapped before tags loaded. */
+export function resolveTagsWithCatalog(tagRefs: Tag[], catalog: Tag[]): Tag[] {
+  return tagRefs.map((ref) => catalog.find((t) => t.id === ref.id) ?? ref);
 }
 
 const TAGS_KEY = "tags";

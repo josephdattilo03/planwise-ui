@@ -35,3 +35,19 @@ export function collectFolderSubtreeIds(
   walk(node);
   return ids;
 }
+
+export function findBoardNameInTree(
+  root: FolderNode,
+  boardId: string
+): string | null {
+  for (const child of root.children) {
+    if (child.type === "board" && child.board.id === boardId) {
+      return child.board.name;
+    }
+    if (child.type === "folder") {
+      const found = findBoardNameInTree(child as FolderNode, boardId);
+      if (found) return found;
+    }
+  }
+  return null;
+}

@@ -69,7 +69,7 @@ const convertTasksToEvents = (tasks: Task[], boards: Board[]): CalendarEvent[] =
 
 export default function CalendarPage() {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userId = session?.user?.email ?? undefined;
   const [events, setEvents] = useState<Event[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -77,10 +77,10 @@ export default function CalendarPage() {
 
   /** Re-fetch the full events list (used after create / delete) */
   const refreshEvents = useCallback(async () => {
-    if (boardsTagsLoading) return;
+    if (boardsTagsLoading || sessionStatus === "loading") return;
     const eventData = await fetchEvents(boards, userId);
     setEvents(eventData);
-  }, [boards, boardsTagsLoading, userId]);
+  }, [boards, boardsTagsLoading, userId, sessionStatus]);
 
   /**
    * In-place update after a drag/resize — replaces the single changed event in
@@ -95,9 +95,12 @@ export default function CalendarPage() {
     setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
   }, []);
 
-  /** Initial load: fetch events and tasks together once boards/tags are ready */
+  /** Initial load: fetch events and tasks together once boards/tags and session are ready */
   useEffect(() => {
     if (boardsTagsLoading) return;
+    // NextAuth resolves after first paint; without this, userId is undefined and backend task fetch misbehaved.
+    if (sessionStatus === "loading") return;
+
     let cancelled = false;
     async function loadData() {
       try {
@@ -120,7 +123,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [boardsTagsLoading, boards, tags, userId]);
+  }, [boardsTagsLoading, boards, tags, userId, sessionStatus]);
 
   /** After server-side Google Calendar sync (login), refresh events from API */
   useEffect(() => {

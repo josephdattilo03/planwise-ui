@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Box,
   Card,
@@ -11,6 +11,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  type SelectChangeEvent,
 } from "@mui/material";
 import TaskIcon from "@mui/icons-material/Task";
 import { useRouter } from "next/navigation";
@@ -20,14 +21,27 @@ import { Board } from "../../types/board";
 interface TasksWidgetProps {
   tasks: Task[];
   boards: Board[];
-  onAddTask: (taskName: string, boardId: string, priority: number) => void;
+  onAddTask: (taskName: string, boardId: string, priority: number) => void | Promise<void>;
+}
+
+function taskBoardsOnly(boards: Board[]): Board[] {
+  return boards.filter((b) => !b.id.startsWith("gcal:"));
 }
 
 export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetProps) {
   const router = useRouter();
   const [newTaskName, setNewTaskName] = useState("");
-  const [selectedBoardId, setSelectedBoardId] = useState(boards[0]?.id || "");
+  const selectableBoards = taskBoardsOnly(boards);
+  const [selectedBoardId, setSelectedBoardId] = useState("");
   const [selectedPriority, setSelectedPriority] = useState(1);
+
+  const boardSelectValue = useMemo(() => {
+    if (selectableBoards.length === 0) return "";
+    if (selectedBoardId && selectableBoards.some((b) => b.id === selectedBoardId)) {
+      return selectedBoardId;
+    }
+    return selectableBoards[0].id;
+  }, [selectableBoards, selectedBoardId]);
 
   // Get recent tasks (next 5 upcoming tasks)
   const recentTasks = tasks
@@ -36,8 +50,8 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
     .slice(0, 5);
 
   const handleAddTask = () => {
-    if (!newTaskName.trim()) return;
-    onAddTask(newTaskName.trim(), selectedBoardId, selectedPriority);
+    if (!newTaskName.trim() || !boardSelectValue) return;
+    void onAddTask(newTaskName.trim(), boardSelectValue, selectedPriority);
     setNewTaskName("");
   };
 
@@ -151,7 +165,15 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
             {recentTasks.length > 0 ? recentTasks.map((task) => {
               // Convert priority number to string
               const priorityLabels = { 0: "Low", 1: "Medium", 2: "High", 3: "Now" };
-              const priorityString = priorityLabels[task.priorityLevel as keyof typeof priorityLabels] || "Low";
+              const priorityString =
+                priorityLabels[task.priorityLevel as keyof typeof priorityLabels] || "Low";
+
+              const priorityStyle =
+                priorityString === "Now" || priorityString === "High"
+                  ? { color: "#d32f2f", bg: "rgba(211, 47, 47, 0.1)" }
+                  : priorityString === "Medium"
+                    ? { color: "#f57c00", bg: "rgba(245, 124, 0, 0.1)" }
+                    : { color: "#2e7d32", bg: "rgba(46, 125, 50, 0.1)" };
 
               return (
                 <Paper
@@ -233,21 +255,11 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                         variant="caption"
                         sx={{
                           fontWeight: 700,
-                          color:
-                            priorityString === "High"
-                              ? "#d32f2f"
-                              : priorityString === "Medium"
-                                ? "#f57c00"
-                                : "#2e7d32",
+                          color: priorityStyle.color,
                           px: 2,
                           py: 0.5,
                           borderRadius: "var(--radius-md)",
-                          backgroundColor:
-                            priorityString === "High"
-                              ? "rgba(211, 47, 47, 0.1)"
-                              : priorityString === "Medium"
-                                ? "rgba(245, 124, 0, 0.1)"
-                                : "rgba(46, 125, 50, 0.1)",
+                          backgroundColor: priorityStyle.bg,
                           fontSize: 11,
                         }}
                       >
@@ -290,9 +302,9 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
             <FormControl size="small" sx={{ minWidth: 100, flex: 1 }}>
               <InputLabel sx={{ fontSize: "12px" }}>Board</InputLabel>
               <Select
-                value={selectedBoardId}
+                value={boardSelectValue}
                 label="Board"
-                onChange={(e: any) => setSelectedBoardId(e.target.value)}
+                onChange={(e: SelectChangeEvent<string>) => setSelectedBoardId(e.target.value)}
                 sx={{
                   borderRadius: "var(--radius-md)",
                   fontSize: "12px",
@@ -312,7 +324,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                   },
                 }}
               >
-                {boards.map((board) => (
+                {selectableBoards.map((board) => (
                   <MenuItem key={board.id} value={board.id} sx={{ fontSize: "12px" }}>
                     {board.name}
                   </MenuItem>
@@ -325,7 +337,9 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
               <Select
                 value={selectedPriority}
                 label="Priority"
-                onChange={(e: any) => setSelectedPriority(Number(e.target.value))}
+                onChange={(e: SelectChangeEvent<number>) =>
+                  setSelectedPriority(Number(e.target.value))
+                }
                 sx={{
                   borderRadius: "var(--radius-md)",
                   fontSize: "12px",
@@ -403,7 +417,7 @@ export default function TasksWidget({ tasks, boards, onAddTask }: TasksWidgetPro
                 e.stopPropagation();
                 handleAddTask();
               }}
-              disabled={!newTaskName.trim()}
+              disabled={!newTaskName.trim() || !boardSelectValue}
               sx={{
                 textTransform: "none",
                 borderRadius: 999,
