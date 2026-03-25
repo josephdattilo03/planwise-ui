@@ -5,6 +5,8 @@ import {
   Box,
   Divider,
   FormControl,
+  createFilterOptions,
+  IconButton,
   MenuItem,
   Select,
   TextField,
@@ -13,12 +15,15 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useSession } from "next-auth/react";
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 
-import type { Board, Tag, Task } from "../../types";
+import type { Board, Tag, TagOption, Task } from "../../types";
 import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
 import { createTask, updateTask } from "../../services/tasks/taskService";
 import { fetchProgress } from "../../services/dataService";
+import { createTag, updateTag as updateTagService } from "../../services/tags/tagService";
 import TagChip from "../tags/TagChip";
+import TagEditDialog from "../tags/TagEditDialog";
 import BoardChip from "../boards/BoardChip";
 import FormButton from "@/src/common/button/FormButton";
 
@@ -39,6 +44,7 @@ type Field =
   | null;
 
 const progressOptions = fetchProgress();
+const filter = createFilterOptions<TagOption>();
 
 export default function TaskDetailPanel({
   task,
@@ -47,13 +53,14 @@ export default function TaskDetailPanel({
 }: Props) {
   const { data: session } = useSession();
   const userId = session?.user?.email ?? undefined;
-  const { boards, tags } = useBoardsTags();
+  const { boards, tags, setTags } = useBoardsTags();
 
   const [activeField, setActiveField] = useState<Field>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [boardOpen, setBoardOpen] = useState(false);
+  const [isEditTag, setIsEditTag] = useState<Tag | null>(null);
   const [autosaveState, setAutosaveState] = useState<
     "idle" | "dirty" | "saving" | "saved" | "error"
   >("idle");
@@ -646,71 +653,179 @@ export default function TaskDetailPanel({
 
         <Row label="Tags" field="tags">
           {activeField === "tags" ? (
-            <Autocomplete<Tag, true, false, false>
-              multiple
-              options={tags}
-              value={selectedTags}
-              open={tagsOpen}
-              onOpen={() => setTagsOpen(true)}
-              onClose={(_, reason) => {
-                // Keep it open after selecting; close only on explicit dismiss.
-                if (reason === "escape" || reason === "blur") {
-                  setTagsOpen(false);
-                  setActiveField(null);
-                }
-              }}
-              // onBlur={() => {
-              //   setTagsOpen(false);
-              //   setActiveField(null);
-              // }}
-              onChange={(_, value) => {
-                setDraft((d) => ({
-                  ...d,
-                  tagIds: new Set(value.map((t) => t.id)),
-                }));
-              }}
-              getOptionLabel={(o) => o.name}
-              isOptionEqualToValue={(a, b) => a.id === b.id}
-              disableCloseOnSelect
-              fullWidth
-              sx={{ width: "100%" }}
-              renderOption={(props, option) => {
-                const { key, ...optionProps } = props;
-                return (
-                  <li key={key} {...optionProps}>
-                    <TagChip tag={option} />
-                  </li>
-                );
-              }}
-              renderValue={(value, getTagProps) =>
-                value.map((option, index) => {
-                  const { key, ...tagProps } = getTagProps({ index });
+            <>
+              <Autocomplete<TagOption, true, false, true>
+                multiple
+                freeSolo
+                selectOnFocus
+                clearOnBlur
+                handleHomeEndKeys
+                forcePopupIcon
+                value={selectedTags as TagOption[]}
+                options={tags as TagOption[]}
+                open={tagsOpen}
+                onOpen={() => setTagsOpen(true)}
+                onClose={(_, reason) => {
+                  // Keep it open after selecting; close only on explicit dismiss.
+                  if (reason === "escape" || reason === "blur") {
+                    setTagsOpen(false);
+                    setActiveField(null);
+                  }
+                }}
+                filterOptions={(options, params) => {
+                  const filtered = filter(options, params);
+
+                  if (params.inputValue !== "") {
+                    filtered.push({
+                      // Synthetic option for: `Add "<input>"`
+                      id: "__synthetic__",
+                      name: params.inputValue,
+                      backgroundColor: "#E0E0E0",
+                      textColor: "#333333",
+                      borderColor: "#999999",
+                      inputValue: params.inputValue,
+                    });
+                  }
+
+                  return filtered;
+                }}
+                getOptionLabel={(option) => {
+                  // typed in directly as string
+                  if (typeof option === "string") return option;
+                  // synthetic option for "Add ... "
+                  if (option.inputValue) return option.inputValue;
+                  // regular tag
+                  return option.name;
+                }}
+                renderOption={(props, option) => {
+                  const { key, ...optionProps } = props;
                   return (
-                    <Box key={key} component="span" {...tagProps} sx={{ mr: 0.5 }}>
-                      <TagChip tag={option} />
-                    </Box>
+                    <li key={key} {...optionProps}>
+                      <div className="group flex w-full items-center justify-between gap-2 font-sans">
+                        <TagChip tag={option} />
+                        {!option.inputValue && (
+                          <IconButton
+                            size="small"
+                            sx={{ "& .MuiSvgIcon-root": { fontSize: 16 } }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsEditTag(option);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <MoreHorizRoundedIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </div>
+                    </li>
                   );
-                })
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  size="small"
-                  placeholder="Select tags"
-                  sx={{
-                    "& .MuiInputBase-root": { minHeight: 40, py: 0.25 },
-                    "& .MuiInputBase-input": {
-                      fontSize: "var(--text-chip-info-font-size)",
-                      fontWeight: "var(--text-chip-info-font-weight)",
-                    },
-                    "& .MuiInputBase-input::placeholder": {
-                      fontSize: "var(--text-chip-info-font-size)",
-                      fontWeight: "var(--text-chip-info-font-weight)",
-                    },
-                  }}
-                />
-              )}
-            />
+                }}
+                onChange={async (_, newValue) => {
+                  if (!userId) return;
+
+                  // Handle creating a new tag (string or synthetic option).
+                  let createdTagId: string | null = null;
+                  let createdTag: Tag | null = null;
+                  for (const option of newValue) {
+                    if (typeof option === "string") {
+                      const name = option.trim();
+                      if (!name) continue;
+                      const created = await createTag({ name }, userId);
+                      createdTagId = created.id;
+                      createdTag = created;
+                      break;
+                    }
+
+                    if (option.inputValue) {
+                      const name = option.inputValue.trim();
+                      if (!name) continue;
+                      const created = await createTag({ name }, userId);
+                      createdTagId = created.id;
+                      createdTag = created;
+                      break;
+                    }
+                  }
+
+                  if (createdTagId !== null) {
+                    setDraft((d) => {
+                      const next = new Set(d.tagIds);
+                      next.add(createdTagId!);
+                      return { ...d, tagIds: next };
+                    });
+                    // Update the global tag catalog so selection chips can render immediately.
+                    setTags((prev) => {
+                      if (!createdTag) return prev;
+                      if (prev.some((t) => t.id === createdTag.id)) return prev;
+                      return [...prev, createdTag];
+                    });
+                    return;
+                  }
+
+                  const newIdSet = new Set(
+                    newValue
+                      .filter(
+                        (opt): opt is TagOption =>
+                          typeof opt !== "string" && !opt.inputValue
+                      )
+                      .map((t) => t.id)
+                  );
+
+                  setDraft((d) => ({
+                    ...d,
+                    tagIds: newIdSet,
+                  }));
+                }}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                disableCloseOnSelect
+                fullWidth
+                sx={{ width: "100%" }}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => {
+                    const tagProps = getTagProps({ index });
+                    return (
+                      <Box
+                        component="span"
+                        {...tagProps}
+                        sx={{ mr: 0.5 }}
+                      >
+                        <TagChip tag={option} />
+                      </Box>
+                    );
+                  })
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    size="small"
+                    placeholder="Select tags"
+                    sx={{
+                      "& .MuiInputBase-root": { minHeight: 40, py: 0.25 },
+                      "& .MuiInputBase-input": {
+                        fontSize: "var(--text-chip-info-font-size)",
+                        fontWeight: "var(--text-chip-info-font-weight)",
+                      },
+                      "& .MuiInputBase-input::placeholder": {
+                        fontSize: "var(--text-chip-info-font-size)",
+                        fontWeight: "var(--text-chip-info-font-weight)",
+                      },
+                    }}
+                  />
+                )}
+              />
+
+              <TagEditDialog
+                open={!!isEditTag}
+                tag={isEditTag}
+                onClose={() => setIsEditTag(null)}
+                onSave={async (updated) => {
+                  await updateTagService(updated, userId);
+                  setTags((prev) =>
+                    prev.map((t) => (t.id === updated.id ? updated : t))
+                  );
+                  setIsEditTag(null);
+                }}
+              />
+            </>
           ) : selectedTags.length > 0 ? (
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
               {selectedTags.map((tag) => (

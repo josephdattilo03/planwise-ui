@@ -75,23 +75,23 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
 
   const handleAddTask =
     (progress: Task["progress"]) =>
-    async (title: string) => {
-      const currentBoard = boards.find((b) => b.id === boardId);
-      if (!currentBoard) return;
+      async (title: string) => {
+        const currentBoard = boards.find((b) => b.id === boardId);
+        if (!currentBoard) return;
 
-      const newTask = await createTask(
-        {
-          name: title,
-          progress,
-          board: currentBoard,
-          dueDate: new Date(),
-          tags: [],
-        },
-        userId
-      );
+        const newTask = await createTask(
+          {
+            name: title,
+            progress,
+            board: currentBoard,
+            dueDate: new Date(),
+            tags: [],
+          },
+          userId
+        );
 
-      setTasks((prev) => [...prev, newTask]);
-    };
+        setTasks((prev) => [...prev, newTask]);
+      };
 
   const handleMoveTask = async (taskId: string, toProgress: Task["progress"]) => {
     const movingTask = tasks.find((t) => t.id === taskId);

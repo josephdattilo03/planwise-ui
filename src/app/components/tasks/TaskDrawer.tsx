@@ -14,15 +14,41 @@ export default function TaskDrawer() {
     useTaskDrawer();
   const pathname = usePathname();
 
-  // Close when leaving the tasks page (Notion-style "panel belongs to page").
+  const [originPage, setOriginPage] = React.useState<
+    "tasks" | "folders" | null
+  >(null);
+
+  // Keep open only while the user stays on the same page type it was opened from.
+  // (So it closes when switching tasks <-> board, but still stays open on query changes within that page.)
   React.useEffect(() => {
     if (!isOpen) return;
     if (!pathname) return;
-    const canStayOpen = pathname.endsWith("/tasks") || pathname.endsWith("/folders");
-    if (!canStayOpen) {
+    const currentPage =
+      pathname.endsWith("/tasks") ? "tasks" : pathname.endsWith("/folders") ? "folders" : null;
+
+    if (!currentPage) {
       close();
+      return;
     }
-  }, [isOpen, pathname, close]);
+
+    // Capture where the panel was opened from.
+    if (!originPage) {
+      setOriginPage(currentPage);
+      return;
+    }
+
+    // If user navigates to a different page type, close.
+    if (originPage !== currentPage) {
+      close();
+      return;
+    }
+  }, [isOpen, pathname, close, originPage]);
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      setOriginPage(null);
+    }
+  }, [isOpen]);
 
   return (
     <Drawer

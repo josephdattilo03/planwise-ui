@@ -12,6 +12,10 @@ import ChatBot from 'react-chatbotify';
 import { dispatchScheduleAgentMutated } from '@/src/app/services/scheduleAgentRefresh';
 import { useCanvasBriefing } from '@/src/app/providers/CanvasBriefingProvider';
 import type { Flow, Params as ChatParams } from 'react-chatbotify';
+import { useTaskDrawer } from '@/src/app/providers/tasks/TaskDrawerContext';
+import MarkdownRenderer, { MarkdownRendererBlock } from "@rcb-plugins/markdown-renderer";
+import ReactMarkdown from 'react-markdown';
+
 
 const APPLY_LABEL = 'Yes, apply';
 const CANCEL_LABEL = 'No, cancel';
@@ -177,7 +181,7 @@ function proposalBubble(
       }}
     >
       {botBubbleShell(
-        <div style={{ whiteSpace: 'pre-wrap' }}>{text}</div>,
+        <ReactMarkdown>{text}</ReactMarkdown>,
       )}
       {hasActions ? (
         <div
@@ -219,8 +223,12 @@ function proposalBubble(
 
 export default function AIChatBot() {
   const { briefing: canvasBriefing, briefingNonce } = useCanvasBriefing();
+  const { isOpen: isTaskDrawerOpen } = useTaskDrawer();
   /** Latest proposed_actions for execute_plan; set in the same async step as the bubble UI. */
   const pendingActionsRef = useRef<unknown[]>([]);
+
+  const plugins = [MarkdownRenderer()];
+
 
   const flow: Flow = useMemo(() => {
     const optionStyle: CSSProperties = {
@@ -282,7 +290,9 @@ export default function AIChatBot() {
           if (!res.ok) {
             pendingActionsRef.current = [];
             return botBubbleShell(
-              <>{data.error ?? 'Sorry—something went wrong.'}</>,
+              <ReactMarkdown>
+                {data.error ?? 'Sorry—something went wrong.'}
+              </ReactMarkdown>,
             );
           }
           const text = data.text ?? 'Sorry—something went wrong.';
@@ -320,7 +330,7 @@ export default function AIChatBot() {
           return data.text ?? 'Changes applied.';
         },
         path: 'gemini',
-      },
+      } as MarkdownRendererBlock,
       cancelled: {
         message: async () => {
           pendingActionsRef.current = [];
@@ -338,6 +348,7 @@ export default function AIChatBot() {
       borderRadius: 'var(--radius-md)',
       padding: '8px 10px',
       fontSize: '12px',
+      boxShadow: '0 6px 18px color-mix(in srgb, #000 12%, transparent)',
     },
     notificationBadgeStyle: {
       backgroundColor: 'var(--red)',
@@ -420,6 +431,20 @@ export default function AIChatBot() {
     sendButtonStyle: {
       borderRadius: 'var(--radius-md)',
     },
+    // chatButtonStyle: {
+    //   display: isTaskDrawerOpen ? 'none' : 'flex',
+    //   width: '56px',
+    //   height: '56px',
+    //   right: '18px',
+    //   bottom: '18px',
+    //   opacity: 0.86,
+    //   boxShadow: '0 6px 18px color-mix(in srgb, #000 18%, transparent)',
+    //   transition: 'transform 0.2s ease, opacity 0.2s ease',
+    // },
+    // chatButtonHoveredStyle: {
+    //   opacity: 1,
+    //   transform: 'scale(1.03)',
+    // },
   };
 
   const settings = {
@@ -454,9 +479,10 @@ export default function AIChatBot() {
       showCharacterCount: true,
       botDelay: 0,
     },
+    // Keep launcher subtle by default (tooltip was too visually loud).
     tooltip: {
       mode: 'CLOSE',
-      text: 'Ask me for help with your schedule!',
+      text: '',
     },
     chatButton: {
       icon: '/owl.svg',
@@ -470,6 +496,7 @@ export default function AIChatBot() {
   return (
     <ChatBot
       key={chatKey}
+      plugins={plugins}
       settings={settings}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- library Styles type is narrower than CSS variables
       styles={styles as any}
