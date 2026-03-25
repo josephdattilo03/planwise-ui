@@ -5,6 +5,7 @@ import type { Board, Tag } from "../../types";
 import { fetchBoardsForFilters } from "../../services/boards/boardService";
 import { fetchTags } from "../../services/tags/tagService";
 import { useSession } from "next-auth/react";
+import { SCHEDULE_AGENT_MUTATED_EVENT } from "../../services/scheduleAgentRefresh";
 
 type BoardsTagsContextType = {
   boards: Board[];
@@ -70,6 +71,40 @@ export function BoardsTagsProvider({ children }: { children: React.ReactNode }) 
     load();
     return () => {
       cancelled = true;
+    };
+  }, [userId, sessionStatus]);
+
+  /** Schedule agent applied writes — refetch so task/calendar/board UIs update without reload. */
+  useEffect(() => {
+    let cancelled = false;
+    const onAgentMutated = () => {
+      if (sessionStatus !== "authenticated") return;
+      void (async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const [boardData, tagData] = await Promise.all([
+            fetchBoardsForFilters(userId),
+            fetchTags(userId),
+          ]);
+          if (!cancelled) {
+            setBoards(boardData);
+            setTags(tagData);
+          }
+        } catch (err) {
+          if (!cancelled) {
+            console.error(err);
+            setError("Failed to load filter data");
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+    };
+    window.addEventListener(SCHEDULE_AGENT_MUTATED_EVENT, onAgentMutated);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(SCHEDULE_AGENT_MUTATED_EVENT, onAgentMutated);
     };
   }, [userId, sessionStatus]);
 

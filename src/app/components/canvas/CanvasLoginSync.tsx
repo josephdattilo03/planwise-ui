@@ -1,43 +1,59 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useCanvasBriefing } from '@/src/app/providers/CanvasBriefingProvider';
 import { getDataMode } from '@/src/app/services/dataMode';
 
+const VISIBILITY_DEBOUNCE_MS = 90_000;
+
+function canvasSyncDebug(message: string, data?: Record<string, unknown>) {
+  if (typeof console === 'undefined' || !console.debug) {
+    return;
+  }
+  if (data) {
+    console.debug(`[CanvasSync] ${message}`, data);
+  } else {
+    console.debug(`[CanvasSync] ${message}`);
+  }
+}
+
 /**
- * After sign-in, triggers Canvas sync on planwise-api once per tab session.
- * Backend stores assignment fingerprints in DynamoDB and returns an AI briefing
- * when Canvas data changes; this component passes it to the chatbot context.
+ * After sign-in, triggers Canvas sync on planwise-api when the app loads and when
+ * the user returns to the tab (debounced). Backend compares assignment fingerprints
+ * and returns an AI briefing when Canvas data changes; this component passes it
+ * to the chatbot context. Uses the same user id as schedule-agent (email when present).
  */
 export function CanvasLoginSync() {
   const { data: session, status } = useSession();
   const { setCanvasBriefing } = useCanvasBriefing();
-  const ran = useRef(false);
+  const inFlight = useRef(false);
+  const lastSyncCompletedAt = useRef(0);
 
-  useEffect(() => {
-    if (status !== 'authenticated' || !session?.user?.id) {
-      return;
-    }
-    if (getDataMode() === 'mock') {
-      return;
-    }
-    const tabKey = `planwise.canvasSync:${session.user.id}`;
-    if (
-      typeof sessionStorage !== 'undefined' &&
-      sessionStorage.getItem(tabKey)
-    ) {
-      return;
-    }
-    if (ran.current) {
-      return;
-    }
-    ran.current = true;
-
-    void (async () => {
+  const runSync = useCallback(
+    async (source: 'initial' | 'visibility') => {
+      if (status !== 'authenticated' || !session?.user) {
+        canvasSyncDebug('skip: not authenticated');
+        return;
+      }
+      const backendUserId = session.user.email ?? session.user.id;
+      if (!backendUserId) {
+        canvasSyncDebug('skip: no backend user id');
+        return;
+      }
+      if (getDataMode() === 'mock') {
+        canvasSyncDebug('skip: mock data mode');
+        return;
+      }
+      if (inFlight.current) {
+        canvasSyncDebug('skip: sync already in flight', { source });
+        return;
+      }
+      inFlight.current = true;
+      canvasSyncDebug('request start', { source });
       try {
-        const uid = encodeURIComponent(session.user.id);
+        const uid = encodeURIComponent(backendUserId);
         const res = await fetch(
           `/api/backend/user/${uid}/integrations/canvas/sync`,
           {
@@ -48,23 +64,82 @@ export function CanvasLoginSync() {
         const data = (await res.json()) as {
           ai?: { text: string; proposed_actions?: unknown[] };
           skipped?: boolean;
+          synced?: boolean;
+          reason?: string;
+          ai_skipped?: boolean;
         };
-        if (res.ok && data.ai?.text) {
+        const proposed = data.ai?.proposed_actions;
+        const proposedCount = Array.isArray(proposed) ? proposed.length : 0;
+        canvasSyncDebug('response', {
+          source,
+          ok: res.ok,
+          status: res.status,
+          skipped: data.skipped,
+          reason: data.reason,
+          synced: data.synced,
+          aiSkipped: data.ai_skipped,
+          hasBriefingText: Boolean(data.ai?.text),
+          proposedActions: proposedCount,
+        });
+        if (res.ok && data.synced && data.ai?.text) {
           setCanvasBriefing({
             text: data.ai.text,
             proposed_actions: Array.isArray(data.ai.proposed_actions)
               ? data.ai.proposed_actions
               : [],
           });
+          canvasSyncDebug('briefing applied to chat context', {
+            textChars: data.ai.text.length,
+            proposedActions: proposedCount,
+          });
         }
-        if (res.ok && typeof sessionStorage !== 'undefined') {
-          sessionStorage.setItem(tabKey, '1');
-        }
-      } catch {
-        /* non-fatal */
+      } catch (err) {
+        canvasSyncDebug('request failed', {
+          source,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      } finally {
+      lastSyncCompletedAt.current = Date.now();
+      inFlight.current = false;
+    }
+    },
+    [status, session?.user, setCanvasBriefing],
+  );
+
+  useEffect(() => {
+    if (status !== 'authenticated' || !session?.user) {
+      return;
+    }
+    const backendUserId = session.user.email ?? session.user.id;
+    if (!backendUserId) {
+      return;
+    }
+    if (getDataMode() === 'mock') {
+      return;
+    }
+
+    void runSync('initial');
+
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') {
+        return;
       }
-    })();
-  }, [status, session?.user?.id, setCanvasBriefing]);
+      if (lastSyncCompletedAt.current === 0) {
+        return;
+      }
+      const now = Date.now();
+      if (now - lastSyncCompletedAt.current < VISIBILITY_DEBOUNCE_MS) {
+        canvasSyncDebug('visibility: debounced', {
+          msSinceLastSync: now - lastSyncCompletedAt.current,
+        });
+        return;
+      }
+      void runSync('visibility');
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [status, session?.user, runSync]);
 
   return null;
 }
