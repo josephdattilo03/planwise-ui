@@ -243,11 +243,14 @@ export default function NewTaskComponent({
               value={priorityLevel}
               onChange={(e) => setPriorityLevel(Number(e.target.value))}
             >
-              {Object.entries(priorityOptions).map(([value, label]) => (
-                <MenuItem key={value} value={Number(value)}>
-                  {label}
-                </MenuItem>
-              ))}
+              {Object.entries(priorityOptions).map(([value, label]) => {
+                const numericValue = Number(value);
+                return (
+                  <MenuItem key={value} value={numericValue}>
+                    {label}
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
 

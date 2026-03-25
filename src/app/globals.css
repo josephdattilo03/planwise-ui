@@ -119,7 +119,7 @@
   --chatbot-confirm-focus-ring: var(--green-1);
 
   /* Type scale (one set for notes + page text) */
-  --font-size-xs: 12px;
+  --font-size-xs: 13px;
   --font-size-sm: 14px;
   --font-size-base: 16px;
   --font-size-lg: 20px;
@@ -348,12 +348,18 @@
 .scroll-shadows {
   z-index: 999;
   background:
-    linear-gradient(var(--color-sidebar-bg) 30%, rgba(255, 255, 255, 0)) center top,
-    linear-gradient(rgba(255, 255, 255, 0), var(--color-sidebar-bg) 70%) center bottom,
-    radial-gradient(farthest-side at 50% 0, rgb(0, 0, 0, 0.2), rgba(0, 0, 0, 0)) center top,
-    radial-gradient(farthest-side at 50% 100%,
-      rgba(0, 0, 0, 0.2),
-      rgba(0, 0, 0, 0)) center bottom;
+    linear-gradient(var(--color-sidebar-bg) 30%, rgba(255, 255, 255, 0)) center
+      top,
+    linear-gradient(rgba(255, 255, 255, 0), var(--color-sidebar-bg) 70%) center
+      bottom,
+    radial-gradient(farthest-side at 50% 0, rgb(0, 0, 0, 0.2), rgba(0, 0, 0, 0))
+      center top,
+    radial-gradient(
+        farthest-side at 50% 100%,
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0)
+      )
+      center bottom;
   background-repeat: no-repeat;
   background-size:
     100% 40px,
@@ -367,11 +373,16 @@
   z-index: 999;
   background:
     linear-gradient(var(--color-sidebar-bg) 30%, rgba(26, 26, 26, 0)) center top,
-    linear-gradient(rgba(26, 26, 26, 0), var(--color-sidebar-bg) 70%) center bottom,
-    radial-gradient(farthest-side at 50% 0, rgb(0, 0, 0, 0.4), rgba(0, 0, 0, 0)) center top,
-    radial-gradient(farthest-side at 50% 100%,
-      rgba(0, 0, 0, 0.4),
-      rgba(0, 0, 0, 0)) center bottom;
+    linear-gradient(rgba(26, 26, 26, 0), var(--color-sidebar-bg) 70%) center
+      bottom,
+    radial-gradient(farthest-side at 50% 0, rgb(0, 0, 0, 0.4), rgba(0, 0, 0, 0))
+      center top,
+    radial-gradient(
+        farthest-side at 50% 100%,
+        rgba(0, 0, 0, 0.4),
+        rgba(0, 0, 0, 0)
+      )
+      center bottom;
   background-repeat: no-repeat;
   background-size:
     100% 40px,
