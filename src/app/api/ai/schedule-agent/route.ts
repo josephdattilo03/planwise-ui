@@ -5,7 +5,15 @@ const backendBaseUrl = process.env.PLANWISE_API_URL ?? '';
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id) {
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Must match BoardsTagsContext / boardService: boards are keyed by email (user_id in API paths).
+  // Using session.user.id (Google sub) alone queries a different DynamoDB USER# partition, so the
+  // agent would not see boards the UI loads and would create duplicates under the wrong user.
+  const backendUserId = session.user.email ?? session.user.id;
+  if (!backendUserId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -24,6 +32,10 @@ export async function POST(req: Request) {
     board_ids?: string[];
     plan_only?: boolean;
     execute_plan?: unknown[];
+    /** IANA timezone from the browser, e.g. America/New_York */
+    timezone?: string;
+    /** YYYY-MM-DD in the user's local calendar (authoritative "today") */
+    user_local_date?: string;
   };
   try {
     body = await req.json();
@@ -46,7 +58,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const uid = encodeURIComponent(session.user.id);
+  const uid = encodeURIComponent(backendUserId);
   const url = `${backendBaseUrl.replace(/\/$/, '')}/user/${uid}/schedule/agent`;
   const payload = hasExecutePlan
     ? { execute_plan: body.execute_plan }
@@ -54,6 +66,9 @@ export async function POST(req: Request) {
         message: message as string,
         ...(body.board_ids != null && { board_ids: body.board_ids }),
         ...(body.plan_only === true && { plan_only: true }),
+        ...(typeof body.timezone === 'string' && body.timezone && { timezone: body.timezone }),
+        ...(typeof body.user_local_date === 'string' &&
+          body.user_local_date && { user_local_date: body.user_local_date }),
       };
 
   try {

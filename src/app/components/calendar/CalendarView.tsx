@@ -9,8 +9,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import GoogleIcon from "@mui/icons-material/Google";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
-import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFilters } from "../../providers/filters/useFilters";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
@@ -22,7 +21,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
   Tooltip,
   TextField,
   FormControl,
@@ -37,13 +35,25 @@ import {
 } from "../../services/events/eventService";
 import { updateTask } from "../../services/tasks/taskService";
 import { getDataMode } from "../../services/dataMode";
-import {
-  getGoogleCalendarStorage,
-  importGoogleCalendarEvents,
-} from "../../services/googleCalendarService";
 import { Event as AppEvent } from "../../types/event";
 import { Task } from "../../types/task";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { googleCalendarBoardIdForUser } from "../../services/googleCalendarService";
+
+type MockStoredEvent = {
+  title?: string;
+  start?: string;
+  end?: string;
+  color?: string;
+};
+
+/** Mock-only localStorage keys (mock mode does not call Google APIs) */
+const MOCK_GCAL = {
+  connectedKey: "planwise.googleCalendar.connected",
+  eventsKey: "planwise.googleCalendar.events",
+  calendarIdKey: "planwise.googleCalendar.calendarId",
+  lastSyncedKey: "planwise.googleCalendar.lastSynced",
+} as const;
 
 const locales = { "en-US": enUS };
 
@@ -82,8 +92,6 @@ interface CalendarViewProps {
   taskEvents?: CalendarEvent[];
   /** Called after create/delete so the parent can re-fetch the full list */
   onEventsChanged?: () => void;
-  /** Called after Google Calendar sync to refresh boards/events */
-  onGoogleCalendarSync?: () => void;
   /**
    * Called after a drop/resize with the already-persisted updated event.
    * The parent should do an in-place state update (no re-fetch) so the
@@ -98,7 +106,6 @@ export default function PlanwiseCalendar({
   calendarEvents = [],
   taskEvents = [],
   onEventsChanged,
-  onGoogleCalendarSync,
   onEventUpdated,
   onTaskUpdated,
 }: CalendarViewProps) {
@@ -109,18 +116,19 @@ export default function PlanwiseCalendar({
   );
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showGoogleDialog, setShowGoogleDialog] = useState(false);
-  const [googleConnected, setGoogleConnected] = useState(false);
-  const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleError, setGoogleError] = useState<string | null>(null);
-  const [googleLastSynced, setGoogleLastSynced] = useState<Date | null>(null);
+  const [mockGoogleConnected, setMockGoogleConnected] = useState(false);
+  const [mockGoogleEvents, setMockGoogleEvents] = useState<CalendarEvent[]>([]);
+  const [mockGoogleLoading, setMockGoogleLoading] = useState(false);
+  const [mockGoogleError, setMockGoogleError] = useState<string | null>(null);
+  const [mockGoogleLastSynced, setMockGoogleLastSynced] =
+    useState<Date | null>(null);
   const [selectedGoogleCalendarId, setSelectedGoogleCalendarId] =
     useState("primary");
 
-  const { boards, selectedBoardIds } = useFilters();
+  const { boards, selectedBoardIds, selectedTagIds } = useFilters();
   const { data: session } = useSession();
-  const pathname = usePathname();
   const userId = session?.user?.email ?? undefined;
+  const googleBoardId = userId ? googleCalendarBoardIdForUser(userId) : undefined;
   const isMock = getDataMode() === "mock";
   // Add-event form state
 
@@ -180,156 +188,114 @@ export default function PlanwiseCalendar({
     [googleCalendars],
   );
 
-  const mapStoredGoogleEvents = (rawEvents: Array<any>): CalendarEvent[] => {
-    const colorMap: Record<string, string> = {
-      "1": "google",
-      "2": "googleAlt",
-      "3": "google",
-      "4": "googleAlt",
-      "5": "google",
-      "6": "googleAlt",
-      "7": "google",
-      "8": "googleAlt",
-      "9": "google",
-      "10": "googleAlt",
-      "11": "google",
-    };
+  const mapStoredGoogleEvents = useCallback(
+    (rawEvents: MockStoredEvent[]): CalendarEvent[] => {
+      const colorMap: Record<string, string> = {
+        "1": "google",
+        "2": "googleAlt",
+        "3": "google",
+        "4": "googleAlt",
+        "5": "google",
+        "6": "googleAlt",
+        "7": "google",
+        "8": "googleAlt",
+        "9": "google",
+        "10": "googleAlt",
+        "11": "google",
+      };
 
-    return rawEvents.map((event) => ({
-      title: event.title ?? "Google Calendar Event",
-      start: new Date(event.start),
-      end: new Date(event.end),
-      resource: {
-        type: "google",
-        color: colorMap[String(event.color ?? "")] ?? "google",
-      },
-    }));
-  };
+      return rawEvents.map((event) => ({
+        title: event.title ?? "Google Calendar Event",
+        start: new Date(event.start ?? 0),
+        end: new Date(event.end ?? 0),
+        resource: {
+          type: "google",
+          color: colorMap[String(event.color ?? "")] ?? "google",
+        },
+      }));
+    },
+    [],
+  );
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const storage = getGoogleCalendarStorage();
+    if (!isMock || typeof window === "undefined") return;
     const storedConnected =
-      localStorage.getItem(storage.connectedKey) === "true";
-    const storedCalendarId = localStorage.getItem(storage.calendarIdKey);
-    const storedLastSynced = localStorage.getItem(storage.lastSyncedKey);
+      localStorage.getItem(MOCK_GCAL.connectedKey) === "true";
+    const storedCalendarId = localStorage.getItem(MOCK_GCAL.calendarIdKey);
+    const storedLastSynced = localStorage.getItem(MOCK_GCAL.lastSyncedKey);
     if (storedCalendarId) {
       setSelectedGoogleCalendarId(storedCalendarId);
     }
     if (storedLastSynced) {
       const parsedDate = new Date(storedLastSynced);
       if (!Number.isNaN(parsedDate.getTime())) {
-        setGoogleLastSynced(parsedDate);
+        setMockGoogleLastSynced(parsedDate);
       }
     }
     if (storedConnected) {
-      setGoogleConnected(true);
-      if (isMock) {
-        const storedEvents = localStorage.getItem(storage.eventsKey);
-        if (storedEvents) {
-          try {
-            const parsed = JSON.parse(storedEvents) as Array<any>;
-            setGoogleEvents(mapStoredGoogleEvents(parsed));
-            return;
-          } catch {}
+      setMockGoogleConnected(true);
+      const storedEvents = localStorage.getItem(MOCK_GCAL.eventsKey);
+      if (storedEvents) {
+        try {
+          const parsed = JSON.parse(storedEvents) as MockStoredEvent[];
+          setMockGoogleEvents(mapStoredGoogleEvents(parsed));
+          return;
+        } catch {
+          /* fall through */
         }
-        const mockEvents = buildMockGoogleEvents(
-          new Date(),
-          storedCalendarId ?? "primary",
-        );
-        setGoogleEvents(mockEvents);
       }
+      setMockGoogleEvents(
+        buildMockGoogleEvents(new Date(), storedCalendarId ?? "primary"),
+      );
     }
-  }, [buildMockGoogleEvents, isMock]);
+  }, [buildMockGoogleEvents, isMock, mapStoredGoogleEvents]);
 
-  const handleConnectGoogleCalendar = async () => {
+  const handleMockConnectGoogle = async () => {
     if (!userId) {
-      setGoogleError("Please sign in to connect your Google Calendar.");
+      setMockGoogleError("Please sign in to use the mock calendar.");
       return;
     }
-    setGoogleLoading(true);
-    setGoogleError(null);
+    setMockGoogleLoading(true);
+    setMockGoogleError(null);
     try {
-      const storage = getGoogleCalendarStorage();
-      localStorage.setItem(storage.calendarIdKey, selectedGoogleCalendarId);
-      if (isMock) {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        const mockEvents = buildMockGoogleEvents(
-          date,
-          selectedGoogleCalendarId,
-        );
-        const now = new Date();
-        setGoogleConnected(true);
-        setGoogleEvents(mockEvents);
-        setGoogleLastSynced(now);
-        localStorage.setItem(storage.connectedKey, "true");
-        localStorage.setItem(storage.eventsKey, JSON.stringify(mockEvents));
-        localStorage.setItem(storage.lastSyncedKey, now.toISOString());
-        setShowGoogleDialog(false);
-      } else {
-        // Use NextAuth (localhost:3000/api/auth/callback/google) — matches typical Google Cloud OAuth client.
-        void signIn("google", { redirectTo: pathname || "/" });
-        return;
-      }
-    } catch (err) {
-      setGoogleError("Failed to connect Google Calendar. Please try again.");
+      localStorage.setItem(MOCK_GCAL.calendarIdKey, selectedGoogleCalendarId);
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      const mockEvents = buildMockGoogleEvents(date, selectedGoogleCalendarId);
+      const now = new Date();
+      setMockGoogleConnected(true);
+      setMockGoogleEvents(mockEvents);
+      setMockGoogleLastSynced(now);
+      localStorage.setItem(MOCK_GCAL.connectedKey, "true");
+      localStorage.setItem(MOCK_GCAL.eventsKey, JSON.stringify(mockEvents));
+      localStorage.setItem(MOCK_GCAL.lastSyncedKey, now.toISOString());
+      setShowGoogleDialog(false);
+    } catch {
+      setMockGoogleError("Mock connect failed.");
     } finally {
-      setGoogleLoading(false);
+      setMockGoogleLoading(false);
     }
   };
 
-  const getSyncRange = () => {
-    const start = new Date(date);
-    start.setDate(1);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 3);
-    return { timeMin: start.toISOString(), timeMax: end.toISOString() };
-  };
-
-  const handleSyncGoogleCalendar = async () => {
+  const handleMockSyncGoogle = async () => {
     if (!userId) {
-      setGoogleError("Please sign in to sync your Google Calendar.");
+      setMockGoogleError("Please sign in.");
       return;
     }
-    setGoogleLoading(true);
-    setGoogleError(null);
+    setMockGoogleLoading(true);
+    setMockGoogleError(null);
     try {
-      const storage = getGoogleCalendarStorage();
-      localStorage.setItem(storage.calendarIdKey, selectedGoogleCalendarId);
-      if (isMock) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const mockEvents = buildMockGoogleEvents(
-          date,
-          selectedGoogleCalendarId,
-        );
-        const now = new Date();
-        setGoogleEvents(mockEvents);
-        setGoogleLastSynced(now);
-        localStorage.setItem(storage.eventsKey, JSON.stringify(mockEvents));
-        localStorage.setItem(storage.lastSyncedKey, now.toISOString());
-      } else {
-        const { timeMin, timeMax } = getSyncRange();
-        await importGoogleCalendarEvents({
-          userId,
-          calendarId: selectedGoogleCalendarId,
-          timeMin,
-          timeMax,
-        });
-        const now = new Date();
-        setGoogleConnected(true);
-        setGoogleLastSynced(now);
-        setGoogleEvents([]);
-        localStorage.setItem(storage.connectedKey, "true");
-        localStorage.removeItem(storage.eventsKey);
-        localStorage.setItem(storage.lastSyncedKey, now.toISOString());
-        onGoogleCalendarSync?.();
-        onEventsChanged?.();
-      }
-    } catch (err) {
-      setGoogleError("Failed to sync. Please try again.");
+      localStorage.setItem(MOCK_GCAL.calendarIdKey, selectedGoogleCalendarId);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const mockEvents = buildMockGoogleEvents(date, selectedGoogleCalendarId);
+      const now = new Date();
+      setMockGoogleEvents(mockEvents);
+      setMockGoogleLastSynced(now);
+      localStorage.setItem(MOCK_GCAL.eventsKey, JSON.stringify(mockEvents));
+      localStorage.setItem(MOCK_GCAL.lastSyncedKey, now.toISOString());
+    } catch {
+      setMockGoogleError("Mock sync failed.");
     } finally {
-      setGoogleLoading(false);
+      setMockGoogleLoading(false);
     }
   };
   // Derived event list
@@ -337,20 +303,54 @@ export default function PlanwiseCalendar({
   const allEvents: CalendarEvent[] = [
     ...calendarEvents,
     ...taskEvents,
-    ...googleEvents,
+    ...(isMock ? mockGoogleEvents : []),
   ];
 
-  const filteredEvents =
-    selectedBoardIds.size === 0
-      ? allEvents
-      : allEvents.filter((event) => {
-          if (event.resource?.type === "google") return true;
-          if (!event.resource?.board) return false;
+  const filteredEvents = useMemo(() => {
+    const noBoardFilter = selectedBoardIds.size === 0;
+    const noTagFilter = selectedTagIds.size === 0;
+    if (noBoardFilter && noTagFilter) {
+      return allEvents;
+    }
+
+    return allEvents.filter((ev) => {
+      if (!noBoardFilter) {
+        if (ev.resource?.type === "google") {
+          if (!googleBoardId || !selectedBoardIds.has(googleBoardId)) {
+            return false;
+          }
+        } else if (ev.resource?.type === "event" && ev.resource.event?.board?.id) {
+          if (!selectedBoardIds.has(ev.resource.event.board.id)) return false;
+        } else if (ev.resource?.type === "task" && ev.resource.task?.board?.id) {
+          if (!selectedBoardIds.has(ev.resource.task.board.id)) return false;
+        } else if (ev.resource?.board) {
           const matchedBoard = boards.find(
-            (b) => b.name.toLowerCase() === event.resource!.board,
+            (b) => b.name.toLowerCase() === ev.resource!.board,
           );
-          return matchedBoard ? selectedBoardIds.has(matchedBoard.id) : false;
-        });
+          if (!matchedBoard || !selectedBoardIds.has(matchedBoard.id)) return false;
+        } else {
+          return false;
+        }
+      }
+
+      if (!noTagFilter) {
+        if (ev.resource?.type === "task" && ev.resource.task) {
+          const hasSelectedTag = ev.resource.task.tags.some((tag) =>
+            selectedTagIds.has(tag.id),
+          );
+          if (!hasSelectedTag) return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    allEvents,
+    boards,
+    googleBoardId,
+    selectedBoardIds,
+    selectedTagIds,
+  ]);
   // Navigation label
 
   const getCurrentLabel = () => {
@@ -559,50 +559,45 @@ export default function PlanwiseCalendar({
               ))}
             </Box>
 
-            <Tooltip
-              title={
-                googleConnected
-                  ? "Google Calendar connected"
-                  : "Connect Google Calendar"
-              }
-            >
-              <Button
-                onClick={() => setShowGoogleDialog(true)}
-                size="small"
-                startIcon={<GoogleIcon />}
-                className="py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground bg-surface-color hover:bg-beige"
-                sx={{ textTransform: "none" }}
-                aria-label={
-                  googleConnected
-                    ? "Google Calendar connected"
-                    : "Connect Google Calendar"
-                }
-              >
-                <span className="hidden sm:inline">
-                  {googleConnected ? "Google" : "Connect Google"}
-                </span>
-                <span className="sm:hidden">Google</span>
-                {googleConnected && (
-                  <Box
-                    component="span"
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: "#34A853",
-                      display: "inline-block",
-                      ml: 1,
-                    }}
-                  />
+            {isMock ? (
+              <>
+                <Tooltip
+                  title={
+                    mockGoogleConnected
+                      ? "Mock Google Calendar"
+                      : "Mock: connect sample Google events"
+                  }
+                >
+                  <Button
+                    onClick={() => setShowGoogleDialog(true)}
+                    size="small"
+                    startIcon={<GoogleIcon />}
+                    className="py-2 px-3 font-sans text-small-header rounded-md transition border border-beige text-foreground bg-surface-color hover:bg-beige"
+                    sx={{ textTransform: "none" }}
+                  >
+                    <span className="hidden sm:inline">
+                      {mockGoogleConnected ? "Mock Google" : "Mock Google"}
+                    </span>
+                    <span className="sm:hidden">Google</span>
+                  </Button>
+                </Tooltip>
+                {mockGoogleConnected && mockGoogleLastSynced && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "var(--text-muted)", ml: 1 }}
+                  >
+                    Mock synced {format(mockGoogleLastSynced, "MMM d, h:mm a")}
+                  </Typography>
                 )}
-              </Button>
-            </Tooltip>
-            {googleConnected && googleLastSynced && (
+              </>
+            ) : (
               <Typography
                 variant="caption"
-                sx={{ color: "var(--text-muted)", ml: 1 }}
+                sx={{ color: "var(--text-muted)", maxWidth: 320 }}
               >
-                Synced {format(googleLastSynced, "MMM d, h:mm a")}
+                {session?.googleCalendarConnected
+                  ? "Google Calendar syncs when you sign in."
+                  : "Sign in with Google (calendar scope) to import events."}
               </Typography>
             )}
           </Box>
@@ -744,9 +739,9 @@ export default function PlanwiseCalendar({
         </DialogActions>
       </Dialog>
 
-      {/* Google Calendar connect modal */}
+      {/* Mock-only: sample Google overlay (no real API calls) */}
       <Dialog
-        open={showGoogleDialog}
+        open={isMock && showGoogleDialog}
         onClose={() => setShowGoogleDialog(false)}
         maxWidth="sm"
         fullWidth
@@ -758,21 +753,14 @@ export default function PlanwiseCalendar({
             fontWeight: 600,
           }}
         >
-          Connect Google Calendar
+          Mock Google Calendar
         </DialogTitle>
         <DialogContent
           sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
         >
           <Typography variant="body2">
-            This will link your Google Calendar and display synced events
-            directly on this calendar.
+            Demo overlay only — backend mode syncs real Google events on sign-in.
           </Typography>
-          {!isMock && (
-            <Typography variant="body2" color="text.secondary">
-              You will be redirected to Google to grant access. Events will
-              appear as a read-only overlay in the calendar.
-            </Typography>
-          )}
           <FormControl fullWidth size="small">
             <InputLabel>Calendar</InputLabel>
             <Select
@@ -781,14 +769,11 @@ export default function PlanwiseCalendar({
               onChange={(e) => {
                 const nextId = e.target.value;
                 setSelectedGoogleCalendarId(nextId);
-                if (googleConnected) {
-                  localStorage.setItem(
-                    "planwise.googleCalendar.calendarId",
-                    nextId,
-                  );
+                if (mockGoogleConnected) {
+                  localStorage.setItem(MOCK_GCAL.calendarIdKey, nextId);
                 }
               }}
-              disabled={googleLoading}
+              disabled={mockGoogleLoading}
             >
               {googleCalendars.map((calendar) => (
                 <MenuItem key={calendar.id} value={calendar.id}>
@@ -797,46 +782,44 @@ export default function PlanwiseCalendar({
               ))}
             </Select>
           </FormControl>
-          {googleLastSynced && (
+          {mockGoogleLastSynced && (
             <Typography variant="caption" color="text.secondary">
-              Last synced: {format(googleLastSynced, "MMM d, h:mm a")}
+              Last mock sync: {format(mockGoogleLastSynced, "MMM d, h:mm a")}
             </Typography>
           )}
-          {googleError && (
+          {mockGoogleError && (
             <Typography variant="body2" color="error">
-              {googleError}
+              {mockGoogleError}
             </Typography>
           )}
         </DialogContent>
         <DialogActions
           sx={{ justifyContent: "space-between", px: "24px", pb: "16px" }}
         >
-          {googleConnected ? (
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
-                onClick={handleSyncGoogleCalendar}
-                variant="contained"
-                disabled={googleLoading}
-                sx={{
-                  backgroundColor: "var(--green-2)",
-                  "&:hover": { backgroundColor: "var(--green-1)" },
-                }}
-              >
-                {googleLoading ? "Syncing..." : "Sync now"}
-              </Button>
-            </Box>
+          {mockGoogleConnected ? (
+            <Button
+              onClick={handleMockSyncGoogle}
+              variant="contained"
+              disabled={mockGoogleLoading}
+              sx={{
+                backgroundColor: "var(--green-2)",
+                "&:hover": { backgroundColor: "var(--green-1)" },
+              }}
+            >
+              {mockGoogleLoading ? "Syncing..." : "Sync mock"}
+            </Button>
           ) : (
             <Button
-              onClick={handleConnectGoogleCalendar}
+              onClick={handleMockConnectGoogle}
               variant="contained"
               startIcon={<GoogleIcon />}
-              disabled={googleLoading}
+              disabled={mockGoogleLoading}
               sx={{
                 backgroundColor: "#4285F4",
                 "&:hover": { backgroundColor: "#3367D6" },
               }}
             >
-              {googleLoading ? "Connecting..." : "Connect"}
+              {mockGoogleLoading ? "Connecting..." : "Connect (mock)"}
             </Button>
           )}
           <Button
@@ -846,7 +829,6 @@ export default function PlanwiseCalendar({
           >
             Close
           </Button>
-          {googleLoading && <CircularProgress size={20} />}
         </DialogActions>
       </Dialog>
 

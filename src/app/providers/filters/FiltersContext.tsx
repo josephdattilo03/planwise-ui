@@ -7,6 +7,7 @@ import type { Board, Tag } from "../../types";
 import {
   createBoard as createBoardService,
 } from "../../services/boards/boardService";
+import { getDataMode } from "../../services/dataMode";
 import {
   createTag as createTagService,
   updateTag as updateTagService,
@@ -145,7 +146,15 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
 
   // Create board (updates preload cache so sidebar stays in sync)
   const createBoard = async (name: string, color: string): Promise<Board> => {
-    const newBoard = await createBoardService(name, color);
+    if (getDataMode() === "mock") {
+      const newBoard = await createBoardService(name, color);
+      setBoards((prev) => [...prev, newBoard]);
+      return newBoard;
+    }
+    if (!userId) {
+      throw new Error("Sign in to create a board");
+    }
+    const newBoard = await createBoardService(name, color, userId, "root");
     setBoards((prev) => [...prev, newBoard]);
     return newBoard;
   };

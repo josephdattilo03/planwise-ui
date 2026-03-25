@@ -13,7 +13,7 @@ import { useSession } from "next-auth/react";
 
 export default function TasksPage() {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userId = session?.user?.email ?? undefined;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -24,6 +24,7 @@ export default function TasksPage() {
   /** Load tasks once boards/tags are ready (from preload) */
   useEffect(() => {
     if (boardsTagsLoading) return;
+    if (sessionStatus === "loading") return;
     let cancelled = false;
     async function load() {
       try {
@@ -40,7 +41,7 @@ export default function TasksPage() {
     return () => {
       cancelled = true;
     };
-  }, [boardsTagsLoading, boards, tags, userId]);
+  }, [boardsTagsLoading, boards, tags, userId, sessionStatus]);
 
 
 

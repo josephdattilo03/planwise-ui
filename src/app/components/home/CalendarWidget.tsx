@@ -11,37 +11,35 @@ import { Board } from "../../types/board";
 
 export type DayEvent = { title: string; color: string };
 
+const DEFAULT_DOT = "#4CAF50";
+
+function boardColor(boards: Board[], boardId: string | undefined, fallback: string): string {
+  if (!boardId) return fallback;
+  const b = boards.find((x) => x.id === boardId);
+  return b?.color || fallback;
+}
+
 function buildEventsByDate(
   events: Event[],
   tasks: Task[],
   boards: Board[]
 ): Record<string, DayEvent[]> {
-  const boardColors: Record<string, string> = {
-    personal: "#9BF2FF",
-    work: "#2196F3",
-    pennos: "#FFA500",
-    "senior-design": "#A7C957",
-    school: "#9C27B0",
-    other: "#E1BEE7",
-  };
   const byDate: Record<string, DayEvent[]> = {};
 
   events.forEach((event) => {
     const d = new Date(event.startTime).toDateString();
     if (!byDate[d]) byDate[d] = [];
-    const eventTitle = event.description.toLowerCase();
-    let color = boardColors[event.board?.name?.toLowerCase() || "other"] ?? "#4CAF50";
-    if (eventTitle.includes("team standup") || eventTitle.includes("standup meeting")) color = "#E1BEE7";
-    if (eventTitle.includes("project milestone") || eventTitle.includes("milestone")) color = "#FFA500";
+    const color =
+      event.board?.color ||
+      boardColor(boards, event.board?.id, event.eventColor || DEFAULT_DOT);
     byDate[d].push({ title: `📅 ${event.description}`, color });
   });
 
   tasks.forEach((task) => {
+    if (!task.dueDate) return;
     const d = new Date(task.dueDate).toDateString();
     if (!byDate[d]) byDate[d] = [];
-    const board = boards.find((b) => b.id === task.board?.id);
-    const boardName = board?.name?.toLowerCase() || "default";
-    const color = boardColors[boardName] ?? "#4CAF50";
+    const color = task.board?.color || boardColor(boards, task.board?.id, DEFAULT_DOT);
     byDate[d].push({ title: `📋 ${task.name}`, color });
   });
 

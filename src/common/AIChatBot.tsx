@@ -8,6 +8,19 @@ import type { Flow, Params } from 'react-chatbotify';
 
 const APPLY_LABEL = 'Yes, apply';
 const CANCEL_LABEL = 'No, cancel';
+
+/** Sends the user's local calendar date + IANA zone so the agent does not assume a wrong year (e.g. 2023). */
+function scheduleAgentCalendarPayload() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    user_local_date: `${y}-${m}-${d}`,
+  };
+}
+
 function ConfirmButtons({
   onApply,
   onCancel,
@@ -112,6 +125,7 @@ export default function AIChatBot() {
             body: JSON.stringify({
               prompt: params.userInput,
               plan_only: true,
+              ...scheduleAgentCalendarPayload(),
             }),
           });
           const data = await res.json();

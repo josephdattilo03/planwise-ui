@@ -13,5 +13,7 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     /** Present when signed in with Google and calendar scope was granted. */
     googleCalendarConnected?: boolean;
+    /** Google OAuth access token (browser Calendar API + sync). */
+    googleAccessToken?: string;
   }
 }

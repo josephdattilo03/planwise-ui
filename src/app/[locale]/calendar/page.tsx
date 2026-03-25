@@ -13,6 +13,7 @@ import LoadingSpinner from "@/src/common/LoadingSpinner";
 import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
 import { CalendarEvent } from "../../components/calendar/CalendarView";
 import { useSession } from "next-auth/react";
+import { googleCalendarBoardIdForUser } from "../../services/googleCalendarService";
 
 const CalendarView = dynamic(
   () => import("../../components/calendar/CalendarView"),
@@ -21,18 +22,25 @@ const CalendarView = dynamic(
 
 // ── Converters ─────────────────────────────────────────────────────────────
 
-const convertEventsForCalendar = (events: Event[]): CalendarEvent[] =>
-  events.map((event) => ({
-    title: `📅 ${event.description}`,
-    start: event.startTime,
-    end: event.endTime,
-    resource: {
-      board: event.board.name.toLowerCase(),
-      color: event.board.color,
-      type: "event" as const,
-      event,
-    },
-  }));
+const convertEventsForCalendar = (
+  events: Event[],
+  googleBoardId: string | undefined
+): CalendarEvent[] =>
+  events.map((event) => {
+    const isGoogleImported =
+      Boolean(googleBoardId) && event.board.id === googleBoardId;
+    return {
+      title: `📅 ${event.description}`,
+      start: event.startTime,
+      end: event.endTime,
+      resource: {
+        board: event.board.name.toLowerCase(),
+        color: event.board.color,
+        type: isGoogleImported ? ("google" as const) : ("event" as const),
+        event,
+      },
+    };
+  });
 
 const getBoardHexColor = (boardName: string, boards: Board[]): string => {
   const boardObj = boards.find((b) => b.name.toLowerCase() === boardName);
@@ -61,7 +69,7 @@ const convertTasksToEvents = (tasks: Task[], boards: Board[]): CalendarEvent[] =
 
 export default function CalendarPage() {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userId = session?.user?.email ?? undefined;
   const [events, setEvents] = useState<Event[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -69,10 +77,10 @@ export default function CalendarPage() {
 
   /** Re-fetch the full events list (used after create / delete) */
   const refreshEvents = useCallback(async () => {
-    if (boardsTagsLoading) return;
-    const eventData = await fetchEvents(boards);
+    if (boardsTagsLoading || sessionStatus === "loading") return;
+    const eventData = await fetchEvents(boards, userId);
     setEvents(eventData);
-  }, [boards, boardsTagsLoading]);
+  }, [boards, boardsTagsLoading, userId, sessionStatus]);
 
   /**
    * In-place update after a drag/resize — replaces the single changed event in
@@ -87,15 +95,18 @@ export default function CalendarPage() {
     setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
   }, []);
 
-  /** Initial load: fetch events and tasks together once boards/tags are ready */
+  /** Initial load: fetch events and tasks together once boards/tags and session are ready */
   useEffect(() => {
     if (boardsTagsLoading) return;
+    // NextAuth resolves after first paint; without this, userId is undefined and backend task fetch misbehaved.
+    if (sessionStatus === "loading") return;
+
     let cancelled = false;
     async function loadData() {
       try {
         setDataLoading(true);
         const [eventData, taskData] = await Promise.all([
-          fetchEvents(boards),
+          fetchEvents(boards, userId),
           fetchTasks(userId, boards, tags),
         ]);
         if (!cancelled) {
@@ -112,9 +123,22 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [boardsTagsLoading, boards, tags, userId]);
+  }, [boardsTagsLoading, boards, tags, userId, sessionStatus]);
 
-  const calendarEvents = convertEventsForCalendar(events);
+  /** After server-side Google Calendar sync (login), refresh events from API */
+  useEffect(() => {
+    const onSynced = () => {
+      void refreshEvents();
+    };
+    window.addEventListener("planwise:google-calendar-synced", onSynced);
+    return () =>
+      window.removeEventListener("planwise:google-calendar-synced", onSynced);
+  }, [refreshEvents]);
+
+  const googleBoardId = userId
+    ? googleCalendarBoardIdForUser(userId)
+    : undefined;
+  const calendarEvents = convertEventsForCalendar(events, googleBoardId);
   const taskEvents = convertTasksToEvents(tasks, boards);
 
   return (

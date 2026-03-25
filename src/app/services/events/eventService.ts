@@ -1,21 +1,8 @@
 import { Event } from "../../types/event";
 import { Board } from "../../types/board";
+import { backendJSON } from "../backendJson";
 import { getDataMode } from "../dataMode";
-
-const BACKEND_PROXY_PREFIX = "/api/backend";
-
-function backendUrl(path: string) {
-  return `${BACKEND_PROXY_PREFIX}${path.startsWith("/") ? "" : "/"}${path}`;
-}
-
-async function backendJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(backendUrl(path), init);
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(text || `Backend request failed (${res.status})`);
-  }
-  return JSON.parse(text) as T;
-}
+import { googleCalendarBoardIdForUser } from "../googleCalendarService";
 
 function toEventMock(raw: any, boards: Board[]): Event {
   return {
@@ -51,12 +38,36 @@ function toBackendYMD(d: Date) {
   return d.toISOString().split("T")[0];
 }
 
+/**
+ * API returns `YYYY-MM-DD` or full ISO (`2026-03-26T00:00:00`). Do not append `T00:00:00`
+ * when the string already includes `T` — that produces Invalid Date and breaks the calendar.
+ */
+function parseBackendEventTime(value: unknown): Date {
+  const s = String(value ?? "").trim();
+  if (!s) {
+    return new Date(NaN);
+  }
+  if (s.includes("T")) {
+    return new Date(s);
+  }
+  return new Date(`${s}T00:00:00`);
+}
+
 function toEventBackend(raw: any, boardById: Map<string, Board>): Event {
-  const board = boardById.get(String(raw.board_id)) || {
-    id: String(raw.board_id),
-    name: "Unknown Board",
-    color: "#ccc",
-  };
+  const bid = String(raw.board_id);
+  const board =
+    boardById.get(bid) ||
+    (bid.startsWith("gcal:")
+      ? {
+          id: bid,
+          name: "Google Calendar",
+          color: "#4285F4",
+        }
+      : {
+          id: bid,
+          name: "Unknown Board",
+          color: "#ccc",
+        });
 
   const recurrence = raw.recurrence
     ? {
@@ -73,8 +84,8 @@ function toEventBackend(raw: any, boardById: Map<string, Board>): Event {
     id: String(raw.id),
     // Backend doesn't have calendarId; UI expects it, so keep a default.
     calendarId: "default",
-    startTime: new Date(`${raw.start_time}T00:00:00`),
-    endTime: new Date(`${raw.end_time}T00:00:00`),
+    startTime: parseBackendEventTime(raw.start_time),
+    endTime: parseBackendEventTime(raw.end_time),
     eventColor: raw.event_color,
     isAllDay: raw.is_all_day,
     description: raw.description,
@@ -95,6 +106,7 @@ function toBackendEventPayload(event: Event) {
     is_all_day: event.isAllDay,
     description: event.description,
     location: event.location,
+    // Backend Pydantic model requires the key; JSON.stringify drops `undefined`.
     recurrence: event.recurrence
       ? {
           frequency: event.recurrence.frequency,
@@ -104,7 +116,7 @@ function toBackendEventPayload(event: Event) {
             ? toBackendYMD(event.recurrence.dateStart)
             : null,
         }
-      : undefined,
+      : null,
   };
 }
 
@@ -163,15 +175,24 @@ async function fetchEventsMock(boards: Board[]): Promise<Event[]> {
   return events.map((raw: any) => toEventMock(raw, boards));
 }
 
-export async function fetchEvents(boards: Board[]): Promise<Event[]> {
+export async function fetchEvents(
+  boards: Board[],
+  userId?: string
+): Promise<Event[]> {
   if (getDataMode() === "mock") {
     return fetchEventsMock(boards);
   }
 
   const boardById = new Map(boards.map((b) => [b.id, b]));
+  const gcalId = userId ? googleCalendarBoardIdForUser(userId) : null;
+  const boardIdsToFetch = [
+    ...boards.map((b) => b.id),
+    ...(gcalId && !boardById.has(gcalId) ? [gcalId] : []),
+  ];
+
   const eventsPerBoard = await Promise.all(
-    boards.map((b) =>
-      backendJSON<any[]>(`/board/${encodeURIComponent(b.id)}/event/`, {
+    boardIdsToFetch.map((id) =>
+      backendJSON<any[]>(`/board/${encodeURIComponent(id)}/event/`, {
         method: "GET",
       })
     )
@@ -305,9 +326,10 @@ export async function deleteEvent(
 export async function getEventsByTimeRange(
   startDate: Date,
   endDate: Date,
-  boards: Board[]
+  boards: Board[],
+  userId?: string
 ): Promise<Event[]> {
-  const allEvents = await fetchEvents(boards);
+  const allEvents = await fetchEvents(boards, userId);
   return allEvents.filter((event) => {
     return event.startTime >= startDate && event.endTime <= endDate;
   });
@@ -315,7 +337,8 @@ export async function getEventsByTimeRange(
 
 export async function getEventById(
   eventId: string,
-  boards: Board[]
+  boards: Board[],
+  userId?: string
 ): Promise<Event | null> {
   if (getDataMode() === "mock") {
     const events = JSON.parse(localStorage.getItem("events") || "[]");
@@ -323,14 +346,17 @@ export async function getEventById(
     return rawEvent ? toEventMock(rawEvent, boards) : null;
   }
 
-  for (const b of boards) {
+  const boardById = new Map(boards.map((bb) => [bb.id, bb]));
+  const gcalId = userId ? googleCalendarBoardIdForUser(userId) : null;
+  const ids = gcalId && !boardById.has(gcalId) ? [...boards.map((b) => b.id), gcalId] : boards.map((b) => b.id);
+
+  for (const bid of ids) {
     const events = await backendJSON<any[]>(
-      `/board/${encodeURIComponent(b.id)}/event/`,
+      `/board/${encodeURIComponent(bid)}/event/`,
       { method: "GET" }
     );
     const found = events.find((e: any) => String(e.id) === eventId);
     if (found) {
-      const boardById = new Map(boards.map((bb) => [bb.id, bb]));
       return toEventBackend(found, boardById);
     }
   }

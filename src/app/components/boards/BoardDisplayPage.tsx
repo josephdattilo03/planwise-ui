@@ -21,7 +21,7 @@ const COLUMNS: Task["progress"][] = ["to-do", "in-progress", "done", "pending"];
 
 const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userId = session?.user?.email ?? undefined;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
@@ -29,6 +29,7 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
   /** Load tasks once boards/tags are ready (from preload); filter by selected board */
   useEffect(() => {
     if (boardsTagsLoading) return;
+    if (sessionStatus === "loading") return;
     let cancelled = false;
     async function loadTasks() {
       try {
@@ -50,7 +51,7 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
     return () => {
       cancelled = true;
     };
-  }, [boardId, boardsTagsLoading, boards, tags, userId]);
+  }, [boardId, boardsTagsLoading, boards, tags, userId, sessionStatus]);
 
   const getTasksByProgress = (progress: Task["progress"]): Task[] => {
     return tasks.filter((task) => task.progress === progress);

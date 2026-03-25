@@ -1,22 +1,8 @@
 import { Task } from "../../types/task";
 import { Board } from "../../types/board";
 import { Tag } from "../../types/tag";
+import { backendJSON } from "../backendJson";
 import { getDataMode } from "../dataMode";
-
-const BACKEND_PROXY_PREFIX = "/api/backend";
-
-function backendUrl(path: string) {
-  return `${BACKEND_PROXY_PREFIX}${path.startsWith("/") ? "" : "/"}${path}`;
-}
-
-async function backendJSON<T>(path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(backendUrl(path), init);
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(text || `Backend request failed (${res.status})`);
-  }
-  return JSON.parse(text) as T;
-}
 
 function toTask(raw: any, boards: Board[], tags: Tag[]): Task {
   return {
@@ -55,8 +41,10 @@ export async function fetchTasks(
 ): Promise<Task[]> {
 
   if (getDataMode() !== "mock") {
+    // No user yet: NextAuth still loading, or signed out. Avoid throwing — callers often run
+    // before session.user.email exists (e.g. calendar page when boards load first).
     if (!userId) {
-      throw new Error("fetchTasks(userId, boards, tags) requires userId in backend mode");
+      return [];
     }
     return fetchTasksByUser(userId, boards, tags);
   }
@@ -191,7 +179,8 @@ export async function fetchTasksByUser(
       color: "#ccc",
     };
 
-    const mappedTags: Tag[] = (rt.tag_ids || []).map((tid: any) => {
+    const tagIdList = rt.tag_ids ?? rt.tagIds ?? [];
+    const mappedTags: Tag[] = tagIdList.map((tid: any) => {
       const found = tagById.get(String(tid));
       return (
         found || {

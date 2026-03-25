@@ -1,8 +1,19 @@
 import { Box, Card, CardContent, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 
-export default function QuickAccessWidget() {
+import type { Board } from "../../types/board";
+
+function isVirtualCalendarBoard(b: Board): boolean {
+  return b.id.startsWith("gcal:");
+}
+
+interface QuickAccessWidgetProps {
+  boards: Board[];
+}
+
+export default function QuickAccessWidget({ boards }: QuickAccessWidgetProps) {
   const router = useRouter();
+  const realBoards = boards.filter((b) => !isVirtualCalendarBoard(b)).slice(0, 5);
 
   return (
     <Card
@@ -27,7 +38,7 @@ export default function QuickAccessWidget() {
         >
           Welcome to your dashboard,
           <br />
-          let's get things done today ☺
+          let&apos;s get things done today ☺
         </Typography>
 
         <Typography
@@ -43,19 +54,10 @@ export default function QuickAccessWidget() {
         </Typography>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {[
-            { name: "Senior Design", boardId: "board-1", description: "Click to access board" },
-            { name: "My Workspace", boardId: null, description: "Click to access workspace" }
-          ].map((item) => (
+          {realBoards.map((board) => (
             <Box
-              key={item.name}
-              onClick={() => {
-                if (item.boardId) {
-                  router.push(`/folders?board=${item.boardId}`);
-                } else {
-                  router.push("/folders");
-                }
-              }}
+              key={board.id}
+              onClick={() => router.push(`/folders?board=${encodeURIComponent(board.id)}`)}
               sx={{
                 cursor: "pointer",
                 p: 2,
@@ -69,25 +71,76 @@ export default function QuickAccessWidget() {
                 },
               }}
             >
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "var(--dark-green-1)",
-                  mb: 0.5,
-                }}
-              >
-                {item.name}
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{ fontSize: 14, color: "var(--dark-green-2)" }}
-              >
-                {item.description}
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    backgroundColor: board.color || "var(--green-2)",
+                  }}
+                  aria-hidden
+                />
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "var(--dark-green-1)",
+                      mb: 0.5,
+                    }}
+                  >
+                    {board.name}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: 13, color: "var(--dark-green-2)" }}
+                  >
+                    Open folders for this board
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
           ))}
+
+          <Box
+            onClick={() => router.push("/folders")}
+            sx={{
+              cursor: "pointer",
+              p: 2,
+              borderRadius: "var(--radius-md)",
+              backgroundColor: "var(--menu-bg)",
+              border: "1px solid var(--card-border)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-1px)",
+                backgroundColor: "var(--menu-item-hover)",
+              },
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--dark-green-1)",
+                mb: 0.5,
+              }}
+            >
+              All workspaces
+            </Typography>
+            <Typography variant="caption" sx={{ fontSize: 13, color: "var(--dark-green-2)" }}>
+              Browse folders and boards
+            </Typography>
+          </Box>
+
+          {realBoards.length === 0 && (
+            <Typography variant="caption" sx={{ color: "var(--dark-green-2)", fontStyle: "italic" }}>
+              Create a board in the app to see shortcuts here.
+            </Typography>
+          )}
         </Box>
       </CardContent>
     </Card>
