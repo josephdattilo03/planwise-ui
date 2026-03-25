@@ -9,6 +9,7 @@ import EditableNote from "./EditableNote";
 import ArchiveModal from "./ArchiveModal";
 import type { StickyNote } from "../../types/note";
 import { getDataMode } from "../../services/dataMode";
+import { SCHEDULE_AGENT_MUTATED_EVENT } from "../../services/scheduleAgentRefresh";
 import {
   fetchNotes,
   createNote,
@@ -97,6 +98,29 @@ export default function NoteBoard() {
       cancelled = true;
     };
   }, [userId, sessionStatus, isBackend]);
+
+  useEffect(() => {
+    if (!isBackend) return;
+    let cancelled = false;
+    const onAgentMutated = () => {
+      void (async () => {
+        try {
+          const { active, archived } = await fetchNotes(userId);
+          if (!cancelled) {
+            setNotes(active.map(normalizeNote));
+            setArchivedNotes(archived.map(normalizeNote));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      })();
+    };
+    window.addEventListener(SCHEDULE_AGENT_MUTATED_EVENT, onAgentMutated);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(SCHEDULE_AGENT_MUTATED_EVENT, onAgentMutated);
+    };
+  }, [userId, isBackend]);
 
   useEffect(() => {
     if (!hydrated) return;
