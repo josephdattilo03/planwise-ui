@@ -21,10 +21,23 @@ const COLUMNS: Task["progress"][] = ["to-do", "in-progress", "done", "pending"];
 const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
   const { boards, tags, loading: boardsTagsLoading } = useBoardsTags();
   const { data: session, status: sessionStatus } = useSession();
-  const { openEdit } = useTaskDrawer();
+  const { openEdit, setOnSaveSuccessHandler } = useTaskDrawer();
   const userId = session?.user?.email ?? undefined;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
+
+  const refreshBoardTasks = React.useCallback(async () => {
+    try {
+      setTasksLoading(true);
+      const fetchedTasks = await fetchTasks(userId, boards, tags);
+      const filteredTasks = fetchedTasks.filter((task) => task.board.id === boardId);
+      setTasks(filteredTasks);
+    } catch (error) {
+      console.error("Error loading board data:", error);
+    } finally {
+      setTasksLoading(false);
+    }
+  }, [boardId, boards, tags, userId]);
 
   /** Load tasks once boards/tags are ready (from preload); filter by selected board */
   useEffect(() => {
@@ -36,9 +49,7 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
         setTasksLoading(true);
         const fetchedTasks = await fetchTasks(userId, boards, tags);
         if (!cancelled) {
-          const filteredTasks = fetchedTasks.filter(
-            (task) => task.board.id === boardId
-          );
+          const filteredTasks = fetchedTasks.filter((task) => task.board.id === boardId);
           setTasks(filteredTasks);
         }
       } catch (error) {
@@ -52,6 +63,11 @@ const BoardDisplayPage = ({ boardId }: BoardDisplayPageProps) => {
       cancelled = true;
     };
   }, [boardId, boardsTagsLoading, boards, tags, userId, sessionStatus]);
+
+  useEffect(() => {
+    setOnSaveSuccessHandler(refreshBoardTasks);
+    return () => setOnSaveSuccessHandler(null);
+  }, [refreshBoardTasks, setOnSaveSuccessHandler]);
 
   const getTasksByProgress = (progress: Task["progress"]): Task[] => {
     return tasks.filter((task) => task.progress === progress);

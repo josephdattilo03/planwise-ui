@@ -11,7 +11,7 @@ import {
 import ChatBot from 'react-chatbotify';
 import { dispatchScheduleAgentMutated } from '@/src/app/services/scheduleAgentRefresh';
 import { useCanvasBriefing } from '@/src/app/providers/CanvasBriefingProvider';
-import type { Flow, Params } from 'react-chatbotify';
+import type { Flow, Params as ChatParams } from 'react-chatbotify';
 
 const APPLY_LABEL = 'Yes, apply';
 const CANCEL_LABEL = 'No, cancel';
@@ -159,7 +159,7 @@ function botBubbleShell(children: ReactNode): ReactElement {
 }
 
 function proposalBubble(
-  params: Params,
+  chat: ChatParams,
   text: string,
   actions: unknown[],
   optionStyle: CSSProperties,
@@ -203,12 +203,12 @@ function proposalBubble(
             optionStyle={optionStyle}
             optionHoveredStyle={optionHoveredStyle}
             onApply={async () => {
-              await params.injectMessage(APPLY_LABEL, 'USER');
-              await params.goToPath('execute_plan');
+              await chat.injectMessage(APPLY_LABEL, 'USER');
+              await chat.goToPath('execute_plan');
             }}
             onCancel={async () => {
-              await params.injectMessage(CANCEL_LABEL, 'USER');
-              await params.goToPath('cancelled');
+              await chat.injectMessage(CANCEL_LABEL, 'USER');
+              await chat.goToPath('cancelled');
             }}
           />
         </div>
@@ -246,12 +246,12 @@ export default function AIChatBot() {
      */
     return {
       start: {
-        component: async (params: Params) => {
+        component: async (chat: ChatParams) => {
           if (canvasBriefing) {
             const actions = canvasBriefing.proposed_actions ?? [];
             pendingActionsRef.current = actions;
             return proposalBubble(
-              params,
+              chat,
               canvasBriefing.text,
               actions,
               optionStyle,
@@ -266,14 +266,14 @@ export default function AIChatBot() {
         path: 'gemini',
       },
       gemini: {
-        component: async (params: Params) => {
+        component: async (chat: ChatParams) => {
           pendingActionsRef.current = [];
           const res = await fetch('/api/ai/schedule-agent', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-              prompt: params.userInput,
+              prompt: chat.userInput,
               plan_only: true,
               ...scheduleAgentCalendarPayload(),
             }),
@@ -291,7 +291,7 @@ export default function AIChatBot() {
             : [];
           pendingActionsRef.current = actions;
           return proposalBubble(
-            params,
+            chat,
             text,
             actions,
             optionStyle,
