@@ -72,7 +72,7 @@ export default function Home() {
         setDashboardLoading(true);
         const [tasksData, eventsData] = await Promise.all([
           fetchTasks(userId, boards, tags),
-          fetchEvents(boards),
+          fetchEvents(boards, userId),
         ]);
         if (!cancelled) {
           setTasks(tasksData);

@@ -1,11 +1,9 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
-import { GOOGLE_CALENDAR_BOARD_ID } from "@/src/app/services/googleCalendarService";
-
 /**
- * Server-side: forwards NextAuth Google OAuth tokens to planwise-api import-calendar
- * with insert_only=true (one DynamoDB prefix query + batched writes on the backend).
+ * Server-side: forwards NextAuth Google tokens to planwise-api `POST /user/{email}/import-calendar`.
+ * Used when `NEXT_PUBLIC_PLANWISE_DATA_MODE` is `backend` (browser does not call Google).
  */
 export async function POST(req: NextRequest) {
   if (process.env.NEXT_PUBLIC_SKIP_GOOGLE_CALENDAR_SCOPE === "true") {
@@ -47,9 +45,7 @@ export async function POST(req: NextRequest) {
   });
 
   const base = backend.replace(/\/$/, "");
-  const url = `${base}/user/${encodeURIComponent(userId)}/board/${encodeURIComponent(
-    GOOGLE_CALENDAR_BOARD_ID,
-  )}/import-calendar?${params}`;
+  const url = `${base}/user/${encodeURIComponent(userId)}/import-calendar?${params}`;
 
   const res = await fetch(url, {
     method: "POST",
@@ -65,7 +61,7 @@ export async function POST(req: NextRequest) {
   if (!res.ok) {
     return NextResponse.json(
       { error: "backend_import_failed", detail: text.slice(0, 800) },
-      { status: 502 },
+      { status: 502 }
     );
   }
 
@@ -74,7 +70,7 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json(
       { error: "invalid_backend_json", detail: text.slice(0, 200) },
-      { status: 502 },
+      { status: 502 }
     );
   }
 }

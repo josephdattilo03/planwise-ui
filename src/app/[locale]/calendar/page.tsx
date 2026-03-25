@@ -13,6 +13,7 @@ import LoadingSpinner from "@/src/common/LoadingSpinner";
 import { useBoardsTags } from "../../providers/boardsTags/BoardsTagsContext";
 import { CalendarEvent } from "../../components/calendar/CalendarView";
 import { useSession } from "next-auth/react";
+import { googleCalendarBoardIdForUser } from "../../services/googleCalendarService";
 
 const CalendarView = dynamic(
   () => import("../../components/calendar/CalendarView"),
@@ -21,18 +22,25 @@ const CalendarView = dynamic(
 
 // ── Converters ─────────────────────────────────────────────────────────────
 
-const convertEventsForCalendar = (events: Event[]): CalendarEvent[] =>
-  events.map((event) => ({
-    title: `📅 ${event.description}`,
-    start: event.startTime,
-    end: event.endTime,
-    resource: {
-      board: event.board.name.toLowerCase(),
-      color: event.board.color,
-      type: "event" as const,
-      event,
-    },
-  }));
+const convertEventsForCalendar = (
+  events: Event[],
+  googleBoardId: string | undefined
+): CalendarEvent[] =>
+  events.map((event) => {
+    const isGoogleImported =
+      Boolean(googleBoardId) && event.board.id === googleBoardId;
+    return {
+      title: `📅 ${event.description}`,
+      start: event.startTime,
+      end: event.endTime,
+      resource: {
+        board: event.board.name.toLowerCase(),
+        color: event.board.color,
+        type: isGoogleImported ? ("google" as const) : ("event" as const),
+        event,
+      },
+    };
+  });
 
 const getBoardHexColor = (boardName: string, boards: Board[]): string => {
   const boardObj = boards.find((b) => b.name.toLowerCase() === boardName);
@@ -70,9 +78,9 @@ export default function CalendarPage() {
   /** Re-fetch the full events list (used after create / delete) */
   const refreshEvents = useCallback(async () => {
     if (boardsTagsLoading) return;
-    const eventData = await fetchEvents(boards);
+    const eventData = await fetchEvents(boards, userId);
     setEvents(eventData);
-  }, [boards, boardsTagsLoading]);
+  }, [boards, boardsTagsLoading, userId]);
 
   /**
    * In-place update after a drag/resize — replaces the single changed event in
@@ -95,7 +103,7 @@ export default function CalendarPage() {
       try {
         setDataLoading(true);
         const [eventData, taskData] = await Promise.all([
-          fetchEvents(boards),
+          fetchEvents(boards, userId),
           fetchTasks(userId, boards, tags),
         ]);
         if (!cancelled) {
@@ -114,7 +122,20 @@ export default function CalendarPage() {
     };
   }, [boardsTagsLoading, boards, tags, userId]);
 
-  const calendarEvents = convertEventsForCalendar(events);
+  /** After server-side Google Calendar sync (login), refresh events from API */
+  useEffect(() => {
+    const onSynced = () => {
+      void refreshEvents();
+    };
+    window.addEventListener("planwise:google-calendar-synced", onSynced);
+    return () =>
+      window.removeEventListener("planwise:google-calendar-synced", onSynced);
+  }, [refreshEvents]);
+
+  const googleBoardId = userId
+    ? googleCalendarBoardIdForUser(userId)
+    : undefined;
+  const calendarEvents = convertEventsForCalendar(events, googleBoardId);
   const taskEvents = convertTasksToEvents(tasks, boards);
 
   return (
