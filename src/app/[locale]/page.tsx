@@ -17,7 +17,6 @@ import { useBoardsTags } from "../providers/boardsTags/BoardsTagsContext";
 import {
   GreetingWidget,
   QuickAccessWidget,
-  ScheduleAlertWidget,
   TasksWidget,
   CalendarWidget,
   NotesWidget,
@@ -234,7 +233,6 @@ export default function Home() {
           }}
         >
           <GreetingWidget userName={userName} />
-          <ScheduleAlertWidget />
           <QuickAccessWidget boards={boards} />
         </Box>
 

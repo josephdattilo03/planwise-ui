@@ -8,17 +8,15 @@ import BoardsFilterSection from "../filters/sections/BoardsFilterSection";
 import TagsFilterSection from "../filters/sections/TagsFilterSection";
 
 export default function CalendarFilterComponent() {
-  const { loading, error, smartRecs, setSmartRecs, clearAll } = useFilters();
+  const { loading, error, clearAll } = useFilters();
 
   return (
     <FilterSidebar
       loading={loading}
       error={error}
       showClearAll
+      showSmartRecommendations={false}
       onClearAll={clearAll}
-      showSmartRecommendations
-      smartRecommendations={smartRecs}
-      onChangeSmartRecommendations={setSmartRecs}
     >
       <CalendarFilterSection />
       <BoardsFilterSection />
