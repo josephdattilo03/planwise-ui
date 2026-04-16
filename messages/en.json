@@ -7,7 +7,16 @@
     "calendar": "Calendar",
     "folders": "Folders & Boards",
     "tasks": "Tasks",
-    "notes": "Notes"
+    "notes": "Notes",
+    "canvasSync": "Sync Canvas",
+    "canvasSyncing": "Syncing with Canvas…",
+    "canvasSyncDemo": "Not available in demo data mode.",
+    "canvasSyncBriefingReady": "Summary added to chat.",
+    "canvasSyncComplete": "Canvas data refreshed.",
+    "canvasSyncUpToDate": "Already up to date with Canvas.",
+    "canvasSyncNotConnected": "Canvas is not connected for this workspace.",
+    "canvasSyncCanvasError": "Canvas could not be reached.",
+    "canvasSyncFailed": "Sync failed. Try again."
   },
   "TaskCard": {
     "task-to-do": "To-Do",

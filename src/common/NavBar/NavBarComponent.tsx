@@ -6,14 +6,14 @@ import {
   Box,
   Tabs,
   Tab,
-  IconButton,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
   Divider,
+  CircularProgress,
 } from "@mui/material";
-import { ReactElement, useEffect, useRef, useState } from "react";
+import { ReactElement, useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
@@ -29,14 +29,15 @@ import ChecklistIcon from "@mui/icons-material/Checklist";
 import StickyNote2OutlinedIcon from "@mui/icons-material/StickyNote2Outlined";
 import StickyNote2Icon from "@mui/icons-material/StickyNote2";
 
-import SearchIcon from "@mui/icons-material/Search";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import PersonIcon from "@mui/icons-material/Person";
+import CloudSyncOutlinedIcon from "@mui/icons-material/CloudSyncOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 import { useSession, signOut } from "next-auth/react";
 import ThemeToggle from "../ThemeToggle";
 import { useTheme } from "../ThemeProvider";
+import { useCanvasBriefing } from "@/src/app/providers/CanvasBriefingProvider";
+import { postCanvasBackendSync } from "@/src/app/services/canvasBackendSync";
+import { getDataMode } from "@/src/app/services/dataMode";
 
 
 interface NavItem {
@@ -87,8 +88,69 @@ export default function NavBarComponent() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const { theme } = useTheme();
+  const { setCanvasBriefing } = useCanvasBriefing();
   const menuRef = useRef<HTMLDivElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const [canvasSyncBusy, setCanvasSyncBusy] = useState(false);
+  const [canvasSyncHint, setCanvasSyncHint] = useState<string | null>(null);
+  const mockData = getDataMode() === "mock";
+
+  useEffect(() => {
+    if (open) {
+      setCanvasSyncHint(null);
+    }
+  }, [open]);
+
+  const handleManualCanvasSync = useCallback(
+    async (event: React.MouseEvent) => {
+      event.stopPropagation();
+      if (canvasSyncBusy || mockData) {
+        return;
+      }
+      const backendUserId = session?.user?.email ?? session?.user?.id;
+      if (!backendUserId) {
+        return;
+      }
+      setCanvasSyncBusy(true);
+      setCanvasSyncHint(null);
+      try {
+        const { ok, payload } = await postCanvasBackendSync(backendUserId);
+        if (ok && payload.synced && payload.ai?.text) {
+          setCanvasBriefing({
+            text: payload.ai.text,
+            proposed_actions: Array.isArray(payload.ai.proposed_actions)
+              ? payload.ai.proposed_actions
+              : [],
+          });
+          setCanvasSyncHint(t("canvasSyncBriefingReady"));
+        } else if (ok && payload.synced) {
+          setCanvasSyncHint(t("canvasSyncComplete"));
+        } else if (ok && payload.skipped && payload.reason === "canvas_unchanged") {
+          setCanvasSyncHint(t("canvasSyncUpToDate"));
+        } else if (ok && payload.skipped && payload.reason === "canvas_not_configured") {
+          setCanvasSyncHint(t("canvasSyncNotConnected"));
+        } else if (ok && payload.skipped && payload.reason === "canvas_error") {
+          setCanvasSyncHint(t("canvasSyncCanvasError"));
+        } else if (ok && payload.skipped) {
+          setCanvasSyncHint(t("canvasSyncNotConnected"));
+        } else {
+          setCanvasSyncHint(t("canvasSyncFailed"));
+        }
+      } catch {
+        setCanvasSyncHint(t("canvasSyncFailed"));
+      } finally {
+        setCanvasSyncBusy(false);
+      }
+    },
+    [
+      canvasSyncBusy,
+      mockData,
+      session?.user?.email,
+      session?.user?.id,
+      setCanvasBriefing,
+      t,
+    ],
+  );
 
   // Close the user menu when clicking anywhere outside of it (including portals
   // like the chatbot input). Using capture phase so stopPropagation inside
@@ -257,11 +319,30 @@ export default function NavBarComponent() {
           },
         }}
       >
-        <MenuItem onClick={handleClose}>
-          <ListItemIcon>
-            <PersonIcon fontSize="small" />
+        <MenuItem
+          disabled={mockData || canvasSyncBusy}
+          onClick={(e) => {
+            void handleManualCanvasSync(e);
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 36 }}>
+            {canvasSyncBusy ? (
+              <CircularProgress size={18} thickness={5} />
+            ) : (
+              <CloudSyncOutlinedIcon fontSize="small" />
+            )}
           </ListItemIcon>
-          <ListItemText>Profile & Settings</ListItemText>
+          <ListItemText
+            primary={canvasSyncBusy ? t("canvasSyncing") : t("canvasSync")}
+            secondary={
+              mockData
+                ? t("canvasSyncDemo")
+                : canvasSyncHint ?? undefined
+            }
+            secondaryTypographyProps={{
+              sx: { fontSize: "0.75rem", mt: 0.25 },
+            }}
+          />
         </MenuItem>
         <Divider />
         <ThemeToggle onClose={handleClose} />

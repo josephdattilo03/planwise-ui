@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { useCanvasBriefing } from '@/src/app/providers/CanvasBriefingProvider';
+import { postCanvasBackendSync } from '@/src/app/services/canvasBackendSync';
 import { getDataMode } from '@/src/app/services/dataMode';
 
 const VISIBILITY_DEBOUNCE_MS = 90_000;
@@ -53,27 +54,14 @@ export function CanvasLoginSync() {
       inFlight.current = true;
       canvasSyncDebug('request start', { source });
       try {
-        const uid = encodeURIComponent(backendUserId);
-        const res = await fetch(
-          `/api/backend/user/${uid}/integrations/canvas/sync`,
-          {
-            method: 'POST',
-            credentials: 'include',
-          },
-        );
-        const data = (await res.json()) as {
-          ai?: { text: string; proposed_actions?: unknown[] };
-          skipped?: boolean;
-          synced?: boolean;
-          reason?: string;
-          ai_skipped?: boolean;
-        };
+        const { ok, status, payload: data } =
+          await postCanvasBackendSync(backendUserId);
         const proposed = data.ai?.proposed_actions;
         const proposedCount = Array.isArray(proposed) ? proposed.length : 0;
         canvasSyncDebug('response', {
           source,
-          ok: res.ok,
-          status: res.status,
+          ok,
+          status,
           skipped: data.skipped,
           reason: data.reason,
           synced: data.synced,
@@ -81,7 +69,7 @@ export function CanvasLoginSync() {
           hasBriefingText: Boolean(data.ai?.text),
           proposedActions: proposedCount,
         });
-        if (res.ok && data.synced && data.ai?.text) {
+        if (ok && data.synced && data.ai?.text) {
           setCanvasBriefing({
             text: data.ai.text,
             proposed_actions: Array.isArray(data.ai.proposed_actions)

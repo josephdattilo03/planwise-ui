@@ -7,6 +7,15 @@
     "calendar": "Calendario",
     "folders": "Carpetas y Tableros",
     "tasks": "Tareas",
-    "notes": "Notas"
+    "notes": "Notas",
+    "canvasSync": "Sincronizar Canvas",
+    "canvasSyncing": "Sincronizando con Canvas…",
+    "canvasSyncDemo": "No disponible en el modo de datos de demostración.",
+    "canvasSyncBriefingReady": "Resumen añadido al chat.",
+    "canvasSyncComplete": "Datos de Canvas actualizados.",
+    "canvasSyncUpToDate": "Ya está al día con Canvas.",
+    "canvasSyncNotConnected": "Canvas no está conectado para este espacio de trabajo.",
+    "canvasSyncCanvasError": "No se pudo acceder a Canvas.",
+    "canvasSyncFailed": "Error al sincronizar. Inténtalo de nuevo."
   }
 }
