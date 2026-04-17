@@ -479,10 +479,8 @@ export default function AIChatBot() {
       showCharacterCount: true,
       botDelay: 0,
     },
-    // Keep launcher subtle by default (tooltip was too visually loud).
     tooltip: {
-      mode: 'CLOSE',
-      text: '',
+      mode: 'NEVER',
     },
     chatButton: {
       icon: '/owl.svg',

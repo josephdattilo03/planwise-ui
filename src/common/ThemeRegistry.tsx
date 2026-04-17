@@ -15,6 +15,7 @@ type ThemeColors = {
   textSecondary: string;
   green1: string;
   green2: string;
+  green3: string;
 };
 
 function getCssVar(varName: string, fallback: string): string {
@@ -36,6 +37,7 @@ function resolveThemeColors(appTheme: "light" | "dark"): ThemeColors {
     textSecondary: isDark ? "#b8c5ba" : "#435447",
     green1: isDark ? "#4a7a5a" : "#386641",
     green2: isDark ? "#5a8a6a" : "#6a994e",
+    green3: isDark ? "#7bb38e" : "#a7c957",
   };
 
   return {
@@ -45,11 +47,13 @@ function resolveThemeColors(appTheme: "light" | "dark"): ThemeColors {
     textSecondary: getCssVar("--dark-green-2", fallback.textSecondary),
     green1: getCssVar("--green-1", fallback.green1),
     green2: getCssVar("--green-2", fallback.green2),
+    green3: getCssVar("--green-3", fallback.green3),
   };
 }
 
 function buildMuiTheme(appTheme: "light" | "dark", colors: ThemeColors) {
   const mode = appTheme === "dark" ? "dark" : "light";
+  const focusGreen = mode === "dark" ? colors.green3 : colors.green1;
 
   return {
     ...theme,
@@ -59,11 +63,11 @@ function buildMuiTheme(appTheme: "light" | "dark", colors: ThemeColors) {
       // Set primary to our green so default focus rings aren't MUI blue
       primary: {
         ...theme.palette.primary,
-        main: colors.green1,
+        main: focusGreen,
       },
       success: {
         ...theme.palette.success,
-        main: colors.green1,
+        main: focusGreen,
       },
       background: {
         ...theme.palette.background,
@@ -88,7 +92,7 @@ function buildMuiTheme(appTheme: "light" | "dark", colors: ThemeColors) {
         styleOverrides: {
           root: {
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-              borderColor: "var(--green-1) !important",
+              borderColor: `${focusGreen} !important`,
             },
           },
         },
@@ -97,7 +101,7 @@ function buildMuiTheme(appTheme: "light" | "dark", colors: ThemeColors) {
         styleOverrides: {
           root: {
             "&:after": {
-              borderBottomColor: "var(--green-1)",
+              borderBottomColor: focusGreen,
             },
           },
         },

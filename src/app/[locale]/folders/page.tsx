@@ -65,6 +65,11 @@ export default function FoldersPage() {
     if (mode === "mock") {
       const newBoard = await createBoard(name, color);
       createBoardNode(parentFolderId, newBoard);
+      setBoards((prev) => {
+        if (prev.some((b) => b.id === newBoard.id)) return prev;
+        return [...prev, newBoard];
+      });
+      handleBoardSelect(newBoard.id);
       setRefreshKey((prev) => prev + 1);
       return;
     }
@@ -74,7 +79,12 @@ export default function FoldersPage() {
       return;
     }
 
-    await createBoard(name, color, userId, parentFolderId);
+    const newBoard = await createBoard(name, color, userId, parentFolderId);
+    setBoards((prev) => {
+      if (prev.some((b) => b.id === newBoard.id)) return prev;
+      return [...prev, newBoard];
+    });
+    handleBoardSelect(newBoard.id);
     setRefreshKey((prev) => prev + 1);
   };
 

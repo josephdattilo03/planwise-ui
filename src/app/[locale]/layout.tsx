@@ -28,6 +28,19 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
+export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: '/favicon/favicon.ico' },
+      { url: '/favicon/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+    ],
+    apple: [{ url: '/favicon/apple-touch-icon.png' }],
+    shortcut: ['/favicon/favicon.ico'],
+  },
+  manifest: '/favicon/site.webmanifest',
+};
+
 const plexSans = IBM_Plex_Sans({
   variable: '--font-plex-sans',
   subsets: ['latin'],
